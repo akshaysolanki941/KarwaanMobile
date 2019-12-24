@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".SaregamaActivity">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/transparent"
+        android:theme="@style/ThemeOverlay.AppCompat.Light">
+
+        <TextView
+            android:id="@+id/toolbar_title"
+            style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="cursive"
+            android:textColor="#000"
+            android:textSize="25dp"
+            android:textStyle="bold" />
+
+    </androidx.appcompat.widget.Toolbar>
+
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/lottie_animation_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        app:lottie_loop="true"
+        app:lottie_rawRes="@raw/sound_visualizer" />
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:alpha="0.5"
+        android:scaleType="fitXY"
+        android:src="@android:color/black" />
+
+    <ImageButton
+        android:id="@+id/btn_play_pause"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_margin="10dp"
+        android:background="@drawable/round_btn" />
+
+    <ImageButton
+        android:id="@+id/btn_next"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_centerInParent="true"
+        android:layout_toEndOf="@+id/btn_play_pause"
+        android:background="@drawable/round_btn"
+        android:src="@drawable/ic_fast_forward_black_24dp" />
+
+    <ImageButton
+        android:id="@+id/btn_previous"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_centerInParent="true"
+        android:layout_toStartOf="@+id/btn_play_pause"
+        android:background="@drawable/round_btn"
+        android:src="@drawable/ic_fast_rewind_black_24dp" />
+
+    <ImageButton
+        android:id="@+id/btn_forward10"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:layout_centerInParent="true"
+        android:layout_margin="10dp"
+        android:layout_toEndOf="@+id/btn_next"
+        android:background="@drawable/round_btn"
+        android:src="@drawable/ic_forward_10_black_24dp" />
+
+    <ImageButton
+        android:id="@+id/btn_backward10"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:layout_centerInParent="true"
+        android:layout_margin="10dp"
+        android:layout_toStartOf="@+id/btn_previous"
+        android:background="@drawable/round_btn"
+        android:src="@drawable/ic_replay_10_black_24dp" />
+
+
+</RelativeLayout>

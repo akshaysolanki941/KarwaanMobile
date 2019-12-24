@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "708030305772",
+    "firebase_url": "https://karwaan-3ea2f.firebaseio.com",
+    "project_id": "karwaan-3ea2f",
+    "storage_bucket": "karwaan-3ea2f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:708030305772:android:1e9ea52cf9fda2a9699cc9",
+        "android_client_info": {
+          "package_name": "com.example.karwaan"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "708030305772-4br71o35po4om4i032m8cb17528frrs1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.karwaan",
+            "certificate_hash": "ea13fff4505307593e16d7c4c2db18858c6b3e20"
+          }
+        },
+        {
+          "client_id": "708030305772-lgv0th1ojfs5lk5pajh96clk8gj2oc2g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCitcB9Bpz04KxZj5GjO9PJpSgGrriEry8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "708030305772-lgv0th1ojfs5lk5pajh96clk8gj2oc2g.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
