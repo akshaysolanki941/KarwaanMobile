@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -12,11 +13,14 @@ import android.content.IntentFilter;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.view.View;
+import android.view.Window;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.airbnb.lottie.LottieAnimationView;
+import com.bumptech.glide.Glide;
 import com.example.karwaan.Models.SongModel;
 import com.example.karwaan.Services.NotificationService;
 import com.google.firebase.database.DataSnapshot;
@@ -28,6 +32,7 @@ import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 
 public class SaregamaActivity extends AppCompatActivity {
 
@@ -39,6 +44,8 @@ public class SaregamaActivity extends AppCompatActivity {
     private int index = 0;
     private ImageButton btn_play_pause, btn_next, btn_previous, btn_forward10, btn_backward10;
     private LottieAnimationView lottieAnimationView;
+    private ImageView bg, loading_gif_imageView;
+    private Dialog loading_dialog;
     //private BroadcastReceiver receiver;
 
     @Override
@@ -59,6 +66,7 @@ public class SaregamaActivity extends AppCompatActivity {
         btn_forward10 = (ImageButton) findViewById(R.id.btn_forward10);
         btn_backward10 = (ImageButton) findViewById(R.id.btn_backward10);
         lottieAnimationView = (LottieAnimationView) findViewById(R.id.lottie_animation_view);
+        bg = findViewById(R.id.bg);
 
         /*Intent serviceIntent = new Intent(SaregamaActivity.this, NotificationService.class);
         serviceIntent.setAction(Constants.ACTION.STARTFOREGROUND_ACTION);
@@ -116,12 +124,23 @@ public class SaregamaActivity extends AppCompatActivity {
             }
         };*/
 
+        loading_dialog = new Dialog(this);
+        loading_dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        loading_dialog.setContentView(R.layout.loading_dialog);
+        loading_gif_imageView = (ImageView) loading_dialog.findViewById(R.id.loading_gif_imageView);
+        Glide.with(getApplicationContext()).load(R.drawable.loading).placeholder(R.drawable.loading).into(loading_gif_imageView);
+        loading_dialog.setCanceledOnTouchOutside(false);
+        loading_dialog.setCancelable(false);
+        loading_dialog.show();
+
         getSongsList();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+
+        Glide.with(this).load(R.drawable.bg).into(bg);
 
         if (!mediaPlayer.isPlaying()) {
             btn_play_pause.setImageResource(R.drawable.play_button);
@@ -151,6 +170,7 @@ public class SaregamaActivity extends AppCompatActivity {
         btn_next.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                loading_dialog.show();
                 index++;
                 if (index >= songList.size() + 1) {
                     index = 0;
@@ -165,6 +185,7 @@ public class SaregamaActivity extends AppCompatActivity {
         btn_previous.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                loading_dialog.show();
                 index--;
                 if (index <= -1) {
                     index = 0;
@@ -179,6 +200,7 @@ public class SaregamaActivity extends AppCompatActivity {
         btn_forward10.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                loading_dialog.show();
                 index += 10;
                 if (index >= songList.size() + 1) {
                     index = 0;
@@ -193,6 +215,7 @@ public class SaregamaActivity extends AppCompatActivity {
         btn_backward10.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                loading_dialog.show();
                 index -= 10;
                 if (index <= -1) {
                     index = 0;
@@ -218,7 +241,7 @@ public class SaregamaActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-       // LocalBroadcastManager.getInstance(getApplicationContext()).unregisterReceiver(receiver);
+        // LocalBroadcastManager.getInstance(getApplicationContext()).unregisterReceiver(receiver);
     }
 
     private void getSongsList() {
@@ -286,6 +309,7 @@ public class SaregamaActivity extends AppCompatActivity {
                 mediaPlayer.start();
                 btn_play_pause.setImageResource(R.drawable.pause_button);
                 lottieAnimationView.playAnimation();
+                loading_dialog.dismiss();
             }
         });
     }

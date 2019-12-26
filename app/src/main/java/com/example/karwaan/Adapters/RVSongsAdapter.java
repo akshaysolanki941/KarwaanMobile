@@ -1,14 +1,18 @@
 package com.example.karwaan.Adapters;
 
 import android.animation.ObjectAnimator;
+import android.app.ActivityManager;
 import android.content.Context;
 import android.media.MediaPlayer;
 import android.os.Handler;
+import android.text.SpannableStringBuilder;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.TranslateAnimation;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -18,9 +22,12 @@ import com.example.karwaan.R;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import static android.content.Context.MODE_PRIVATE;
 
 public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHolder> {
 
@@ -29,18 +36,24 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
     private SlidingUpPanelLayout slidingUpPanelLayout;
     private ImageButton btn_play_pause;
     private SeekBar seekBar;
+    private TextView tv_sliding_view_song_name;
 
-    private MediaPlayer mediaPlayer = new MediaPlayer();
+    private MediaPlayer mediaPlayer;
     private int mediaFileLengthInMilliseconds;
     private final Handler handler = new Handler();
 
-    public RVSongsAdapter(ArrayList<SongModel> songs, Context context, SlidingUpPanelLayout slidingUpPanelLayout, ImageButton btn_play_pause,
-                          SeekBar seekBar) {
+    public RVSongsAdapter() {
+    }
+
+    public RVSongsAdapter(ArrayList<SongModel> songs, Context context, MediaPlayer mediaPlayer, SlidingUpPanelLayout slidingUpPanelLayout,
+                          ImageButton btn_play_pause, SeekBar seekBar, TextView tv_sliding_view_song_name) {
         this.songs = songs;
         this.context = context;
+        this.mediaPlayer = mediaPlayer;
         this.slidingUpPanelLayout = slidingUpPanelLayout;
         this.btn_play_pause = btn_play_pause;
         this.seekBar = seekBar;
+        this.tv_sliding_view_song_name = tv_sliding_view_song_name;
     }
 
     @NonNull
@@ -52,6 +65,7 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull final RVSongsAdapter.ViewHolder holder, final int position) {
+
         final SongModel song = songs.get(position);
 
         holder.tv_song_name.setText(song.getSongName());
@@ -59,6 +73,20 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                ArrayList<String> artistList = song.getArtists();
+                SpannableStringBuilder artists = new SpannableStringBuilder();
+
+                for (int i = 0; i < artistList.size(); i++) {
+                    String artist = artistList.get(i);
+                    if (i == artistList.size() - 1) {
+                        artists.append(artist);
+                    } else {
+                        artists.append(artist).append(" | ");
+                    }
+                }
+
+                tv_sliding_view_song_name.setText(song.getSongName() + " - " + artists);
+                tv_sliding_view_song_name.setSelected(true);
                 setUpMediaPlayer(song.getUrl());
                 slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
             }
@@ -83,19 +111,20 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
     }
 
     private void primarySeekBarProgressUpdater() {
-        seekBar.setProgress((int) (((float) mediaPlayer.getCurrentPosition() / mediaFileLengthInMilliseconds) * 100));
-        if (mediaPlayer.isPlaying()) {
-            Runnable notification = new Runnable() {
-                public void run() {
-                    primarySeekBarProgressUpdater();
-                }
-            };
-            handler.postDelayed(notification, 10);
-        }
+        if (!context.getSharedPreferences("released", MODE_PRIVATE).getBoolean("released", true))
+            if (mediaPlayer.isPlaying()) {
+                seekBar.setProgress((int) (((float) mediaPlayer.getCurrentPosition() / mediaFileLengthInMilliseconds) * 100));
+                Runnable notification = new Runnable() {
+                    public void run() {
+                        primarySeekBarProgressUpdater();
+                    }
+                };
+                handler.postDelayed(notification, 10);
+            }
     }
 
     private void setUpMediaPlayer(final String song_url) {
-        btn_play_pause.setImageResource(R.drawable.pause_button);
+        btn_play_pause.setImageResource(R.drawable.pause_btn_black);
 
         if (mediaPlayer.isPlaying()) {
             mediaPlayer.stop();
@@ -130,7 +159,7 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
         mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mediaPlayer) {
-                btn_play_pause.setImageResource(R.drawable.play_button);
+                btn_play_pause.setImageResource(R.drawable.play_btn_black);
             }
         });
 
@@ -153,11 +182,11 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
 
                 if (!mediaPlayer.isPlaying()) {
                     mediaPlayer.start();
-                    btn_play_pause.setImageResource(R.drawable.pause_button);
+                    btn_play_pause.setImageResource(R.drawable.pause_btn_black);
 
                 } else {
                     mediaPlayer.pause();
-                    btn_play_pause.setImageResource(R.drawable.play_button);
+                    btn_play_pause.setImageResource(R.drawable.play_btn_black);
                 }
                 primarySeekBarProgressUpdater();
             }
