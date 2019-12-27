@@ -4,8 +4,11 @@ import android.animation.ObjectAnimator;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.media.MediaPlayer;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.StyleSpan;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -16,6 +19,7 @@ import android.view.animation.TranslateAnimation;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.karwaan.Models.SongModel;
 import com.example.karwaan.R;
@@ -34,26 +38,32 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
     private ArrayList<SongModel> songs;
     private Context context;
     private SlidingUpPanelLayout slidingUpPanelLayout;
-    private ImageButton btn_play_pause;
+    private ImageButton btn_play_pause, btn_next_song, btn_prev_song;
     private SeekBar seekBar;
-    private TextView tv_sliding_view_song_name;
+    private TextView tv_sliding_view_song_name, tv_current_time, tv_total_time;
 
     private MediaPlayer mediaPlayer;
     private int mediaFileLengthInMilliseconds;
     private final Handler handler = new Handler();
+    int index;
 
     public RVSongsAdapter() {
     }
 
     public RVSongsAdapter(ArrayList<SongModel> songs, Context context, MediaPlayer mediaPlayer, SlidingUpPanelLayout slidingUpPanelLayout,
-                          ImageButton btn_play_pause, SeekBar seekBar, TextView tv_sliding_view_song_name) {
+                          ImageButton btn_play_pause, ImageButton btn_next_song, ImageButton btn_prev_song, SeekBar seekBar, TextView tv_sliding_view_song_name,
+                          TextView tv_current_time, TextView tv_total_time) {
         this.songs = songs;
         this.context = context;
         this.mediaPlayer = mediaPlayer;
         this.slidingUpPanelLayout = slidingUpPanelLayout;
         this.btn_play_pause = btn_play_pause;
+        this.btn_next_song = btn_next_song;
+        this.btn_prev_song = btn_prev_song;
         this.seekBar = seekBar;
         this.tv_sliding_view_song_name = tv_sliding_view_song_name;
+        this.tv_current_time = tv_current_time;
+        this.tv_total_time = tv_total_time;
     }
 
     @NonNull
@@ -73,6 +83,8 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                index = position;
+
                 ArrayList<String> artistList = song.getArtists();
                 SpannableStringBuilder artists = new SpannableStringBuilder();
 
@@ -89,6 +101,54 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
                 tv_sliding_view_song_name.setSelected(true);
                 setUpMediaPlayer(song.getUrl());
                 slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
+            }
+        });
+
+        btn_next_song.setOnClickListener(v -> {
+            if (index + 1 >= songs.size()) {
+                Toast.makeText(context, "This is the last song", Toast.LENGTH_SHORT).show();
+            } else {
+                index++;
+                SongModel nextSong = songs.get(index);
+                ArrayList<String> artistList = nextSong.getArtists();
+                SpannableStringBuilder artists = new SpannableStringBuilder();
+
+                for (int i = 0; i < artistList.size(); i++) {
+                    String artist = artistList.get(i);
+                    if (i == artistList.size() - 1) {
+                        artists.append(artist);
+                    } else {
+                        artists.append(artist).append(" | ");
+                    }
+                }
+
+                tv_sliding_view_song_name.setText(nextSong.getSongName() + " - " + artists);
+                tv_sliding_view_song_name.setSelected(true);
+                setUpMediaPlayer(nextSong.getUrl());
+            }
+        });
+
+        btn_prev_song.setOnClickListener(v -> {
+            if (index - 1 < 0) {
+                Toast.makeText(context, "This is the first song", Toast.LENGTH_SHORT).show();
+            } else {
+                index--;
+                SongModel prevSong = songs.get(index);
+                ArrayList<String> artistList = prevSong.getArtists();
+                SpannableStringBuilder artists = new SpannableStringBuilder();
+
+                for (int i = 0; i < artistList.size(); i++) {
+                    String artist = artistList.get(i);
+                    if (i == artistList.size() - 1) {
+                        artists.append(artist);
+                    } else {
+                        artists.append(artist).append(" | ");
+                    }
+                }
+
+                tv_sliding_view_song_name.setText(prevSong.getSongName() + " - " + artists);
+                tv_sliding_view_song_name.setSelected(true);
+                setUpMediaPlayer(prevSong.getUrl());
             }
         });
     }
@@ -114,12 +174,13 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
         if (!context.getSharedPreferences("released", MODE_PRIVATE).getBoolean("released", true))
             if (mediaPlayer.isPlaying()) {
                 seekBar.setProgress((int) (((float) mediaPlayer.getCurrentPosition() / mediaFileLengthInMilliseconds) * 100));
+                tv_current_time.setText(milliSecondsToTimer(mediaPlayer.getCurrentPosition()));
                 Runnable notification = new Runnable() {
                     public void run() {
                         primarySeekBarProgressUpdater();
                     }
                 };
-                handler.postDelayed(notification, 10);
+                handler.postDelayed(notification, 1000);
             }
     }
 
@@ -144,6 +205,7 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
             @Override
             public void onPrepared(MediaPlayer mediaPlayer) {
                 mediaFileLengthInMilliseconds = mediaPlayer.getDuration();
+                tv_total_time.setText(milliSecondsToTimer(mediaFileLengthInMilliseconds));
                 mediaPlayer.start();
                 primarySeekBarProgressUpdater();
             }
@@ -191,5 +253,31 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
                 primarySeekBarProgressUpdater();
             }
         });
+    }
+
+    private String milliSecondsToTimer(long milliseconds) {
+        String finalTimerString = "";
+        String secondsString = "";
+
+        // Convert total duration into time
+        int hours = (int) (milliseconds / (1000 * 60 * 60));
+        int minutes = (int) (milliseconds % (1000 * 60 * 60)) / (1000 * 60);
+        int seconds = (int) ((milliseconds % (1000 * 60 * 60)) % (1000 * 60) / 1000);
+        // Add hours if there
+        if (hours > 0) {
+            finalTimerString = hours + ":";
+        }
+
+        // Prepending 0 to seconds if it is one digit
+        if (seconds < 10) {
+            secondsString = "0" + seconds;
+        } else {
+            secondsString = "" + seconds;
+        }
+
+        finalTimerString = finalTimerString + minutes + ":" + secondsString;
+
+        // return timer string
+        return finalTimerString;
     }
 }

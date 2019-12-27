@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
@@ -17,6 +18,7 @@ public class ModeActivity extends AppCompatActivity {
     private Toolbar toolbar;
     private TextView toolbar_title;
     private Button btn_saregama_mode, btn_maunal_mode;
+    private RelativeLayout rl_saregama_mode, rl_manual_mode;
     private ImageView bg;
 
 
@@ -33,6 +35,8 @@ public class ModeActivity extends AppCompatActivity {
 
         btn_saregama_mode = (Button) findViewById(R.id.btn_saregama_mode);
         btn_maunal_mode = (Button) findViewById(R.id.btn_manual_mode);
+        rl_saregama_mode = findViewById(R.id.rl_saregama_mode);
+        rl_manual_mode = findViewById(R.id.rl_manual_mode);
         bg = findViewById(R.id.bg);
 
     }
@@ -43,14 +47,14 @@ public class ModeActivity extends AppCompatActivity {
 
         Glide.with(this).load(R.drawable.bg).into(bg);
 
-        btn_saregama_mode.setOnClickListener(new View.OnClickListener() {
+        rl_saregama_mode.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 startActivity(new Intent(ModeActivity.this, SaregamaActivity.class));
             }
         });
 
-        btn_maunal_mode.setOnClickListener(new View.OnClickListener() {
+        rl_manual_mode.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 startActivity(new Intent(ModeActivity.this, ManualActivity.class));

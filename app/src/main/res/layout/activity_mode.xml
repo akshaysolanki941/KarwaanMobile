@@ -15,7 +15,7 @@
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolBar"
         android:layout_width="match_parent"
-        android:layout_height="100dp"
+        android:layout_height="200dp"
         android:background="@drawable/toolbar_bg"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
 
@@ -43,7 +43,8 @@
         android:fontFamily="@font/overpass_semi_bold"
         android:padding="10dp"
         android:text="saregama mode"
-        android:textSize="20sp" />
+        android:textSize="20sp"
+        android:visibility="gone" />
 
     <Button
         android:id="@+id/btn_manual_mode"
@@ -55,6 +56,56 @@
         android:fontFamily="@font/overpass_semi_bold"
         android:padding="10dp"
         android:text="maunal mode"
-        android:textSize="20sp" />
+        android:textSize="20sp"
+        android:visibility="gone" />
+
+    <RelativeLayout
+        android:id="@+id/rl_saregama_mode"
+        android:layout_width="250dp"
+        android:layout_height="250dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="150dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginBottom="10dp"
+        android:background="@drawable/ripplebackground"
+        android:clickable="true"
+        android:focusable="true">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:fontFamily="@font/overpass_semi_bold"
+            android:text="SAREGAMA MODE"
+            android:textAlignment="center"
+            android:textColor="#000"
+            android:textSize="20sp" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rl_manual_mode"
+        android:layout_width="250dp"
+        android:layout_height="250dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginBottom="50dp"
+        android:background="@drawable/ripplebackground"
+        android:clickable="true"
+        android:focusable="true">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:fontFamily="@font/overpass_semi_bold"
+            android:text="MANUAL MODE"
+            android:textAlignment="center"
+            android:textColor="#000"
+            android:textSize="20sp" />
+    </RelativeLayout>
 
 </RelativeLayout>

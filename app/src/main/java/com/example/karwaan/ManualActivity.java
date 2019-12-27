@@ -38,13 +38,13 @@ import java.util.HashSet;
 public class ManualActivity extends AppCompatActivity {
 
     private Toolbar toolbar;
-    private TextView toolbar_title, tv_sliding_view_song_name;
+    private TextView toolbar_title, tv_sliding_view_song_name, tv_current_time, tv_total_time;
     private RecyclerView rv_songs;
     private DatabaseReference songsRef;
     private ArrayList<SongModel> songs = new ArrayList<>();
     private ArrayList<String> artistsList = new ArrayList<>();
     private SlidingUpPanelLayout slidingUpPanelLayout;
-    private ImageButton btn_play_pause;
+    private ImageButton btn_play_pause, btn_next_song, btn_prev_song;
     private SeekBar seekBar;
     private Dialog loading_dialog;
     private ImageView loading_gif_imageView, bg;
@@ -79,7 +79,11 @@ public class ManualActivity extends AppCompatActivity {
         slidingUpPanelLayout = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
         //slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
         btn_play_pause = (ImageButton) findViewById(R.id.btn_play_pause);
+        btn_next_song = findViewById(R.id.btn_next_song);
+        btn_prev_song = findViewById(R.id.btn_prev_song);
         seekBar = (SeekBar) findViewById(R.id.seekBar);
+        tv_current_time = findViewById(R.id.tv_current_time);
+        tv_total_time = findViewById(R.id.tv_total_time);
         tv_sliding_view_song_name = findViewById(R.id.tv_sliding_view_song_name);
         tv_sliding_view_song_name.setText("Select a song to play");
         chipGroup = findViewById(R.id.chipGroup);
@@ -116,7 +120,8 @@ public class ManualActivity extends AppCompatActivity {
                 }
                 if (!songs.isEmpty()) {
                     getArtists();
-                    rv_songs.setAdapter(new RVSongsAdapter(songs, ManualActivity.this, mediaPlayer, slidingUpPanelLayout, btn_play_pause, seekBar, tv_sliding_view_song_name));
+                    rv_songs.setAdapter(new RVSongsAdapter(songs, ManualActivity.this, mediaPlayer, slidingUpPanelLayout, btn_play_pause, btn_next_song, btn_prev_song,
+                            seekBar, tv_sliding_view_song_name, tv_current_time, tv_total_time));
                 } else {
                     Toast.makeText(ManualActivity.this, "No songs found", Toast.LENGTH_SHORT).show();
                 }
@@ -156,7 +161,8 @@ public class ManualActivity extends AppCompatActivity {
             if (selectedChip != null) {
                 String selectedArtist = selectedChip.getText().toString();
                 if (selectedArtist.equals("All")) {
-                    rv_songs.setAdapter(new RVSongsAdapter(songs, ManualActivity.this, mediaPlayer, slidingUpPanelLayout, btn_play_pause, seekBar, tv_sliding_view_song_name));
+                    rv_songs.setAdapter(new RVSongsAdapter(songs, ManualActivity.this, mediaPlayer, slidingUpPanelLayout, btn_play_pause, btn_next_song, btn_prev_song,
+                            seekBar, tv_sliding_view_song_name, tv_current_time, tv_total_time));
                 } else {
                     for (SongModel song : songs) {
                         for (String artistName : song.getArtists()) {
@@ -166,7 +172,8 @@ public class ManualActivity extends AppCompatActivity {
                             }
                         }
                     }
-                    rv_songs.setAdapter(new RVSongsAdapter(artistSongsList, ManualActivity.this, mediaPlayer, slidingUpPanelLayout, btn_play_pause, seekBar, tv_sliding_view_song_name));
+                    rv_songs.setAdapter(new RVSongsAdapter(artistSongsList, ManualActivity.this, mediaPlayer, slidingUpPanelLayout, btn_play_pause, btn_next_song, btn_prev_song,
+                            seekBar, tv_sliding_view_song_name, tv_current_time, tv_total_time));
                 }
             }
             loading_dialog.dismiss();
@@ -181,7 +188,8 @@ public class ManualActivity extends AppCompatActivity {
                 searchSongNames.add(song);
             }
         }
-        rv_songs.setAdapter(new RVSongsAdapter(searchSongNames, ManualActivity.this, mediaPlayer, slidingUpPanelLayout, btn_play_pause, seekBar, tv_sliding_view_song_name));
+        rv_songs.setAdapter(new RVSongsAdapter(searchSongNames, ManualActivity.this, mediaPlayer, slidingUpPanelLayout, btn_play_pause, btn_next_song, btn_prev_song,
+                seekBar, tv_sliding_view_song_name, tv_current_time, tv_total_time));
     }
 
     private void getArtists() {
