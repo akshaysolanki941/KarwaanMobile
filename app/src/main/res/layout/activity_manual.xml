@@ -39,7 +39,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:fitsSystemWindows="true"
-                app:contentScrim="?attr/colorPrimary"
+                app:contentScrim="@color/transparent"
                 app:expandedTitleMarginEnd="64dp"
                 app:expandedTitleMarginStart="48dp"
                 app:layout_scrollFlags="scroll|exitUntilCollapsed">
@@ -114,8 +114,7 @@
                 android:id="@+id/rv_songs"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_below="@+id/horizontalScroll"
-                android:layout_marginBottom="61dp" />
+                android:layout_below="@+id/horizontalScroll" />
         </RelativeLayout>
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

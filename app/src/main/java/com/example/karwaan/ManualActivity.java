@@ -76,7 +76,7 @@ public class ManualActivity extends AppCompatActivity {
         bg = findViewById(R.id.bg);
         searchBar = findViewById(R.id.searchBar);
         slidingUpPanelLayout = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
-        //slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
+        slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
         btn_play_pause = (ImageButton) findViewById(R.id.btn_play_pause);
         btn_next_song = findViewById(R.id.btn_next_song);
         btn_prev_song = findViewById(R.id.btn_prev_song);
@@ -128,7 +128,7 @@ public class ManualActivity extends AppCompatActivity {
                 String selectedArtist = selectedChip.getText().toString();
                 if (selectedArtist.equals("All")) {
                     rv_songs.setAdapter(new RVSongsAdapter(songs, ManualActivity.this, mediaPlayer, slidingUpPanelLayout, btn_play_pause, btn_next_song, btn_prev_song,
-                            seekBar, tv_sliding_view_song_name, tv_current_time, tv_total_time));
+                            seekBar, tv_sliding_view_song_name, tv_current_time, tv_total_time, rv_songs));
                 } else {
                     for (SongModel song : songs) {
                         for (String artistName : song.getArtists()) {
@@ -139,7 +139,7 @@ public class ManualActivity extends AppCompatActivity {
                         }
                     }
                     rv_songs.setAdapter(new RVSongsAdapter(artistSongsList, ManualActivity.this, mediaPlayer, slidingUpPanelLayout, btn_play_pause, btn_next_song, btn_prev_song,
-                            seekBar, tv_sliding_view_song_name, tv_current_time, tv_total_time));
+                            seekBar, tv_sliding_view_song_name, tv_current_time, tv_total_time, rv_songs));
                 }
             }
             loading_dialog.dismiss();
@@ -169,7 +169,7 @@ public class ManualActivity extends AppCompatActivity {
                 if (!songs.isEmpty()) {
                     getArtists();
                     rv_songs.setAdapter(new RVSongsAdapter(songs, ManualActivity.this, mediaPlayer, slidingUpPanelLayout, btn_play_pause, btn_next_song, btn_prev_song,
-                            seekBar, tv_sliding_view_song_name, tv_current_time, tv_total_time));
+                            seekBar, tv_sliding_view_song_name, tv_current_time, tv_total_time, rv_songs));
                 } else {
                     Toast.makeText(ManualActivity.this, "No songs found", Toast.LENGTH_SHORT).show();
                 }
@@ -193,7 +193,7 @@ public class ManualActivity extends AppCompatActivity {
             }
         }
         rv_songs.setAdapter(new RVSongsAdapter(searchSongNames, ManualActivity.this, mediaPlayer, slidingUpPanelLayout, btn_play_pause, btn_next_song, btn_prev_song,
-                seekBar, tv_sliding_view_song_name, tv_current_time, tv_total_time));
+                seekBar, tv_sliding_view_song_name, tv_current_time, tv_total_time, rv_songs));
     }
 
     private void getArtists() {

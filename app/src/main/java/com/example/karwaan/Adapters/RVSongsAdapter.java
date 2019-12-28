@@ -1,5 +1,7 @@
 package com.example.karwaan.Adapters;
 
+import android.animation.AnimatorInflater;
+import android.animation.AnimatorSet;
 import android.app.Dialog;
 import android.content.Context;
 import android.media.MediaPlayer;
@@ -10,6 +12,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.animation.AlphaAnimation;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
@@ -22,6 +25,7 @@ import com.example.karwaan.R;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -38,6 +42,7 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
     private TextView tv_sliding_view_song_name, tv_current_time, tv_total_time;
     private ImageView loading_gif_imageView;
     private Dialog loading_dialog;
+    private RecyclerView rv_songs;
 
     private MediaPlayer mediaPlayer;
     private int mediaFileLengthInMilliseconds;
@@ -49,7 +54,7 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
 
     public RVSongsAdapter(ArrayList<SongModel> songs, Context context, MediaPlayer mediaPlayer, SlidingUpPanelLayout slidingUpPanelLayout,
                           ImageButton btn_play_pause, ImageButton btn_next_song, ImageButton btn_prev_song, SeekBar seekBar, TextView tv_sliding_view_song_name,
-                          TextView tv_current_time, TextView tv_total_time) {
+                          TextView tv_current_time, TextView tv_total_time, RecyclerView rv_songs) {
         this.songs = songs;
         this.context = context;
         this.mediaPlayer = mediaPlayer;
@@ -61,6 +66,7 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
         this.tv_sliding_view_song_name = tv_sliding_view_song_name;
         this.tv_current_time = tv_current_time;
         this.tv_total_time = tv_total_time;
+        this.rv_songs = rv_songs;
     }
 
     @NonNull
@@ -86,28 +92,40 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
 
         holder.tv_song_name.setText(song.getSongName());
 
+        setEnterAnimation(holder.itemView, position);
+
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                loading_dialog.show();
-                index = position;
 
-                ArrayList<String> artistList = song.getArtists();
-                SpannableStringBuilder artists = new SpannableStringBuilder();
+                setReduceSizeAnimation(holder.itemView);
+                setRegainSizeAnimation(holder.itemView);
 
-                for (int i = 0; i < artistList.size(); i++) {
-                    String artist = artistList.get(i);
-                    if (i == artistList.size() - 1) {
-                        artists.append(artist);
-                    } else {
-                        artists.append(artist).append(" | ");
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        loading_dialog.show();
+                        index = position;
+
+                        ArrayList<String> artistList = song.getArtists();
+                        SpannableStringBuilder artists = new SpannableStringBuilder();
+
+                        for (int i = 0; i < artistList.size(); i++) {
+                            String artist = artistList.get(i);
+                            if (i == artistList.size() - 1) {
+                                artists.append(artist);
+                            } else {
+                                artists.append(artist).append(" | ");
+                            }
+                        }
+
+                        tv_sliding_view_song_name.setText(song.getSongName() + " - " + artists);
+                        tv_sliding_view_song_name.setSelected(true);
+                        setUpMediaPlayer(song.getUrl());
+                        slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
+                        setMargins(rv_songs, 0, 0, 0, 150);
                     }
-                }
-
-                tv_sliding_view_song_name.setText(song.getSongName() + " - " + artists);
-                tv_sliding_view_song_name.setSelected(true);
-                setUpMediaPlayer(song.getUrl());
-                slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
+                }, 100);
             }
         });
 
@@ -252,6 +270,9 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
             @Override
             public void onClick(View view) {
 
+                setReduceSizeAnimation(btn_play_pause);
+                setRegainSizeAnimation(btn_play_pause);
+
                 if (!mediaPlayer.isPlaying()) {
                     mediaPlayer.start();
                     btn_play_pause.setImageResource(R.drawable.pause_btn_black);
@@ -289,5 +310,35 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
 
         // return timer string
         return finalTimerString;
+    }
+
+    private void setMargins(View view, int left, int top, int right, int bottom) {
+        if (view.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
+            ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
+            p.setMargins(left, top, right, bottom);
+            view.requestLayout();
+        }
+    }
+
+    private void setEnterAnimation(View viewToAnimate, int position) {
+        // If the bound view wasn't previously displayed on screen, it's animated
+        //if (position > lastPosition) {
+        AlphaAnimation anim = new AlphaAnimation(0.0f, 1f);
+        anim.setDuration(new Random().nextInt(501 - 51) + 51);//to make duration random number between [0,501)
+        viewToAnimate.startAnimation(anim);
+        //lastPosition = position;
+        //}
+    }
+
+    private void setReduceSizeAnimation(View viewToAnimate) {
+        AnimatorSet reducer = (AnimatorSet) AnimatorInflater.loadAnimator(context, R.animator.reduce_size);
+        reducer.setTarget(viewToAnimate);
+        reducer.start();
+    }
+
+    private void setRegainSizeAnimation(View viewToAnimate) {
+        AnimatorSet regainer = (AnimatorSet) AnimatorInflater.loadAnimator(context, R.animator.regain_size);
+        regainer.setTarget(viewToAnimate);
+        regainer.start();
     }
 }

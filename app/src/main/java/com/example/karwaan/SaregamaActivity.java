@@ -1,8 +1,12 @@
 package com.example.karwaan;
 
+import android.animation.AnimatorInflater;
+import android.animation.AnimatorSet;
 import android.app.Dialog;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.PowerManager;
+import android.support.v4.media.MediaBrowserCompat;
 import android.view.View;
 import android.view.Window;
 import android.widget.ImageButton;
@@ -32,13 +36,15 @@ public class SaregamaActivity extends AppCompatActivity {
     private TextView toolbar_title, tv_saregama_song_details;
     private ArrayList<SongModel> songList = new ArrayList<>();
     private DatabaseReference songRef;
-    private MediaPlayer mediaPlayer = new MediaPlayer();
+    private MediaPlayer mediaPlayer;
     private int index = 0;
     private ImageButton btn_play_pause, btn_next, btn_previous, btn_forward10, btn_backward10;
     private LottieAnimationView lottieAnimationView;
     private ImageView bg, loading_gif_imageView;
     private Dialog loading_dialog;
-    //private BroadcastReceiver receiver;
+
+    private MediaBrowserCompat mediaBrowser;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,62 +67,6 @@ public class SaregamaActivity extends AppCompatActivity {
         bg = findViewById(R.id.bg);
         tv_saregama_song_details = findViewById(R.id.tv_saregama_song_details);
 
-        /*Intent serviceIntent = new Intent(SaregamaActivity.this, NotificationService.class);
-        serviceIntent.setAction(Constants.ACTION.STARTFOREGROUND_ACTION);
-        startService(serviceIntent);*/
-
-        /*receiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                Toast.makeText(context, "received", Toast.LENGTH_SHORT).show();
-                switch (intent.getAction()) {
-                    case Constants.ACTION.NEXT_ACTION:
-                        index++;
-                        if (index >= songList.size() + 1) {
-                            index = 0;
-                            Collections.shuffle(songList);
-                            playSong(songList.get(index));
-                        } else {
-                            playSong(songList.get(index));
-                        }
-                        break;
-
-                    case Constants.ACTION.PREV_ACTION:
-                        index--;
-                        if (index <= -1) {
-                            index = 0;
-                            Collections.shuffle(songList);
-                            playSong(songList.get(index));
-                        } else {
-                            playSong(songList.get(index));
-                        }
-                        break;
-
-                    case Constants.ACTION.NEXT_10_ACTION:
-                        index += 10;
-                        if (index >= songList.size() + 1) {
-                            index = 0;
-                            Collections.shuffle(songList);
-                            playSong(songList.get(index));
-                        } else {
-                            playSong(songList.get(index));
-                        }
-                        break;
-
-                    case Constants.ACTION.PREV_10_ACTION:
-                        index -= 10;
-                        if (index <= -1) {
-                            index = 0;
-                            Collections.shuffle(songList);
-                            playSong(songList.get(index));
-                        } else {
-                            playSong(songList.get(index));
-                        }
-                        break;
-                }
-            }
-        };*/
-
         loading_dialog = new Dialog(this);
         loading_dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         loading_dialog.setContentView(R.layout.loading_dialog);
@@ -125,8 +75,13 @@ public class SaregamaActivity extends AppCompatActivity {
         loading_dialog.setCanceledOnTouchOutside(false);
         loading_dialog.setCancelable(false);
 
-        mediaPlayer.setScreenOnWhilePlaying(true);
-       // new PlayPauseTask().execute();
+        setReduceSizeAnimation(btn_play_pause);
+        setReduceSizeAnimation(btn_next);
+        setReduceSizeAnimation(btn_previous);
+        setReduceSizeAnimation(btn_forward10);
+        setReduceSizeAnimation(btn_backward10);
+
+        initMediaPlayer();
         getSongsList();
 
     }
@@ -149,15 +104,26 @@ public class SaregamaActivity extends AppCompatActivity {
         btn_play_pause.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
                 if (!mediaPlayer.isPlaying()) {
                     mediaPlayer.start();
                     btn_play_pause.setImageResource(R.drawable.pause_button);
                     lottieAnimationView.playAnimation();
+                    setRegainSizeAnimation(btn_play_pause);
+                    setRegainSizeAnimation(btn_next);
+                    setRegainSizeAnimation(btn_previous);
+                    setRegainSizeAnimation(btn_forward10);
+                    setRegainSizeAnimation(btn_backward10);
 
                 } else {
                     mediaPlayer.pause();
                     btn_play_pause.setImageResource(R.drawable.play_button);
                     lottieAnimationView.pauseAnimation();
+                    setReduceSizeAnimation(btn_play_pause);
+                    setReduceSizeAnimation(btn_next);
+                    setReduceSizeAnimation(btn_previous);
+                    setReduceSizeAnimation(btn_forward10);
+                    setReduceSizeAnimation(btn_backward10);
                 }
             }
         });
@@ -231,20 +197,18 @@ public class SaregamaActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-      /*  LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(receiver, new IntentFilter(Constants.ACTION.NEXT_ACTION));
-        LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(receiver, new IntentFilter(Constants.ACTION.PREV_ACTION));
-        LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(receiver, new IntentFilter(Constants.ACTION.NEXT_10_ACTION));
-        LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(receiver, new IntentFilter(Constants.ACTION.PREV_10_ACTION));*/
-    }
-
-    @Override
     protected void onDestroy() {
         super.onDestroy();
-        // LocalBroadcastManager.getInstance(getApplicationContext()).unregisterReceiver(receiver);
         mediaPlayer.release();
         lottieAnimationView.pauseAnimation();
+    }
+
+    private void initMediaPlayer() {
+        mediaPlayer = new MediaPlayer();
+        mediaPlayer.setScreenOnWhilePlaying(true);
+        mediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
+        //mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        mediaPlayer.setVolume(1.0f, 1.0f);
     }
 
     private void getSongsList() {
@@ -314,11 +278,28 @@ public class SaregamaActivity extends AppCompatActivity {
                 btn_play_pause.setImageResource(R.drawable.pause_button);
                 lottieAnimationView.playAnimation();
                 loading_dialog.dismiss();
+                setRegainSizeAnimation(btn_play_pause);
+                setRegainSizeAnimation(btn_next);
+                setRegainSizeAnimation(btn_previous);
+                setRegainSizeAnimation(btn_forward10);
+                setRegainSizeAnimation(btn_backward10);
             }
         });
 
         tv_saregama_song_details.setText(song.getSongName());
         tv_saregama_song_details.setSelected(true);
+    }
+
+    private void setReduceSizeAnimation(View viewToAnimate) {
+        AnimatorSet reducer = (AnimatorSet) AnimatorInflater.loadAnimator(this, R.animator.reduce_size);
+        reducer.setTarget(viewToAnimate);
+        reducer.start();
+    }
+
+    private void setRegainSizeAnimation(View viewToAnimate) {
+        AnimatorSet regainer = (AnimatorSet) AnimatorInflater.loadAnimator(this, R.animator.regain_size);
+        regainer.setTarget(viewToAnimate);
+        regainer.start();
     }
 
     @Override

@@ -6,6 +6,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
+    <permission android:name="android.permission.MEDIA_CONTENT_CONTROL" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -15,27 +17,15 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <service
-            android:name=".Services.NotificationService"
-            android:enabled="true"
-            android:exported="true" />
-
-        <activity android:name=".SaregamaActivity">
-            <intent-filter>
-                <action android:name="next" />
-                <action android:name="prev" />
-                <action android:name="next10" />
-                <action android:name="prev10" />
-            </intent-filter>
-        </activity>
+        <activity android:name=".SaregamaActivity" />
         <activity android:name=".ModeActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity android:name=".ManualActivity" />
-        <activity android:name=".AudioPlayerActivity" />
     </application>
 
 </manifest>
