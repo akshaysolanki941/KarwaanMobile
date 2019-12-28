@@ -2,7 +2,6 @@
 <com.sothree.slidinguppanel.SlidingUpPanelLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:sothree="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/sliding_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -15,10 +14,11 @@
     sothree:umanoScrollableView="@+id/seekBar"
     sothree:umanoShadowHeight="4dp">
 
-    <RelativeLayout
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".ManualActivity">
+        android:clipToPadding="false"
+        android:fitsSystemWindows="true">
 
         <ImageView
             android:id="@+id/bg"
@@ -26,67 +26,98 @@
             android:layout_height="match_parent"
             android:scaleType="fitXY" />
 
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolBar"
+        <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/detail_app_bar"
             android:layout_width="match_parent"
-            android:layout_height="70dp"
-            android:background="@drawable/toolbar_bg"
+            android:layout_height="wrap_content"
+            android:background="@drawable/appbar_bg"
+            android:fitsSystemWindows="true"
             android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
 
-            <TextView
-                android:id="@+id/toolbar_title"
-                style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:fontFamily="cursive"
-                android:textColor="#fff"
-                android:textSize="25dp"
-                android:textStyle="bold" />
+            <com.google.android.material.appbar.CollapsingToolbarLayout
+                android:id="@+id/detail_collapsing_toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fitsSystemWindows="true"
+                app:contentScrim="?attr/colorPrimary"
+                app:expandedTitleMarginEnd="64dp"
+                app:expandedTitleMarginStart="48dp"
+                app:layout_scrollFlags="scroll|exitUntilCollapsed">
 
-        </androidx.appcompat.widget.Toolbar>
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
 
-        <com.mancj.materialsearchbar.MaterialSearchBar
-            android:id="@+id/searchBar"
-            style="@style/MaterialSearchBarLight"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/toolBar"
-            android:layout_margin="5dp"
-            android:padding="8dp"
-            app:mt_maxSuggestionsCount="10"
-            app:mt_placeholder="Search Song"
-            app:mt_placeholderColor="#8B8585"
-            app:mt_searchIconDrawable="@drawable/ic_search_black_24dp"
-            app:mt_speechIconDrawable="@drawable/ic_search_black_24dp"
-            app:mt_speechMode="true"
-            app:mt_textCursorTint="#205088" />
+                    <androidx.appcompat.widget.Toolbar
+                        android:id="@+id/toolBar"
+                        android:layout_width="match_parent"
+                        android:layout_height="70dp"
+                        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+                        app:layout_collapseMode="pin">
 
-        <HorizontalScrollView
-            android:id="@+id/horizontalScroll"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/searchBar"
-            android:layout_marginTop="5dp"
-            android:layout_marginBottom="5dp"
-            android:padding="5dp"
-            android:scrollbars="none">
+                        <TextView
+                            android:id="@+id/toolbar_title"
+                            style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:fontFamily="cursive"
+                            android:textColor="#fff"
+                            android:textSize="25dp"
+                            android:textStyle="bold" />
 
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/chipGroup"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:singleSelection="true" />
+                    </androidx.appcompat.widget.Toolbar>
 
-        </HorizontalScrollView>
+                    <com.mancj.materialsearchbar.MaterialSearchBar
+                        android:id="@+id/searchBar"
+                        style="@style/MaterialSearchBarLight"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/toolBar"
+                        android:layout_margin="5dp"
+                        android:padding="8dp"
+                        app:mt_maxSuggestionsCount="10"
+                        app:mt_placeholder="Search Song"
+                        app:mt_placeholderColor="#8B8585"
+                        app:mt_searchIconDrawable="@drawable/ic_search_black_24dp"
+                        app:mt_speechIconDrawable="@drawable/ic_search_black_24dp"
+                        app:mt_speechMode="true"
+                        app:mt_textCursorTint="#205088" />
+                </RelativeLayout>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv_songs"
+            </com.google.android.material.appbar.CollapsingToolbarLayout>
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_below="@+id/horizontalScroll"
-            android:layout_marginBottom="61dp" />
-    </RelativeLayout>
+            app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+            <HorizontalScrollView
+                android:id="@+id/horizontalScroll"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:padding="5dp"
+                android:scrollbars="none">
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipGroup"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:singleSelection="true" />
+
+            </HorizontalScrollView>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_songs"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_below="@+id/horizontalScroll"
+                android:layout_marginBottom="61dp" />
+        </RelativeLayout>
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
     <!-- sliding view -->
     <RelativeLayout

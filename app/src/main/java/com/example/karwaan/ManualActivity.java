@@ -1,11 +1,5 @@
 package com.example.karwaan;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.app.Dialog;
 import android.media.MediaPlayer;
 import android.os.Bundle;
@@ -14,7 +8,6 @@ import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.MediaController;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -34,6 +27,12 @@ import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class ManualActivity extends AppCompatActivity {
 
@@ -91,6 +90,9 @@ public class ManualActivity extends AppCompatActivity {
         rv_songs.setHasFixedSize(true);
         rv_songs.setLayoutManager(new LinearLayoutManager(this));
 
+        mediaPlayer.setScreenOnWhilePlaying(true);
+        getSongs();
+
     }
 
     @Override
@@ -98,42 +100,6 @@ public class ManualActivity extends AppCompatActivity {
         super.onStart();
 
         Glide.with(this).load(R.drawable.bg).into(bg);
-
-        loading_dialog.show();
-
-        if (!songs.isEmpty()) {
-            songs.clear();
-        }
-        songsRef = FirebaseDatabase.getInstance().getReference("Songs");
-        songsRef.keepSynced(true);
-        songsRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                for (DataSnapshot ds : dataSnapshot.getChildren()) {
-                    String songName = ds.child("songName").getValue(String.class);
-                    String url = ds.child("url").getValue(String.class);
-                    ArrayList<String> artistsList = new ArrayList<>();
-                    for (DataSnapshot ds1 : ds.child("artists").getChildren()) {
-                        artistsList.add(ds1.getValue(String.class));
-                    }
-                    songs.add(new SongModel(url, songName, artistsList));
-                }
-                if (!songs.isEmpty()) {
-                    getArtists();
-                    rv_songs.setAdapter(new RVSongsAdapter(songs, ManualActivity.this, mediaPlayer, slidingUpPanelLayout, btn_play_pause, btn_next_song, btn_prev_song,
-                            seekBar, tv_sliding_view_song_name, tv_current_time, tv_total_time));
-                } else {
-                    Toast.makeText(ManualActivity.this, "No songs found", Toast.LENGTH_SHORT).show();
-                }
-                loading_dialog.dismiss();
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                Toast.makeText(ManualActivity.this, databaseError.getMessage(), Toast.LENGTH_SHORT).show();
-                loading_dialog.dismiss();
-            }
-        });
 
         searchBar.setOnSearchActionListener(new MaterialSearchBar.OnSearchActionListener() {
             @Override
@@ -177,6 +143,44 @@ public class ManualActivity extends AppCompatActivity {
                 }
             }
             loading_dialog.dismiss();
+        });
+    }
+
+    private void getSongs() {
+        loading_dialog.show();
+
+        if (!songs.isEmpty()) {
+            songs.clear();
+        }
+        songsRef = FirebaseDatabase.getInstance().getReference("Songs");
+        songsRef.keepSynced(true);
+        songsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for (DataSnapshot ds : dataSnapshot.getChildren()) {
+                    String songName = ds.child("songName").getValue(String.class);
+                    String url = ds.child("url").getValue(String.class);
+                    ArrayList<String> artistsList = new ArrayList<>();
+                    for (DataSnapshot ds1 : ds.child("artists").getChildren()) {
+                        artistsList.add(ds1.getValue(String.class));
+                    }
+                    songs.add(new SongModel(url, songName, artistsList));
+                }
+                if (!songs.isEmpty()) {
+                    getArtists();
+                    rv_songs.setAdapter(new RVSongsAdapter(songs, ManualActivity.this, mediaPlayer, slidingUpPanelLayout, btn_play_pause, btn_next_song, btn_prev_song,
+                            seekBar, tv_sliding_view_song_name, tv_current_time, tv_total_time));
+                } else {
+                    Toast.makeText(ManualActivity.this, "No songs found", Toast.LENGTH_SHORT).show();
+                }
+                loading_dialog.dismiss();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Toast.makeText(ManualActivity.this, databaseError.getMessage(), Toast.LENGTH_SHORT).show();
+                loading_dialog.dismiss();
+            }
         });
     }
 

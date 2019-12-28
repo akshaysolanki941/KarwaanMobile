@@ -1,19 +1,8 @@
 package com.example.karwaan;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-
 import android.app.Dialog;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.media.MediaPlayer;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.text.SpannableStringBuilder;
 import android.view.View;
 import android.view.Window;
 import android.widget.ImageButton;
@@ -24,17 +13,18 @@ import android.widget.Toast;
 import com.airbnb.lottie.LottieAnimationView;
 import com.bumptech.glide.Glide;
 import com.example.karwaan.Models.SongModel;
-import com.example.karwaan.Services.NotificationService;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 public class SaregamaActivity extends AppCompatActivity {
 
@@ -135,7 +125,9 @@ public class SaregamaActivity extends AppCompatActivity {
         loading_dialog.setCanceledOnTouchOutside(false);
         loading_dialog.setCancelable(false);
 
-        new PlayPauseTask().execute();
+        mediaPlayer.setScreenOnWhilePlaying(true);
+       // new PlayPauseTask().execute();
+        getSongsList();
 
     }
 
@@ -173,6 +165,8 @@ public class SaregamaActivity extends AppCompatActivity {
         btn_next.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                loading_dialog.show();
+                lottieAnimationView.pauseAnimation();
                 index++;
                 if (index >= songList.size() + 1) {
                     index = 0;
@@ -187,6 +181,8 @@ public class SaregamaActivity extends AppCompatActivity {
         btn_previous.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                loading_dialog.show();
+                lottieAnimationView.pauseAnimation();
                 index--;
                 if (index <= -1) {
                     index = 0;
@@ -201,6 +197,9 @@ public class SaregamaActivity extends AppCompatActivity {
         btn_forward10.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Toast.makeText(SaregamaActivity.this, "Skipping 10 songs in forward direction", Toast.LENGTH_SHORT).show();
+                loading_dialog.show();
+                lottieAnimationView.pauseAnimation();
                 index += 10;
                 if (index >= songList.size() + 1) {
                     index = 0;
@@ -215,6 +214,9 @@ public class SaregamaActivity extends AppCompatActivity {
         btn_backward10.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Toast.makeText(SaregamaActivity.this, "Skipping 10 songs in backward direction", Toast.LENGTH_SHORT).show();
+                loading_dialog.show();
+                lottieAnimationView.pauseAnimation();
                 index -= 10;
                 if (index <= -1) {
                     index = 0;
@@ -301,7 +303,7 @@ public class SaregamaActivity extends AppCompatActivity {
 
         try {
             mediaPlayer.setDataSource(song.getUrl());
-            mediaPlayer.prepare();
+            mediaPlayer.prepareAsync();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -330,26 +332,5 @@ public class SaregamaActivity extends AppCompatActivity {
         super.onBackPressed();
         mediaPlayer.release();
         lottieAnimationView.pauseAnimation();
-    }
-
-    private class PlayPauseTask extends AsyncTask<Void, Void, Void> {
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            loading_dialog.show();
-        }
-
-        @Override
-        protected Void doInBackground(Void... voids) {
-            getSongsList();
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-            loading_dialog.dismiss();
-        }
     }
 }

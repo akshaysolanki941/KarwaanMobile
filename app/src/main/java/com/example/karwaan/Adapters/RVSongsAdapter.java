@@ -1,32 +1,27 @@
 package com.example.karwaan.Adapters;
 
-import android.animation.ObjectAnimator;
-import android.app.ActivityManager;
+import android.app.Dialog;
 import android.content.Context;
 import android.media.MediaPlayer;
-import android.os.AsyncTask;
 import android.os.Handler;
 import android.text.SpannableStringBuilder;
-import android.text.Spanned;
-import android.text.style.StyleSpan;
-import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.TranslateAnimation;
+import android.view.Window;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.example.karwaan.Models.SongModel;
 import com.example.karwaan.R;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -41,6 +36,8 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
     private ImageButton btn_play_pause, btn_next_song, btn_prev_song;
     private SeekBar seekBar;
     private TextView tv_sliding_view_song_name, tv_current_time, tv_total_time;
+    private ImageView loading_gif_imageView;
+    private Dialog loading_dialog;
 
     private MediaPlayer mediaPlayer;
     private int mediaFileLengthInMilliseconds;
@@ -70,6 +67,15 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
     @Override
     public RVSongsAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
         View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.rv_songs_item, viewGroup, false);
+
+        loading_dialog = new Dialog(context);
+        loading_dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        loading_dialog.setContentView(R.layout.loading_dialog);
+        loading_gif_imageView = (ImageView) loading_dialog.findViewById(R.id.loading_gif_imageView);
+        Glide.with(context).load(R.drawable.loading).placeholder(R.drawable.loading).into(loading_gif_imageView);
+        loading_dialog.setCanceledOnTouchOutside(false);
+        loading_dialog.setCancelable(false);
+
         return new RVSongsAdapter.ViewHolder(view);
     }
 
@@ -83,6 +89,7 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                loading_dialog.show();
                 index = position;
 
                 ArrayList<String> artistList = song.getArtists();
@@ -105,6 +112,7 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
         });
 
         btn_next_song.setOnClickListener(v -> {
+            loading_dialog.show();
             if (index + 1 >= songs.size()) {
                 Toast.makeText(context, "This is the last song", Toast.LENGTH_SHORT).show();
             } else {
@@ -129,6 +137,7 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
         });
 
         btn_prev_song.setOnClickListener(v -> {
+            loading_dialog.show();
             if (index - 1 < 0) {
                 Toast.makeText(context, "This is the first song", Toast.LENGTH_SHORT).show();
             } else {
@@ -197,7 +206,7 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
 
         try {
             mediaPlayer.setDataSource(song_url);
-            mediaPlayer.prepare();
+            mediaPlayer.prepareAsync();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -208,6 +217,7 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
                 tv_total_time.setText(milliSecondsToTimer(mediaFileLengthInMilliseconds));
                 mediaPlayer.start();
                 primarySeekBarProgressUpdater();
+                loading_dialog.dismiss();
             }
         });
 
