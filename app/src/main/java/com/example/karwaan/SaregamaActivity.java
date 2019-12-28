@@ -243,6 +243,8 @@ public class SaregamaActivity extends AppCompatActivity {
         mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mediaPlayer) {
+                loading_dialog.show();
+                lottieAnimationView.pauseAnimation();
                 index++;
                 if (index >= songList.size() + 1) {
                     index = 0;
