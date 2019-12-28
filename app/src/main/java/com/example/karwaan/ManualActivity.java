@@ -3,6 +3,8 @@ package com.example.karwaan;
 import android.app.Dialog;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.view.Window;
 import android.widget.ImageButton;
@@ -120,13 +122,36 @@ public class ManualActivity extends AppCompatActivity {
             }
         });
 
+        searchBar.addTextChangeListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                ArrayList<String> suggestions = new ArrayList<>();
+                for (SongModel model : songs) {
+                    if (model.getSongName().toLowerCase().contains(charSequence.toString().toLowerCase())) {
+                        suggestions.add(model.getSongName());
+                    }
+                }
+                searchBar.setLastSuggestions(suggestions);
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+
+            }
+        });
+
         chipGroup.setOnCheckedChangeListener((chipGroup, i) -> {
             loading_dialog.show();
             ArrayList<SongModel> artistSongsList = new ArrayList<>();
             Chip selectedChip = chipGroup.findViewById(i);
             if (selectedChip != null) {
                 String selectedArtist = selectedChip.getText().toString();
-                if (selectedArtist.equals("All")) {
+                if (selectedArtist.equals("All Artists")) {
                     rv_songs.setAdapter(new RVSongsAdapter(songs, ManualActivity.this, mediaPlayer, slidingUpPanelLayout, btn_play_pause, btn_next_song, btn_prev_song,
                             seekBar, tv_sliding_view_song_name, tv_current_time, tv_total_time, rv_songs));
                 } else {
@@ -167,6 +192,11 @@ public class ManualActivity extends AppCompatActivity {
                     songs.add(new SongModel(url, songName, artistsList));
                 }
                 if (!songs.isEmpty()) {
+                    ArrayList<String> songNames = new ArrayList<>();
+                    for (SongModel model : songs) {
+                        songNames.add(model.getSongName());
+                    }
+                    searchBar.setLastSuggestions(songNames);
                     getArtists();
                     rv_songs.setAdapter(new RVSongsAdapter(songs, ManualActivity.this, mediaPlayer, slidingUpPanelLayout, btn_play_pause, btn_next_song, btn_prev_song,
                             seekBar, tv_sliding_view_song_name, tv_current_time, tv_total_time, rv_songs));
@@ -197,7 +227,7 @@ public class ManualActivity extends AppCompatActivity {
     }
 
     private void getArtists() {
-        generateChip("All");
+        generateChip("All Artists");
 
         if (!artistsList.isEmpty()) {
             artistsList.clear();
@@ -229,7 +259,7 @@ public class ManualActivity extends AppCompatActivity {
         chip.setCloseIconEnabled(false);
         chip.setClickable(true);
         chip.setCheckable(true);
-        if (title.equals("All")) {
+        if (title.equals("All Artists")) {
             chip.setChecked(true);
         }
         chipGroup.addView(chip);
