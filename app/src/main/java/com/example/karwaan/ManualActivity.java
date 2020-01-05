@@ -1,10 +1,10 @@
 package com.example.karwaan;
 
+import android.animation.AnimatorInflater;
+import android.animation.AnimatorSet;
 import android.app.Dialog;
 import android.media.MediaPlayer;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.View;
 import android.view.Window;
 import android.widget.ImageButton;
@@ -122,7 +122,7 @@ public class ManualActivity extends AppCompatActivity {
             }
         });
 
-        searchBar.addTextChangeListener(new TextWatcher() {
+        /*searchBar.addTextChangeListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
 
@@ -143,12 +143,14 @@ public class ManualActivity extends AppCompatActivity {
             public void afterTextChanged(Editable editable) {
 
             }
-        });
+        });*/
 
         chipGroup.setOnCheckedChangeListener((chipGroup, i) -> {
             loading_dialog.show();
             ArrayList<SongModel> artistSongsList = new ArrayList<>();
             Chip selectedChip = chipGroup.findViewById(i);
+            setReduceSizeAnimation(selectedChip);
+            setRegainSizeAnimation(selectedChip);
             if (selectedChip != null) {
                 String selectedArtist = selectedChip.getText().toString();
                 if (selectedArtist.equals("All Artists")) {
@@ -193,10 +195,10 @@ public class ManualActivity extends AppCompatActivity {
                 }
                 if (!songs.isEmpty()) {
                     ArrayList<String> songNames = new ArrayList<>();
-                    for (SongModel model : songs) {
+                    /*for (SongModel model : songs) {
                         songNames.add(model.getSongName());
                     }
-                    searchBar.setLastSuggestions(songNames);
+                    searchBar.setLastSuggestions(songNames);*/
                     getArtists();
                     rv_songs.setAdapter(new RVSongsAdapter(songs, ManualActivity.this, mediaPlayer, slidingUpPanelLayout, btn_play_pause, btn_next_song, btn_prev_song,
                             seekBar, tv_sliding_view_song_name, tv_current_time, tv_total_time, rv_songs));
@@ -256,13 +258,27 @@ public class ManualActivity extends AppCompatActivity {
         chip.setLayoutParams(layoutParams);
         chip.setId(View.generateViewId());
         chip.setText(title);
+        chip.setTextAppearance(R.style.chipTextAppearance);
         chip.setCloseIconEnabled(false);
         chip.setClickable(true);
         chip.setCheckable(true);
         if (title.equals("All Artists")) {
             chip.setChecked(true);
+            chip.setTextAppearance(R.style.chipTextAppearanceBold);
         }
         chipGroup.addView(chip);
+    }
+
+    private void setReduceSizeAnimation(View viewToAnimate) {
+        AnimatorSet reducer = (AnimatorSet) AnimatorInflater.loadAnimator(this, R.animator.reduce_size);
+        reducer.setTarget(viewToAnimate);
+        reducer.start();
+    }
+
+    private void setRegainSizeAnimation(View viewToAnimate) {
+        AnimatorSet regainer = (AnimatorSet) AnimatorInflater.loadAnimator(this, R.animator.regain_size);
+        regainer.setTarget(viewToAnimate);
+        regainer.start();
     }
 
     @Override

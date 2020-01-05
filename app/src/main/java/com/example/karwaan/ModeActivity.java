@@ -1,17 +1,21 @@
 package com.example.karwaan;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-
+import android.animation.AnimatorInflater;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 public class ModeActivity extends AppCompatActivity {
 
@@ -39,6 +43,18 @@ public class ModeActivity extends AppCompatActivity {
         rl_manual_mode = findViewById(R.id.rl_manual_mode);
         bg = findViewById(R.id.bg);
 
+        setReduceSizeAnimation(toolbar_title);
+        alphaAnimation(toolbar, 0, 1f);
+        setRegainSizeAnimation(toolbar_title);
+
+        setReduceSizeAnimation(rl_saregama_mode);
+        alphaAnimation(rl_saregama_mode, 0, 1f);
+        setRegainSizeAnimation(rl_saregama_mode);
+
+        setReduceSizeAnimation(rl_manual_mode);
+        alphaAnimation(rl_manual_mode, 0, 1f);
+        setRegainSizeAnimation(rl_manual_mode);
+
     }
 
     @Override
@@ -62,5 +78,22 @@ public class ModeActivity extends AppCompatActivity {
         });
     }
 
+    private void alphaAnimation(View view, float from, float to) {
+        ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(view, "alpha", from, to);
+        objectAnimator.setDuration(1200);
+        objectAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+        objectAnimator.start();
+    }
 
+    private void setReduceSizeAnimation(View viewToAnimate) {
+        AnimatorSet reducer = (AnimatorSet) AnimatorInflater.loadAnimator(this, R.animator.reduce_size);
+        reducer.setTarget(viewToAnimate);
+        reducer.start();
+    }
+
+    private void setRegainSizeAnimation(View viewToAnimate) {
+        AnimatorSet regainer = (AnimatorSet) AnimatorInflater.loadAnimator(this, R.animator.regain_size);
+        regainer.setTarget(viewToAnimate);
+        regainer.start();
+    }
 }

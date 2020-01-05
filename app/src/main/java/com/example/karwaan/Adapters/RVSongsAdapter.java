@@ -2,6 +2,7 @@ package com.example.karwaan.Adapters;
 
 import android.animation.AnimatorInflater;
 import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.app.Dialog;
 import android.content.Context;
 import android.media.MediaPlayer;
@@ -12,6 +13,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AlphaAnimation;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -119,6 +121,14 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
                             }
                         }
 
+                        if (!btn_next_song.isEnabled()) {
+                            btn_next_song.setEnabled(true);
+                            alphaAnimation(btn_next_song, 0, 1f);
+                        }
+                        if (!btn_prev_song.isEnabled()) {
+                            btn_prev_song.setEnabled(true);
+                            alphaAnimation(btn_prev_song, 0, 1f);
+                        }
                         tv_sliding_view_song_name.setText(song.getSongName() + " - " + artists);
                         tv_sliding_view_song_name.setSelected(true);
                         setUpMediaPlayer(song.getUrl());
@@ -276,10 +286,18 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
                 if (!mediaPlayer.isPlaying()) {
                     mediaPlayer.start();
                     btn_play_pause.setImageResource(R.drawable.pause_btn_black);
+                    btn_next_song.setEnabled(true);
+                    btn_prev_song.setEnabled(true);
+                    alphaAnimation(btn_next_song, 0, 1f);
+                    alphaAnimation(btn_prev_song, 0, 1f);
 
                 } else {
                     mediaPlayer.pause();
                     btn_play_pause.setImageResource(R.drawable.play_btn_black);
+                    btn_next_song.setEnabled(false);
+                    btn_prev_song.setEnabled(false);
+                    alphaAnimation(btn_next_song, 1f, 0);
+                    alphaAnimation(btn_prev_song, 1f, 0);
                 }
                 primarySeekBarProgressUpdater();
             }
@@ -340,5 +358,12 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
         AnimatorSet regainer = (AnimatorSet) AnimatorInflater.loadAnimator(context, R.animator.regain_size);
         regainer.setTarget(viewToAnimate);
         regainer.start();
+    }
+
+    private void alphaAnimation(View view, float from, float to) {
+        ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(view, "alpha", from, to);
+        objectAnimator.setDuration(800);
+        objectAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+        objectAnimator.start();
     }
 }

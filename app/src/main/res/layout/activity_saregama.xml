@@ -47,6 +47,25 @@
 
     </androidx.appcompat.widget.Toolbar>
 
+    <HorizontalScrollView
+        android:id="@+id/horizontalScroll"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/toolBar"
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="5dp"
+        android:padding="5dp"
+        android:scrollbars="none">
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:selectionRequired="true"
+            app:singleSelection="true" />
+
+    </HorizontalScrollView>
+
     <ImageButton
         android:id="@+id/btn_play_pause"
         android:layout_width="90dp"

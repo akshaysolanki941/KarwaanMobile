@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+
     <permission android:name="android.permission.MEDIA_CONTENT_CONTROL" />
 
     <application
@@ -15,16 +16,22 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-
-        <activity android:name=".SaregamaActivity" />
-        <activity android:name=".ModeActivity">
+        <activity android:name=".SplashActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ManualActivity" />
+        <activity
+            android:name=".SaregamaActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ModeActivity"
+            android:screenOrientation="portrait"></activity>
+        <activity
+            android:name=".ManualActivity"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>
