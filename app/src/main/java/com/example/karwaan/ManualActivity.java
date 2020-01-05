@@ -5,8 +5,11 @@ import android.animation.AnimatorSet;
 import android.app.Dialog;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.view.Window;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -24,7 +27,6 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.mancj.materialsearchbar.MaterialSearchBar;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import java.util.ArrayList;
@@ -49,9 +51,9 @@ public class ManualActivity extends AppCompatActivity {
     private SeekBar seekBar;
     private Dialog loading_dialog;
     private ImageView loading_gif_imageView, bg;
-    private MaterialSearchBar searchBar;
     private MediaPlayer mediaPlayer = new MediaPlayer();
     private ChipGroup chipGroup;
+    private EditText et_search;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,7 +78,7 @@ public class ManualActivity extends AppCompatActivity {
         loading_dialog.setCancelable(false);
 
         bg = findViewById(R.id.bg);
-        searchBar = findViewById(R.id.searchBar);
+        et_search = findViewById(R.id.et_search);
         slidingUpPanelLayout = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
         slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
         btn_play_pause = (ImageButton) findViewById(R.id.btn_play_pause);
@@ -102,48 +104,6 @@ public class ManualActivity extends AppCompatActivity {
         super.onStart();
 
         Glide.with(this).load(R.drawable.bg).into(bg);
-
-        searchBar.setOnSearchActionListener(new MaterialSearchBar.OnSearchActionListener() {
-            @Override
-            public void onSearchStateChanged(boolean enabled) {
-
-            }
-
-            @Override
-            public void onSearchConfirmed(CharSequence text) {
-                search(text);
-            }
-
-            @Override
-            public void onButtonClicked(int buttonCode) {
-                if (buttonCode == MaterialSearchBar.BUTTON_BACK) {
-
-                }
-            }
-        });
-
-        /*searchBar.addTextChangeListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                ArrayList<String> suggestions = new ArrayList<>();
-                for (SongModel model : songs) {
-                    if (model.getSongName().toLowerCase().contains(charSequence.toString().toLowerCase())) {
-                        suggestions.add(model.getSongName());
-                    }
-                }
-                searchBar.setLastSuggestions(suggestions);
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) {
-
-            }
-        });*/
 
         chipGroup.setOnCheckedChangeListener((chipGroup, i) -> {
             loading_dialog.show();
@@ -171,6 +131,23 @@ public class ManualActivity extends AppCompatActivity {
             }
             loading_dialog.dismiss();
         });
+
+        et_search.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                search(charSequence);
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+
+            }
+        });
     }
 
     private void getSongs() {
@@ -194,11 +171,6 @@ public class ManualActivity extends AppCompatActivity {
                     songs.add(new SongModel(url, songName, artistsList));
                 }
                 if (!songs.isEmpty()) {
-                    ArrayList<String> songNames = new ArrayList<>();
-                    /*for (SongModel model : songs) {
-                        songNames.add(model.getSongName());
-                    }
-                    searchBar.setLastSuggestions(songNames);*/
                     getArtists();
                     rv_songs.setAdapter(new RVSongsAdapter(songs, ManualActivity.this, mediaPlayer, slidingUpPanelLayout, btn_play_pause, btn_next_song, btn_prev_song,
                             seekBar, tv_sliding_view_song_name, tv_current_time, tv_total_time, rv_songs));

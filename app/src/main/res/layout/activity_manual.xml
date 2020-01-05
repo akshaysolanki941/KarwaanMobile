@@ -65,24 +65,56 @@
                             android:textColor="#fff"
                             android:textSize="25dp"
                             android:textStyle="bold" />
-
                     </androidx.appcompat.widget.Toolbar>
 
-                    <com.mancj.materialsearchbar.MaterialSearchBar
+                    <androidx.cardview.widget.CardView
                         android:id="@+id/searchBar"
-                        style="@style/MaterialSearchBarLight"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="40dp"
                         android:layout_below="@+id/toolBar"
-                        android:layout_margin="5dp"
-                        android:padding="8dp"
-                        app:mt_maxSuggestionsCount="10"
-                        app:mt_placeholder="Search Song"
-                        app:mt_placeholderColor="#8B8585"
-                        app:mt_searchIconDrawable="@drawable/ic_search_black_24dp"
-                        app:mt_speechIconDrawable="@drawable/ic_search_black_24dp"
-                        app:mt_speechMode="true"
-                        app:mt_textCursorTint="#205088" />
+                        android:layout_gravity="center_vertical"
+                        android:layout_margin="10dp"
+                        android:layout_weight="1"
+                        android:padding="8dp">
+
+                        <RelativeLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="#fff">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:orientation="horizontal"
+                                android:weightSum="2">
+
+                                <ImageView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_gravity="center_vertical"
+                                    android:layout_weight="0.3"
+                                    android:src="@drawable/ic_search_black_24dp" />
+
+                                <EditText
+                                    android:id="@+id/et_search"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_gravity="center_vertical"
+                                    android:layout_weight="1.7"
+                                    android:background="@drawable/et_bg"
+                                    android:fontFamily="@font/overpass_light"
+                                    android:hint="Search a Song"
+                                    android:imeOptions="actionSearch"
+                                    android:inputType="text"
+                                    android:textColor="#000"
+                                    android:textColorHint="#887E7E" />
+
+                            </LinearLayout>
+
+                        </RelativeLayout>
+
+                    </androidx.cardview.widget.CardView>
+
                 </RelativeLayout>
 
             </com.google.android.material.appbar.CollapsingToolbarLayout>

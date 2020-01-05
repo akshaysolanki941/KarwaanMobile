@@ -140,6 +140,8 @@ public class SaregamaActivity extends AppCompatActivity {
                     alphaAnimation(btn_previous, 0, 1f);
                     alphaAnimation(btn_forward10, 0, 1f);
                     alphaAnimation(btn_backward10, 0, 1f);
+                    alphaAnimation(chipGroup, 0, 1f);
+                    chipGroup.setVisibility(View.VISIBLE);
 
                 } else {
                     mediaPlayer.pause();
@@ -154,6 +156,8 @@ public class SaregamaActivity extends AppCompatActivity {
                     translateAnimation(btn_previous, 0, btn_play_pause.getX() - btn_previous.getX(), 0, 0);
                     translateAnimation(btn_forward10, 0, btn_play_pause.getX() - btn_forward10.getX(), 0, 0);
                     translateAnimation(btn_backward10, 0, btn_play_pause.getX() - btn_backward10.getX(), 0, 0);
+                    alphaAnimation(chipGroup, 1f, 0);
+                    chipGroup.setVisibility(View.GONE);
                 }
             }
         });

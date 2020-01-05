@@ -143,6 +143,7 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
             loading_dialog.show();
             if (index + 1 >= songs.size()) {
                 Toast.makeText(context, "This is the last song", Toast.LENGTH_SHORT).show();
+                loading_dialog.dismiss();
             } else {
                 index++;
                 SongModel nextSong = songs.get(index);
@@ -168,6 +169,7 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
             loading_dialog.show();
             if (index - 1 < 0) {
                 Toast.makeText(context, "This is the first song", Toast.LENGTH_SHORT).show();
+                loading_dialog.dismiss();
             } else {
                 index--;
                 SongModel prevSong = songs.get(index);
