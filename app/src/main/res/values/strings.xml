@@ -1,3 +1,15 @@
 <resources>
     <string name="app_name">Karwaan Mobile</string>
+
+    <string name="voice_help">
+        Touch on the screen anywhere and as soon as the message <i>\'Give a command\'</i> appears, say any command you wish among <b>\'next\'</b>,
+         <b>\'previous\'</b>, <b>\'play\'</b>, <b>\'pause\'</b>, <b>\'forward\'</b>, <b>\'backward\'</b>.
+        \n\nJust keep in mind that you will get only one second to say the command.
+        \n\n<b>next:</b> <i>plays the next song</i>
+        \n\n<b>previous:</b> <i>plays the previous song</i>
+        \n\n<b>play:</b> <i>plays the paused song</i>
+        \n\n<b>pause:</b> <i>pauses the playing song</i>
+        \n\n<b>forward:</b> <i>skips 10 songs in forward direction</i>
+        \n\n<b>backward:</b> <i>skips 10 songs in backward direction</i>
+    </string>
 </resources>

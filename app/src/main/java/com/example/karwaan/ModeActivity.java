@@ -1,10 +1,16 @@
 package com.example.karwaan;
 
+import android.Manifest;
 import android.animation.AnimatorInflater;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.Button;
@@ -14,8 +20,10 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 
 public class ModeActivity extends AppCompatActivity {
 
@@ -54,7 +62,6 @@ public class ModeActivity extends AppCompatActivity {
         setReduceSizeAnimation(rl_manual_mode);
         alphaAnimation(rl_manual_mode, 0, 1f);
         setRegainSizeAnimation(rl_manual_mode);
-
     }
 
     @Override
@@ -76,6 +83,30 @@ public class ModeActivity extends AppCompatActivity {
                 startActivity(new Intent(ModeActivity.this, ManualActivity.class));
             }
         });
+    }
+
+    private void checkVoiceCommandPermission() {
+        if (!(ContextCompat.checkSelfPermission(ModeActivity.this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)) {
+            startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getPackageName())));
+            finish();
+        }
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.settings_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_settings:
+                startActivity(new Intent(ModeActivity.this, SettingsActivity.class));
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private void alphaAnimation(View view, float from, float to) {

@@ -2,7 +2,13 @@
 <resources>
     <color name="colorPrimary">#000</color>
     <color name="colorPrimaryDark">#000</color>
-    <color name="colorAccent">#D81B60</color>
+    <!-- <color name="colorAccent">#D81B60</color> -->
+    <color name="colorAccent">#8E24AA</color>
 
     <color name="transparent">#00ffffff</color>
+
+    <color name="bgGradientStart">#000000</color>
+    <color name="bgGradientEnd">#d8000000</color>
+
+    <color name="bgSolidDark">#55000000</color>
 </resources>

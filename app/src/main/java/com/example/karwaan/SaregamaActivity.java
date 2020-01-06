@@ -4,10 +4,15 @@ import android.animation.AnimatorInflater;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.app.Dialog;
+import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.PowerManager;
-import android.support.v4.media.MediaBrowserCompat;
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -15,6 +20,7 @@ import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,6 +38,7 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -51,11 +58,13 @@ public class SaregamaActivity extends AppCompatActivity {
     private LottieAnimationView lottieAnimationView;
     private ImageView bg, loading_gif_imageView;
     private Dialog loading_dialog;
-    private float nextX, prevX, forward10X, rewind10X;
     private ChipGroup chipGroup;
+    private RelativeLayout rlParentLayout;
+    private Boolean voiceModeEnabled;
 
-    private MediaBrowserCompat mediaBrowser;
-
+    private SpeechRecognizer speechRecognizer;
+    private Intent speechRecognizerIntent;
+    private String keeper = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,16 +78,13 @@ public class SaregamaActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayShowTitleEnabled(false);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+        rlParentLayout = findViewById(R.id.rlParentLayout);
         btn_play_pause = (ImageButton) findViewById(R.id.btn_play_pause);
         btn_play_pause.bringToFront();
         btn_next = (ImageButton) findViewById(R.id.btn_next);
-        nextX = btn_next.getX();
         btn_previous = (ImageButton) findViewById(R.id.btn_previous);
-        prevX = btn_previous.getX();
         btn_forward10 = (ImageButton) findViewById(R.id.btn_forward10);
-        forward10X = btn_forward10.getX();
         btn_backward10 = (ImageButton) findViewById(R.id.btn_backward10);
-        rewind10X = btn_backward10.getX();
         lottieAnimationView = (LottieAnimationView) findViewById(R.id.lottie_animation_view);
         bg = findViewById(R.id.bg);
         tv_saregama_song_details = findViewById(R.id.tv_saregama_song_details);
@@ -92,15 +98,48 @@ public class SaregamaActivity extends AppCompatActivity {
         loading_dialog.setCanceledOnTouchOutside(false);
         loading_dialog.setCancelable(false);
 
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(SaregamaActivity.this);
+        speechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+        speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false);
+        speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+        speechRecognizerIntent.putExtra("android.speech.extra.DICTATION_MODE", true);
+
         setReduceSizeAnimation(btn_play_pause);
         setReduceSizeAnimation(btn_next);
         setReduceSizeAnimation(btn_previous);
         setReduceSizeAnimation(btn_forward10);
         setReduceSizeAnimation(btn_backward10);
 
+        voiceModeEnabled = getSharedPreferences("voiceModeEnabled", MODE_PRIVATE).getBoolean("voiceModeEnabled", false);
+        if (voiceModeEnabled) {
+            btn_play_pause.setVisibility(View.GONE);
+            btn_next.setVisibility(View.GONE);
+            btn_previous.setVisibility(View.GONE);
+            btn_forward10.setVisibility(View.GONE);
+            btn_backward10.setVisibility(View.GONE);
+
+            rlParentLayout.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View view, MotionEvent motionEvent) {
+                    switch (motionEvent.getAction()) {
+                        case MotionEvent.ACTION_DOWN:
+                            speechRecognizer.startListening(speechRecognizerIntent);
+                            keeper = "";
+                            break;
+
+                        /*case MotionEvent.ACTION_UP:
+                            speechRecognizer.stopListening();
+                            break;*/
+                    }
+                    return false;
+                }
+            });
+        }
+
         initMediaPlayer();
         getSongsList();
-
     }
 
     @Override
@@ -121,110 +160,35 @@ public class SaregamaActivity extends AppCompatActivity {
         btn_play_pause.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
-
-                if (!mediaPlayer.isPlaying()) {
-                    mediaPlayer.start();
-                    btn_play_pause.setImageResource(R.drawable.pause_button);
-                    alphaAnimation(lottieAnimationView, 0, 1f);
-                    lottieAnimationView.playAnimation();
-                    setRegainSizeAnimation(btn_next);
-                    setRegainSizeAnimation(btn_previous);
-                    setRegainSizeAnimation(btn_forward10);
-                    setRegainSizeAnimation(btn_backward10);
-                    translateAnimation(btn_next, btn_play_pause.getX() - btn_next.getX(), 0, 0, 0);
-                    translateAnimation(btn_previous, btn_play_pause.getX() - btn_previous.getX(), 0, 0, 0);
-                    translateAnimation(btn_forward10, btn_play_pause.getX() - btn_forward10.getX(), 0, 0, 0);
-                    translateAnimation(btn_backward10, btn_play_pause.getX() - btn_backward10.getX(), 0, 0, 0);
-                    alphaAnimation(btn_next, 0, 1f);
-                    alphaAnimation(btn_previous, 0, 1f);
-                    alphaAnimation(btn_forward10, 0, 1f);
-                    alphaAnimation(btn_backward10, 0, 1f);
-                    alphaAnimation(chipGroup, 0, 1f);
-                    chipGroup.setVisibility(View.VISIBLE);
-
-                } else {
-                    mediaPlayer.pause();
-                    btn_play_pause.setImageResource(R.drawable.play_button);
-                    alphaAnimation(lottieAnimationView, 1f, 0);
-                    lottieAnimationView.pauseAnimation();
-                    setReduceSizeAnimation(btn_next);
-                    setReduceSizeAnimation(btn_previous);
-                    setReduceSizeAnimation(btn_forward10);
-                    setReduceSizeAnimation(btn_backward10);
-                    translateAnimation(btn_next, 0, btn_play_pause.getX() - btn_next.getX(), 0, 0);
-                    translateAnimation(btn_previous, 0, btn_play_pause.getX() - btn_previous.getX(), 0, 0);
-                    translateAnimation(btn_forward10, 0, btn_play_pause.getX() - btn_forward10.getX(), 0, 0);
-                    translateAnimation(btn_backward10, 0, btn_play_pause.getX() - btn_backward10.getX(), 0, 0);
-                    alphaAnimation(chipGroup, 1f, 0);
-                    chipGroup.setVisibility(View.GONE);
-                }
+                playPauseSong();
             }
         });
 
         btn_next.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                loading_dialog.show();
-                lottieAnimationView.pauseAnimation();
-                index++;
-                if (index >= songList.size()) {
-                    index = 0;
-                    Collections.shuffle(songList);
-                    playSong(songList.get(index));
-                } else {
-                    playSong(songList.get(index));
-                }
+                nextSong();
             }
         });
 
         btn_previous.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                loading_dialog.show();
-                lottieAnimationView.pauseAnimation();
-                index--;
-                if (index <= -1) {
-                    index = 0;
-                    Collections.shuffle(songList);
-                    playSong(songList.get(index));
-                } else {
-                    playSong(songList.get(index));
-                }
+                previousSong();
             }
         });
 
         btn_forward10.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Toast.makeText(SaregamaActivity.this, "Skipping 10 songs in forward direction", Toast.LENGTH_SHORT).show();
-                loading_dialog.show();
-                lottieAnimationView.pauseAnimation();
-                index += 10;
-                if (index >= songList.size()) {
-                    index = 0;
-                    Collections.shuffle(songList);
-                    playSong(songList.get(index));
-                } else {
-                    playSong(songList.get(index));
-                }
+                skip10SongsForward();
             }
         });
 
         btn_backward10.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Toast.makeText(SaregamaActivity.this, "Skipping 10 songs in backward direction", Toast.LENGTH_SHORT).show();
-                loading_dialog.show();
-                lottieAnimationView.pauseAnimation();
-                index -= 10;
-                if (index <= -1) {
-                    index = 0;
-                    Collections.shuffle(songList);
-                    playSong(songList.get(index));
-                } else {
-                    playSong(songList.get(index));
-                }
+                skip10SongsBackward();
             }
         });
 
@@ -254,6 +218,99 @@ public class SaregamaActivity extends AppCompatActivity {
                     songList.addAll(artistSongsList);
                     startRandomSongs();
                 }
+            }
+        });
+
+        speechRecognizer.setRecognitionListener(new RecognitionListener() {
+            @Override
+            public void onReadyForSpeech(Bundle bundle) {
+                Toast.makeText(SaregamaActivity.this, "Give a command", Toast.LENGTH_SHORT).show();
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        speechRecognizer.stopListening();
+                    }
+                }, 1000);
+            }
+
+            @Override
+            public void onBeginningOfSpeech() {
+
+            }
+
+            @Override
+            public void onRmsChanged(float v) {
+
+            }
+
+            @Override
+            public void onBufferReceived(byte[] bytes) {
+                Toast.makeText(SaregamaActivity.this, "Buffering", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onEndOfSpeech() {
+
+            }
+
+            @Override
+            public void onError(int i) {
+                Toast.makeText(SaregamaActivity.this, "Some error occured!", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onResults(Bundle bundle) {
+                ArrayList<String> results = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+
+                if (!results.isEmpty()) {
+                    keeper = results.get(0);
+                }
+
+                switch (keeper) {
+                    case "next":
+                        nextSong();
+                        Toast.makeText(SaregamaActivity.this, "Command: " + keeper, Toast.LENGTH_SHORT).show();
+                        break;
+
+                    case "previous":
+                        previousSong();
+                        Toast.makeText(SaregamaActivity.this, "Command: " + keeper, Toast.LENGTH_SHORT).show();
+                        break;
+
+                    case "play":
+                        playPauseSong();
+                        Toast.makeText(SaregamaActivity.this, "Command: " + keeper, Toast.LENGTH_SHORT).show();
+                        break;
+
+                    case "pause":
+                        playPauseSong();
+                        Toast.makeText(SaregamaActivity.this, "Command: " + keeper, Toast.LENGTH_SHORT).show();
+                        break;
+
+                    case "forward":
+                        skip10SongsForward();
+                        Toast.makeText(SaregamaActivity.this, "Command: " + keeper, Toast.LENGTH_SHORT).show();
+                        break;
+
+                    case "backward":
+                        skip10SongsBackward();
+                        Toast.makeText(SaregamaActivity.this, "Command: " + keeper, Toast.LENGTH_SHORT).show();
+                        break;
+
+                    default:
+                        Toast.makeText(SaregamaActivity.this, "Doesn't know what to do with this command: " + keeper, Toast.LENGTH_LONG).show();
+                        break;
+                }
+            }
+
+            @Override
+            public void onPartialResults(Bundle bundle) {
+
+            }
+
+            @Override
+            public void onEvent(int i, Bundle bundle) {
+
             }
         });
     }
@@ -399,6 +456,99 @@ public class SaregamaActivity extends AppCompatActivity {
             chip.setTextAppearance(R.style.chipTextAppearanceBold);
         }
         chipGroup.addView(chip);
+    }
+
+    private void playPauseSong() {
+        if (!mediaPlayer.isPlaying()) {
+            mediaPlayer.start();
+            btn_play_pause.setImageResource(R.drawable.pause_button);
+            alphaAnimation(lottieAnimationView, 0, 1f);
+            lottieAnimationView.playAnimation();
+            setRegainSizeAnimation(btn_next);
+            setRegainSizeAnimation(btn_previous);
+            setRegainSizeAnimation(btn_forward10);
+            setRegainSizeAnimation(btn_backward10);
+            translateAnimation(btn_next, btn_play_pause.getX() - btn_next.getX(), 0, 0, 0);
+            translateAnimation(btn_previous, btn_play_pause.getX() - btn_previous.getX(), 0, 0, 0);
+            translateAnimation(btn_forward10, btn_play_pause.getX() - btn_forward10.getX(), 0, 0, 0);
+            translateAnimation(btn_backward10, btn_play_pause.getX() - btn_backward10.getX(), 0, 0, 0);
+            alphaAnimation(btn_next, 0, 1f);
+            alphaAnimation(btn_previous, 0, 1f);
+            alphaAnimation(btn_forward10, 0, 1f);
+            alphaAnimation(btn_backward10, 0, 1f);
+            alphaAnimation(chipGroup, 0, 1f);
+            chipGroup.setVisibility(View.VISIBLE);
+
+        } else {
+            mediaPlayer.pause();
+            btn_play_pause.setImageResource(R.drawable.play_button);
+            alphaAnimation(lottieAnimationView, 1f, 0);
+            lottieAnimationView.pauseAnimation();
+            setReduceSizeAnimation(btn_next);
+            setReduceSizeAnimation(btn_previous);
+            setReduceSizeAnimation(btn_forward10);
+            setReduceSizeAnimation(btn_backward10);
+            translateAnimation(btn_next, 0, btn_play_pause.getX() - btn_next.getX(), 0, 0);
+            translateAnimation(btn_previous, 0, btn_play_pause.getX() - btn_previous.getX(), 0, 0);
+            translateAnimation(btn_forward10, 0, btn_play_pause.getX() - btn_forward10.getX(), 0, 0);
+            translateAnimation(btn_backward10, 0, btn_play_pause.getX() - btn_backward10.getX(), 0, 0);
+            alphaAnimation(chipGroup, 1f, 0);
+            chipGroup.setVisibility(View.GONE);
+        }
+    }
+
+    private void nextSong() {
+        loading_dialog.show();
+        lottieAnimationView.pauseAnimation();
+        index++;
+        if (index >= songList.size()) {
+            index = 0;
+            Collections.shuffle(songList);
+            playSong(songList.get(index));
+        } else {
+            playSong(songList.get(index));
+        }
+    }
+
+    private void previousSong() {
+        loading_dialog.show();
+        lottieAnimationView.pauseAnimation();
+        index--;
+        if (index <= -1) {
+            index = 0;
+            Collections.shuffle(songList);
+            playSong(songList.get(index));
+        } else {
+            playSong(songList.get(index));
+        }
+    }
+
+    private void skip10SongsForward() {
+        Toast.makeText(SaregamaActivity.this, "Skipping 10 songs in forward direction", Toast.LENGTH_SHORT).show();
+        loading_dialog.show();
+        lottieAnimationView.pauseAnimation();
+        index += 10;
+        if (index >= songList.size()) {
+            index = 0;
+            Collections.shuffle(songList);
+            playSong(songList.get(index));
+        } else {
+            playSong(songList.get(index));
+        }
+    }
+
+    private void skip10SongsBackward() {
+        Toast.makeText(SaregamaActivity.this, "Skipping 10 songs in backward direction", Toast.LENGTH_SHORT).show();
+        loading_dialog.show();
+        lottieAnimationView.pauseAnimation();
+        index -= 10;
+        if (index <= -1) {
+            index = 0;
+            Collections.shuffle(songList);
+            playSong(songList.get(index));
+        } else {
+            playSong(songList.get(index));
+        }
     }
 
     private void translateAnimation(View view, float fromX, float toX, float fromY, float toY) {
