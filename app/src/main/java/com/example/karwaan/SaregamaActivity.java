@@ -107,6 +107,7 @@ public class SaregamaActivity extends AppCompatActivity {
         loading_dialog.setCanceledOnTouchOutside(false);
         loading_dialog.setCancelable(false);
 
+        notificationManager = getSystemService(NotificationManager.class);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel();
         }
@@ -589,7 +590,6 @@ public class SaregamaActivity extends AppCompatActivity {
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel notificationChannel = new NotificationChannel(CreateNotification.CHANNEL_ID, "Karvaan Music Notifications", NotificationManager.IMPORTANCE_LOW);
-            notificationManager = getSystemService(NotificationManager.class);
 
             if (notificationManager != null) {
                 notificationManager.createNotificationChannel(notificationChannel);
@@ -644,9 +644,9 @@ public class SaregamaActivity extends AppCompatActivity {
         if (speechRecognizer != null) {
             speechRecognizer.cancel();
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            notificationManager.cancelAll();
-        }
+        // if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        notificationManager.cancelAll();
+        //}
         unregisterReceiver(broadcastReceiver);
     }
 }

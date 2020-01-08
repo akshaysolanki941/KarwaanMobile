@@ -117,6 +117,7 @@ public class ManualActivity extends AppCompatActivity {
         rv_songs.setHasFixedSize(true);
         rv_songs.setLayoutManager(new LinearLayoutManager(this));
 
+        notificationManager = getSystemService(NotificationManager.class);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel();
         }
@@ -490,8 +491,7 @@ public class ManualActivity extends AppCompatActivity {
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel notificationChannel = new NotificationChannel(CreateNotification.CHANNEL_ID1, "Karvaan Music Notifications (Manual)", NotificationManager.IMPORTANCE_LOW);
-            notificationManager = getSystemService(NotificationManager.class);
+            NotificationChannel notificationChannel = new NotificationChannel(CreateNotification.CHANNEL_ID, "Karvaan Music Notifications", NotificationManager.IMPORTANCE_LOW);
 
             if (notificationManager != null) {
                 notificationManager.createNotificationChannel(notificationChannel);
@@ -572,9 +572,9 @@ public class ManualActivity extends AppCompatActivity {
         super.onDestroy();
         getSharedPreferences("released", MODE_PRIVATE).edit().putBoolean("released", true).commit();
         mediaPlayer.release();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            notificationManager.cancelAll();
-        }
+        //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        notificationManager.cancelAll();
+        //}
         unregisterReceiver(broadcastReceiver);
     }
 }
