@@ -4,8 +4,14 @@ import android.animation.AnimatorInflater;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.app.Dialog;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.MediaPlayer;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
@@ -26,6 +32,8 @@ import android.widget.Toast;
 import com.airbnb.lottie.LottieAnimationView;
 import com.bumptech.glide.Glide;
 import com.example.karwaan.Models.SongModel;
+import com.example.karwaan.Notification.CreateNotification;
+import com.example.karwaan.Services.OnClearFromRecentService;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.database.DataSnapshot;
@@ -60,6 +68,7 @@ public class SaregamaActivity extends AppCompatActivity {
     private ChipGroup chipGroup;
     private RelativeLayout rlParentLayout;
     private Boolean voiceModeEnabled;
+    private NotificationManager notificationManager;
 
     private SpeechRecognizer speechRecognizer;
     private Intent speechRecognizerIntent;
@@ -98,11 +107,18 @@ public class SaregamaActivity extends AppCompatActivity {
         loading_dialog.setCanceledOnTouchOutside(false);
         loading_dialog.setCancelable(false);
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            createNotificationChannel();
+        }
+
         setReduceSizeAnimation(btn_play_pause);
         setReduceSizeAnimation(btn_next);
         setReduceSizeAnimation(btn_previous);
         setReduceSizeAnimation(btn_forward10);
         setReduceSizeAnimation(btn_backward10);
+
+        registerReceiver(broadcastReceiver, new IntentFilter("SONGS_SONGS"));
+        startService(new Intent(getBaseContext(), OnClearFromRecentService.class));
 
         voiceModeEnabled = getSharedPreferences("voiceModeEnabled", MODE_PRIVATE).getBoolean("voiceModeEnabled", false);
         if (voiceModeEnabled) {
@@ -364,8 +380,10 @@ public class SaregamaActivity extends AppCompatActivity {
                 } else {
                     playSong(songList.get(index));
                 }
+                CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, index, songList.size());
             }
         });
+        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, index, songList.size());
     }
 
     private void playSong(SongModel song) {
@@ -464,6 +482,7 @@ public class SaregamaActivity extends AppCompatActivity {
             alphaAnimation(btn_backward10, 0, 1f);
             alphaAnimation(chipGroup, 0, 1f);
             chipGroup.setVisibility(View.VISIBLE);
+            CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, index, songList.size());
 
         } else {
             mediaPlayer.pause();
@@ -480,6 +499,7 @@ public class SaregamaActivity extends AppCompatActivity {
             translateAnimation(btn_backward10, 0, btn_play_pause.getX() - btn_backward10.getX(), 0, 0);
             alphaAnimation(chipGroup, 1f, 0);
             chipGroup.setVisibility(View.GONE);
+            CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, index, songList.size());
         }
     }
 
@@ -494,6 +514,7 @@ public class SaregamaActivity extends AppCompatActivity {
         } else {
             playSong(songList.get(index));
         }
+        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, index, songList.size());
     }
 
     private void previousSong() {
@@ -507,6 +528,7 @@ public class SaregamaActivity extends AppCompatActivity {
         } else {
             playSong(songList.get(index));
         }
+        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, index, songList.size());
     }
 
     private void skip10SongsForward() {
@@ -521,6 +543,7 @@ public class SaregamaActivity extends AppCompatActivity {
         } else {
             playSong(songList.get(index));
         }
+        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, index, songList.size());
     }
 
     private void skip10SongsBackward() {
@@ -534,6 +557,47 @@ public class SaregamaActivity extends AppCompatActivity {
             playSong(songList.get(index));
         } else {
             playSong(songList.get(index));
+        }
+        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, index, songList.size());
+    }
+
+    BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getExtras().getString("actionname");
+
+            switch (action) {
+                case CreateNotification.ACTION_PREVIOUS:
+                    previousSong();
+                    break;
+
+                case CreateNotification.ACTION_PLAY:
+                    playPauseSong();
+                    break;
+
+                case CreateNotification.ACTION_NEXT:
+                    nextSong();
+                    break;
+
+                case CreateNotification.ACTION_FORWARD:
+                    skip10SongsForward();
+                    break;
+
+                case CreateNotification.ACTION_BACKWARD:
+                    skip10SongsBackward();
+                    break;
+            }
+        }
+    };
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel notificationChannel = new NotificationChannel(CreateNotification.CHANNEL_ID, "Karvaan Music Notifications", NotificationManager.IMPORTANCE_LOW);
+            notificationManager = getSystemService(NotificationManager.class);
+
+            if (notificationManager != null) {
+                notificationManager.createNotificationChannel(notificationChannel);
+            }
         }
     }
 
@@ -584,5 +648,9 @@ public class SaregamaActivity extends AppCompatActivity {
         if (speechRecognizer != null) {
             speechRecognizer.cancel();
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            notificationManager.cancelAll();
+        }
+        unregisterReceiver(broadcastReceiver);
     }
 }
