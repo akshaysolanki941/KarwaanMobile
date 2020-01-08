@@ -12,7 +12,6 @@ import android.os.PowerManager;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -66,6 +65,7 @@ public class SaregamaActivity extends AppCompatActivity {
     private Intent speechRecognizerIntent;
     private String keeper = "";
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -98,14 +98,6 @@ public class SaregamaActivity extends AppCompatActivity {
         loading_dialog.setCanceledOnTouchOutside(false);
         loading_dialog.setCancelable(false);
 
-        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(SaregamaActivity.this);
-        speechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
-        speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false);
-        speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
-        speechRecognizerIntent.putExtra("android.speech.extra.DICTATION_MODE", true);
-
         setReduceSizeAnimation(btn_play_pause);
         setReduceSizeAnimation(btn_next);
         setReduceSizeAnimation(btn_previous);
@@ -120,22 +112,7 @@ public class SaregamaActivity extends AppCompatActivity {
             btn_forward10.setVisibility(View.GONE);
             btn_backward10.setVisibility(View.GONE);
 
-            rlParentLayout.setOnTouchListener(new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View view, MotionEvent motionEvent) {
-                    switch (motionEvent.getAction()) {
-                        case MotionEvent.ACTION_DOWN:
-                            speechRecognizer.startListening(speechRecognizerIntent);
-                            keeper = "";
-                            break;
-
-                        /*case MotionEvent.ACTION_UP:
-                            speechRecognizer.stopListening();
-                            break;*/
-                    }
-                    return false;
-                }
-            });
+            initSpeechRecognition();
         }
 
         initMediaPlayer();
@@ -220,7 +197,31 @@ public class SaregamaActivity extends AppCompatActivity {
                 }
             }
         });
+    }
 
+    private void initMediaPlayer() {
+        mediaPlayer = new MediaPlayer();
+        mediaPlayer.setScreenOnWhilePlaying(true);
+        mediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
+        mediaPlayer.setVolume(1.0f, 1.0f);
+    }
+
+    private void initSpeechRecognition() {
+        rlParentLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                speechRecognizer.startListening(speechRecognizerIntent);
+                keeper = "";
+            }
+        });
+
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(SaregamaActivity.this);
+        speechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+        speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false);
+        speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+        speechRecognizerIntent.putExtra("android.speech.extra.DICTATION_MODE", true);
         speechRecognizer.setRecognitionListener(new RecognitionListener() {
             @Override
             public void onReadyForSpeech(Bundle bundle) {
@@ -230,7 +231,7 @@ public class SaregamaActivity extends AppCompatActivity {
                     public void run() {
                         speechRecognizer.stopListening();
                     }
-                }, 1000);
+                }, 1500);
             }
 
             @Override
@@ -313,21 +314,6 @@ public class SaregamaActivity extends AppCompatActivity {
 
             }
         });
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        mediaPlayer.release();
-        lottieAnimationView.pauseAnimation();
-    }
-
-    private void initMediaPlayer() {
-        mediaPlayer = new MediaPlayer();
-        mediaPlayer.setScreenOnWhilePlaying(true);
-        mediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
-        //mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        mediaPlayer.setVolume(1.0f, 1.0f);
     }
 
     private void getSongsList() {
@@ -588,5 +574,15 @@ public class SaregamaActivity extends AppCompatActivity {
         super.onBackPressed();
         mediaPlayer.release();
         lottieAnimationView.pauseAnimation();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mediaPlayer.release();
+        lottieAnimationView.pauseAnimation();
+        if (speechRecognizer != null) {
+            speechRecognizer.cancel();
+        }
     }
 }
