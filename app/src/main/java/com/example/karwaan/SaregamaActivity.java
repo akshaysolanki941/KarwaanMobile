@@ -117,7 +117,7 @@ public class SaregamaActivity extends AppCompatActivity {
         setReduceSizeAnimation(btn_forward10);
         setReduceSizeAnimation(btn_backward10);
 
-        registerReceiver(broadcastReceiver, new IntentFilter("SONGS_SONGS"));
+        registerReceiver(broadcastReceiver, new IntentFilter("SONGS"));
         startService(new Intent(getBaseContext(), OnClearFromRecentService.class));
 
         voiceModeEnabled = getSharedPreferences("voiceModeEnabled", MODE_PRIVATE).getBoolean("voiceModeEnabled", false);
@@ -380,10 +380,10 @@ public class SaregamaActivity extends AppCompatActivity {
                 } else {
                     playSong(songList.get(index));
                 }
-                CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, index, songList.size());
+                CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, true, "saregama");
             }
         });
-        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, index, songList.size());
+        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, true, "saregama");
     }
 
     private void playSong(SongModel song) {
@@ -414,6 +414,7 @@ public class SaregamaActivity extends AppCompatActivity {
                 setRegainSizeAnimation(btn_previous);
                 setRegainSizeAnimation(btn_forward10);
                 setRegainSizeAnimation(btn_backward10);
+                CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, false, "saregama");
             }
         });
 
@@ -482,7 +483,7 @@ public class SaregamaActivity extends AppCompatActivity {
             alphaAnimation(btn_backward10, 0, 1f);
             alphaAnimation(chipGroup, 0, 1f);
             chipGroup.setVisibility(View.VISIBLE);
-            CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, index, songList.size());
+            CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, false, "saregama");
 
         } else {
             mediaPlayer.pause();
@@ -499,7 +500,7 @@ public class SaregamaActivity extends AppCompatActivity {
             translateAnimation(btn_backward10, 0, btn_play_pause.getX() - btn_backward10.getX(), 0, 0);
             alphaAnimation(chipGroup, 1f, 0);
             chipGroup.setVisibility(View.GONE);
-            CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, index, songList.size());
+            CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, false, "saregama");
         }
     }
 
@@ -514,7 +515,7 @@ public class SaregamaActivity extends AppCompatActivity {
         } else {
             playSong(songList.get(index));
         }
-        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, index, songList.size());
+        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, true, "saregama");
     }
 
     private void previousSong() {
@@ -528,7 +529,7 @@ public class SaregamaActivity extends AppCompatActivity {
         } else {
             playSong(songList.get(index));
         }
-        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, index, songList.size());
+        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, true, "saregama");
     }
 
     private void skip10SongsForward() {
@@ -543,7 +544,7 @@ public class SaregamaActivity extends AppCompatActivity {
         } else {
             playSong(songList.get(index));
         }
-        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, index, songList.size());
+        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, true, "saregama");
     }
 
     private void skip10SongsBackward() {
@@ -558,7 +559,7 @@ public class SaregamaActivity extends AppCompatActivity {
         } else {
             playSong(songList.get(index));
         }
-        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, index, songList.size());
+        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, true, "saregama");
     }
 
     BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {

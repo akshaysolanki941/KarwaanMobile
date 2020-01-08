@@ -2,13 +2,26 @@ package com.example.karwaan;
 
 import android.animation.AnimatorInflater;
 import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.app.Dialog;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.MediaPlayer;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.Editable;
+import android.text.SpannableStringBuilder;
 import android.text.TextWatcher;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -20,6 +33,8 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.example.karwaan.Adapters.RVSongsAdapter;
 import com.example.karwaan.Models.SongModel;
+import com.example.karwaan.Notification.CreateNotification;
+import com.example.karwaan.Services.OnClearFromRecentService;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.database.DataSnapshot;
@@ -45,7 +60,9 @@ public class ManualActivity extends AppCompatActivity {
     private RecyclerView rv_songs;
     private DatabaseReference songsRef;
     private ArrayList<SongModel> songs = new ArrayList<>();
-    private ArrayList<String> artistsList = new ArrayList<>();
+    private ArrayList<SongModel> mainSongsList = new ArrayList<>();
+    // private ArrayList<String> artistsList = new ArrayList<>();
+    private HashSet<String> artistHashSet = new HashSet<>();
     private SlidingUpPanelLayout slidingUpPanelLayout;
     private ImageButton btn_play_pause, btn_next_song, btn_prev_song;
     private SeekBar seekBar;
@@ -54,6 +71,12 @@ public class ManualActivity extends AppCompatActivity {
     private MediaPlayer mediaPlayer = new MediaPlayer();
     private ChipGroup chipGroup;
     private EditText et_search;
+
+    private int mediaFileLengthInMilliseconds;
+    private final Handler handler = new Handler();
+    private int index;
+
+    private NotificationManager notificationManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,9 +117,15 @@ public class ManualActivity extends AppCompatActivity {
         rv_songs.setHasFixedSize(true);
         rv_songs.setLayoutManager(new LinearLayoutManager(this));
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            createNotificationChannel();
+        }
+
+        registerReceiver(broadcastReceiver, new IntentFilter("SONGS"));
+        startService(new Intent(getBaseContext(), OnClearFromRecentService.class));
+
         mediaPlayer.setScreenOnWhilePlaying(true);
         getSongs();
-
     }
 
     @Override
@@ -105,28 +134,36 @@ public class ManualActivity extends AppCompatActivity {
 
         Glide.with(this).load(R.drawable.bg).into(bg);
 
+        btn_next_song.setOnClickListener(v -> {
+            nextSong();
+        });
+
+        btn_prev_song.setOnClickListener(v -> {
+            prevSong();
+        });
+
         chipGroup.setOnCheckedChangeListener((chipGroup, i) -> {
             loading_dialog.show();
-            ArrayList<SongModel> artistSongsList = new ArrayList<>();
             Chip selectedChip = chipGroup.findViewById(i);
             setReduceSizeAnimation(selectedChip);
             setRegainSizeAnimation(selectedChip);
             if (selectedChip != null) {
                 String selectedArtist = selectedChip.getText().toString();
                 if (selectedArtist.equals("All Artists")) {
-                    rv_songs.setAdapter(new RVSongsAdapter(songs, ManualActivity.this, mediaPlayer, slidingUpPanelLayout, btn_play_pause, btn_next_song, btn_prev_song,
-                            seekBar, tv_sliding_view_song_name, tv_current_time, tv_total_time, rv_songs));
+                    songs.clear();
+                    songs.addAll(mainSongsList);
+                    rv_songs.setAdapter(new RVSongsAdapter(songs, ManualActivity.this));
                 } else {
-                    for (SongModel song : songs) {
+                    songs.clear();
+                    for (SongModel song : mainSongsList) {
                         for (String artistName : song.getArtists()) {
                             if (artistName.equals(selectedArtist)) {
-                                artistSongsList.add(song);
+                                songs.add(song);
                                 break;
                             }
                         }
                     }
-                    rv_songs.setAdapter(new RVSongsAdapter(artistSongsList, ManualActivity.this, mediaPlayer, slidingUpPanelLayout, btn_play_pause, btn_next_song, btn_prev_song,
-                            seekBar, tv_sliding_view_song_name, tv_current_time, tv_total_time, rv_songs));
+                    rv_songs.setAdapter(new RVSongsAdapter(songs, ManualActivity.this));
                 }
             }
             loading_dialog.dismiss();
@@ -153,8 +190,8 @@ public class ManualActivity extends AppCompatActivity {
     private void getSongs() {
         loading_dialog.show();
 
-        if (!songs.isEmpty()) {
-            songs.clear();
+        if (!mainSongsList.isEmpty()) {
+            mainSongsList.clear();
         }
         songsRef = FirebaseDatabase.getInstance().getReference("Songs");
         songsRef.keepSynced(true);
@@ -168,12 +205,13 @@ public class ManualActivity extends AppCompatActivity {
                     for (DataSnapshot ds1 : ds.child("artists").getChildren()) {
                         artistsList.add(ds1.getValue(String.class));
                     }
-                    songs.add(new SongModel(url, songName, artistsList));
+                    mainSongsList.add(new SongModel(url, songName, artistsList));
                 }
-                if (!songs.isEmpty()) {
+                if (!mainSongsList.isEmpty()) {
+                    songs.clear();
+                    songs.addAll(mainSongsList);
                     getArtists();
-                    rv_songs.setAdapter(new RVSongsAdapter(songs, ManualActivity.this, mediaPlayer, slidingUpPanelLayout, btn_play_pause, btn_next_song, btn_prev_song,
-                            seekBar, tv_sliding_view_song_name, tv_current_time, tv_total_time, rv_songs));
+                    rv_songs.setAdapter(new RVSongsAdapter(songs, ManualActivity.this));
                 } else {
                     Toast.makeText(ManualActivity.this, "No songs found", Toast.LENGTH_SHORT).show();
                 }
@@ -191,33 +229,26 @@ public class ManualActivity extends AppCompatActivity {
     private void search(CharSequence text) {
         String query = text.toString().toLowerCase();
         ArrayList<SongModel> searchSongNames = new ArrayList<>();
-        for (SongModel song : songs) {
+        for (SongModel song : mainSongsList) {
             if (song.getSongName().toLowerCase().contains(query)) {
                 searchSongNames.add(song);
             }
         }
-        rv_songs.setAdapter(new RVSongsAdapter(searchSongNames, ManualActivity.this, mediaPlayer, slidingUpPanelLayout, btn_play_pause, btn_next_song, btn_prev_song,
-                seekBar, tv_sliding_view_song_name, tv_current_time, tv_total_time, rv_songs));
+        rv_songs.setAdapter(new RVSongsAdapter(searchSongNames, ManualActivity.this));
     }
 
     private void getArtists() {
         generateChip("All Artists");
 
-        if (!artistsList.isEmpty()) {
-            artistsList.clear();
+        if (!artistHashSet.isEmpty()) {
+            artistHashSet.clear();
         }
 
-        for (SongModel song : songs) {
-            for (String artistName : song.getArtists())
-                artistsList.add(artistName);
+        for (SongModel song : mainSongsList) {
+            artistHashSet.addAll(song.getArtists());
         }
 
-        HashSet hs = new HashSet();
-        hs.addAll(artistsList);
-        artistsList.clear();
-        artistsList.addAll(hs);
-
-        for (String artistName : artistsList) {
+        for (String artistName : artistHashSet) {
             generateChip(artistName);
         }
 
@@ -239,6 +270,274 @@ public class ManualActivity extends AppCompatActivity {
             chip.setTextAppearance(R.style.chipTextAppearanceBold);
         }
         chipGroup.addView(chip);
+    }
+
+    private void primarySeekBarProgressUpdater() {
+        if (!getSharedPreferences("released", MODE_PRIVATE).getBoolean("released", true))
+            if (mediaPlayer.isPlaying()) {
+                seekBar.setProgress((int) (((float) mediaPlayer.getCurrentPosition() / mediaFileLengthInMilliseconds) * 100));
+                tv_current_time.setText(milliSecondsToTimer(mediaPlayer.getCurrentPosition()));
+                Runnable notification = new Runnable() {
+                    public void run() {
+                        primarySeekBarProgressUpdater();
+                    }
+                };
+                handler.postDelayed(notification, 1000);
+            }
+    }
+
+    private void setUpMediaPlayer(final SongModel song) {
+        btn_play_pause.setImageResource(R.drawable.pause_btn_black);
+
+        if (mediaPlayer.isPlaying()) {
+            mediaPlayer.stop();
+            mediaPlayer.reset();
+        } else if (!mediaPlayer.isPlaying()) {
+            mediaPlayer.stop();
+            mediaPlayer.reset();
+        }
+
+        try {
+            mediaPlayer.setDataSource(song.getUrl());
+            mediaPlayer.prepareAsync();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mediaPlayer) {
+                mediaFileLengthInMilliseconds = mediaPlayer.getDuration();
+                tv_total_time.setText(milliSecondsToTimer(mediaFileLengthInMilliseconds));
+                mediaPlayer.start();
+                primarySeekBarProgressUpdater();
+                loading_dialog.dismiss();
+                CreateNotification.createNotification(ManualActivity.this, song, R.drawable.pause_btn_black, false, "manual");
+            }
+        });
+
+        mediaPlayer.setOnBufferingUpdateListener(new MediaPlayer.OnBufferingUpdateListener() {
+            @Override
+            public void onBufferingUpdate(MediaPlayer mediaPlayer, int i) {
+                seekBar.setSecondaryProgress(i);
+            }
+        });
+
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mediaPlayer) {
+                btn_play_pause.setImageResource(R.drawable.play_btn_black);
+                CreateNotification.createNotification(ManualActivity.this, song, R.drawable.play_btn_black, false, "manual");
+            }
+        });
+
+
+        seekBar.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                if (mediaPlayer.isPlaying()) {
+                    SeekBar sb = (SeekBar) view;
+                    int playPositionInMillisecconds = (mediaFileLengthInMilliseconds / 100) * sb.getProgress();
+                    mediaPlayer.seekTo(playPositionInMillisecconds);
+                }
+                return false;
+            }
+        });
+
+        btn_play_pause.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                playPauseSong(song);
+            }
+        });
+    }
+
+    private void playPauseSong(SongModel song) {
+        setReduceSizeAnimation(btn_play_pause);
+        setRegainSizeAnimation(btn_play_pause);
+
+        if (!mediaPlayer.isPlaying()) {
+            mediaPlayer.start();
+            btn_play_pause.setImageResource(R.drawable.pause_btn_black);
+            btn_next_song.setEnabled(true);
+            btn_prev_song.setEnabled(true);
+            alphaAnimation(btn_next_song, 0, 1f);
+            alphaAnimation(btn_prev_song, 0, 1f);
+            CreateNotification.createNotification(ManualActivity.this, song, R.drawable.pause_btn_black, false, "manual");
+
+        } else {
+            mediaPlayer.pause();
+            btn_play_pause.setImageResource(R.drawable.play_btn_black);
+            btn_next_song.setEnabled(false);
+            btn_prev_song.setEnabled(false);
+            alphaAnimation(btn_next_song, 1f, 0);
+            alphaAnimation(btn_prev_song, 1f, 0);
+            CreateNotification.createNotification(ManualActivity.this, song, R.drawable.play_btn_black, false, "manual");
+        }
+        primarySeekBarProgressUpdater();
+    }
+
+    private void nextSong() {
+        loading_dialog.show();
+        if (index + 1 >= songs.size()) {
+            Toast.makeText(ManualActivity.this, "This is the last song", Toast.LENGTH_SHORT).show();
+            loading_dialog.dismiss();
+        } else {
+            index++;
+            SongModel nextSong = songs.get(index);
+            ArrayList<String> artistList = nextSong.getArtists();
+            SpannableStringBuilder artists = new SpannableStringBuilder();
+
+            for (int i = 0; i < artistList.size(); i++) {
+                String artist = artistList.get(i);
+                if (i == artistList.size() - 1) {
+                    artists.append(artist);
+                } else {
+                    artists.append(artist).append(" | ");
+                }
+            }
+
+            tv_sliding_view_song_name.setText(nextSong.getSongName() + " - " + artists);
+            tv_sliding_view_song_name.setSelected(true);
+            CreateNotification.createNotification(ManualActivity.this, nextSong, R.drawable.play_btn_black, true, "manual");
+            setUpMediaPlayer(nextSong);
+        }
+    }
+
+    private void prevSong() {
+        loading_dialog.show();
+        if (index - 1 < 0) {
+            Toast.makeText(ManualActivity.this, "This is the first song", Toast.LENGTH_SHORT).show();
+            loading_dialog.dismiss();
+        } else {
+            index--;
+            SongModel prevSong = songs.get(index);
+            ArrayList<String> artistList = prevSong.getArtists();
+            SpannableStringBuilder artists = new SpannableStringBuilder();
+
+            for (int i = 0; i < artistList.size(); i++) {
+                String artist = artistList.get(i);
+                if (i == artistList.size() - 1) {
+                    artists.append(artist);
+                } else {
+                    artists.append(artist).append(" | ");
+                }
+            }
+
+            tv_sliding_view_song_name.setText(prevSong.getSongName() + " - " + artists);
+            tv_sliding_view_song_name.setSelected(true);
+            CreateNotification.createNotification(ManualActivity.this, prevSong, R.drawable.play_btn_black, true, "manual");
+            setUpMediaPlayer(prevSong);
+        }
+    }
+
+    public void holderItemOnClick(int position) {
+        SongModel song = songs.get(position);
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                loading_dialog.show();
+                index = position;
+
+                ArrayList<String> artistList = song.getArtists();
+                SpannableStringBuilder artists = new SpannableStringBuilder();
+
+                for (int i = 0; i < artistList.size(); i++) {
+                    String artist = artistList.get(i);
+                    if (i == artistList.size() - 1) {
+                        artists.append(artist);
+                    } else {
+                        artists.append(artist).append(" | ");
+                    }
+                }
+
+                if (!btn_next_song.isEnabled()) {
+                    btn_next_song.setEnabled(true);
+                    alphaAnimation(btn_next_song, 0, 1f);
+                }
+                if (!btn_prev_song.isEnabled()) {
+                    btn_prev_song.setEnabled(true);
+                    alphaAnimation(btn_prev_song, 0, 1f);
+                }
+                tv_sliding_view_song_name.setText(song.getSongName() + " - " + artists);
+                tv_sliding_view_song_name.setSelected(true);
+                setUpMediaPlayer(song);
+                slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
+                setMargins(rv_songs, 0, 0, 0, 150);
+            }
+        }, 100);
+    }
+
+    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getExtras().getString("actionname");
+
+            switch (action) {
+                case CreateNotification.ACTION_PREVIOUS:
+                    prevSong();
+                    break;
+
+                case CreateNotification.ACTION_PLAY:
+                    playPauseSong(songs.get(index));
+                    break;
+
+                case CreateNotification.ACTION_NEXT:
+                    nextSong();
+                    break;
+            }
+        }
+    };
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel notificationChannel = new NotificationChannel(CreateNotification.CHANNEL_ID1, "Karvaan Music Notifications (Manual)", NotificationManager.IMPORTANCE_LOW);
+            notificationManager = getSystemService(NotificationManager.class);
+
+            if (notificationManager != null) {
+                notificationManager.createNotificationChannel(notificationChannel);
+            }
+        }
+    }
+
+    private String milliSecondsToTimer(long milliseconds) {
+        String finalTimerString = "";
+        String secondsString = "";
+
+        // Convert total duration into time
+        int hours = (int) (milliseconds / (1000 * 60 * 60));
+        int minutes = (int) (milliseconds % (1000 * 60 * 60)) / (1000 * 60);
+        int seconds = (int) ((milliseconds % (1000 * 60 * 60)) % (1000 * 60) / 1000);
+        // Add hours if there
+        if (hours > 0) {
+            finalTimerString = hours + ":";
+        }
+
+        // Prepending 0 to seconds if it is one digit
+        if (seconds < 10) {
+            secondsString = "0" + seconds;
+        } else {
+            secondsString = "" + seconds;
+        }
+
+        finalTimerString = finalTimerString + minutes + ":" + secondsString;
+
+        // return timer string
+        return finalTimerString;
+    }
+
+    private void setMargins(View view, int left, int top, int right, int bottom) {
+        if (view.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
+            ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
+            p.setMargins(left, top, right, bottom);
+            view.requestLayout();
+        }
+    }
+
+    private void alphaAnimation(View view, float from, float to) {
+        ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(view, "alpha", from, to);
+        objectAnimator.setDuration(800);
+        objectAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+        objectAnimator.start();
     }
 
     private void setReduceSizeAnimation(View viewToAnimate) {
@@ -273,5 +572,9 @@ public class ManualActivity extends AppCompatActivity {
         super.onDestroy();
         getSharedPreferences("released", MODE_PRIVATE).edit().putBoolean("released", true).commit();
         mediaPlayer.release();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            notificationManager.cancelAll();
+        }
+        unregisterReceiver(broadcastReceiver);
     }
 }
