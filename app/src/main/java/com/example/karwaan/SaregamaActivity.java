@@ -57,7 +57,7 @@ public class SaregamaActivity extends AppCompatActivity {
     private TextView toolbar_title, tv_saregama_song_details;
     private ArrayList<SongModel> songList = new ArrayList<>();
     private ArrayList<SongModel> mainSongList = new ArrayList<>();
-    private ArrayList<String> artistsList = new ArrayList<>();
+    private HashSet<String> artistHashSet = new HashSet<>();
     private DatabaseReference songRef;
     private MediaPlayer mediaPlayer;
     private int index = 0;
@@ -402,6 +402,7 @@ public class SaregamaActivity extends AppCompatActivity {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mediaPlayer) {
@@ -425,21 +426,15 @@ public class SaregamaActivity extends AppCompatActivity {
     private void getArtists() {
         generateChip("All Artists");
 
-        if (!artistsList.isEmpty()) {
-            artistsList.clear();
+        if (!artistHashSet.isEmpty()) {
+            artistHashSet.clear();
         }
 
         for (SongModel song : mainSongList) {
-            for (String artistName : song.getArtists())
-                artistsList.add(artistName);
+            artistHashSet.addAll(song.getArtists());
         }
 
-        HashSet hs = new HashSet();
-        hs.addAll(artistsList);
-        artistsList.clear();
-        artistsList.addAll(hs);
-
-        for (String artistName : artistsList) {
+        for (String artistName : artistHashSet) {
             generateChip(artistName);
         }
 

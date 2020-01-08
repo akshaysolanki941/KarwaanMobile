@@ -3,7 +3,9 @@ package com.example.karwaan;
 import android.animation.AnimatorInflater;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -13,6 +15,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
@@ -68,16 +71,30 @@ public class ModeActivity extends AppCompatActivity {
         rl_saregama_mode.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent(ModeActivity.this, SaregamaActivity.class));
+                if (isNetworkConnected()) {
+                    startActivity(new Intent(ModeActivity.this, SaregamaActivity.class));
+                } else {
+                    Toast.makeText(ModeActivity.this, "No internet connection", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
         rl_manual_mode.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent(ModeActivity.this, ManualActivity.class));
+                if (isNetworkConnected()) {
+                    startActivity(new Intent(ModeActivity.this, ManualActivity.class));
+                } else {
+                    Toast.makeText(ModeActivity.this, "No internet connection", Toast.LENGTH_SHORT).show();
+                }
             }
         });
+    }
+
+    private boolean isNetworkConnected() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        return cm.getActiveNetworkInfo() != null && cm.getActiveNetworkInfo().isConnected();
     }
 
     @Override
