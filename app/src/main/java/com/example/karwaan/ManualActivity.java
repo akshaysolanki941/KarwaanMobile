@@ -3,6 +3,7 @@ package com.example.karwaan;
 import android.animation.AnimatorInflater;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -10,7 +11,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -35,6 +36,23 @@ import com.example.karwaan.Adapters.RVSongsAdapter;
 import com.example.karwaan.Models.SongModel;
 import com.example.karwaan.Notification.CreateNotification;
 import com.example.karwaan.Services.OnClearFromRecentService;
+import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
+import com.google.android.exoplayer2.extractor.ExtractorsFactory;
+import com.google.android.exoplayer2.source.ExtractorMediaSource;
+import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
+import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
+import com.google.android.exoplayer2.trackselection.TrackSelection;
+import com.google.android.exoplayer2.upstream.BandwidthMeter;
+import com.google.android.exoplayer2.upstream.DataSource;
+import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
+import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
+import com.google.android.exoplayer2.upstream.TransferListener;
+import com.google.android.exoplayer2.util.Util;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.database.DataSnapshot;
@@ -61,16 +79,20 @@ public class ManualActivity extends AppCompatActivity {
     private DatabaseReference songsRef;
     private ArrayList<SongModel> songs = new ArrayList<>();
     private ArrayList<SongModel> mainSongsList = new ArrayList<>();
-    // private ArrayList<String> artistsList = new ArrayList<>();
     private HashSet<String> artistHashSet = new HashSet<>();
     private SlidingUpPanelLayout slidingUpPanelLayout;
     private ImageButton btn_play_pause, btn_next_song, btn_prev_song;
     private SeekBar seekBar;
     private Dialog loading_dialog;
     private ImageView loading_gif_imageView, bg;
-    private MediaPlayer mediaPlayer = new MediaPlayer();
     private ChipGroup chipGroup;
     private EditText et_search;
+
+    private ExoPlayer exoPlayer;
+    private BandwidthMeter bandwidthMeter;
+    private ExtractorsFactory extractorsFactory;
+    private TrackSelection.Factory trackSelectionfactory;
+    private DataSource.Factory dataSourceFactory;
 
     private int mediaFileLengthInMilliseconds;
     private final Handler handler = new Handler();
@@ -125,7 +147,7 @@ public class ManualActivity extends AppCompatActivity {
         registerReceiver(broadcastReceiver, new IntentFilter("SONGS"));
         startService(new Intent(getBaseContext(), OnClearFromRecentService.class));
 
-        mediaPlayer.setScreenOnWhilePlaying(true);
+        initExoPlayer();
         getSongs();
     }
 
@@ -134,6 +156,13 @@ public class ManualActivity extends AppCompatActivity {
         super.onStart();
 
         Glide.with(this).load(R.drawable.bg).into(bg);
+
+        btn_play_pause.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                playPauseSong();
+            }
+        });
 
         btn_next_song.setOnClickListener(v -> {
             nextSong();
@@ -275,9 +304,9 @@ public class ManualActivity extends AppCompatActivity {
 
     private void primarySeekBarProgressUpdater() {
         if (!getSharedPreferences("released", MODE_PRIVATE).getBoolean("released", true))
-            if (mediaPlayer.isPlaying()) {
-                seekBar.setProgress((int) (((float) mediaPlayer.getCurrentPosition() / mediaFileLengthInMilliseconds) * 100));
-                tv_current_time.setText(milliSecondsToTimer(mediaPlayer.getCurrentPosition()));
+            if (isExoPlaying()) {
+                seekBar.setProgress((int) (((float) exoPlayer.getCurrentPosition() / mediaFileLengthInMilliseconds) * 100));
+                tv_current_time.setText(milliSecondsToTimer(exoPlayer.getCurrentPosition()));
                 Runnable notification = new Runnable() {
                     public void run() {
                         primarySeekBarProgressUpdater();
@@ -287,92 +316,94 @@ public class ManualActivity extends AppCompatActivity {
             }
     }
 
-    private void setUpMediaPlayer(final SongModel song) {
-        btn_play_pause.setImageResource(R.drawable.pause_btn_black);
+    private void initExoPlayer() {
+        bandwidthMeter = new DefaultBandwidthMeter();
+        extractorsFactory = new DefaultExtractorsFactory();
+        trackSelectionfactory = new AdaptiveTrackSelection.Factory(bandwidthMeter);
+        dataSourceFactory = new DefaultDataSourceFactory(this, Util.getUserAgent(this, getPackageName()), (TransferListener) bandwidthMeter);
+        exoPlayer = ExoPlayerFactory.newSimpleInstance(this, new DefaultTrackSelector(trackSelectionfactory));
 
-        if (mediaPlayer.isPlaying()) {
-            mediaPlayer.stop();
-            mediaPlayer.reset();
-        } else if (!mediaPlayer.isPlaying()) {
-            mediaPlayer.stop();
-            mediaPlayer.reset();
-        }
-
-        try {
-            mediaPlayer.setDataSource(song.getUrl());
-            mediaPlayer.prepareAsync();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+        exoPlayer.addListener(new Player.EventListener() {
             @Override
-            public void onPrepared(MediaPlayer mediaPlayer) {
-                mediaFileLengthInMilliseconds = mediaPlayer.getDuration();
-                tv_total_time.setText(milliSecondsToTimer(mediaFileLengthInMilliseconds));
-                mediaPlayer.start();
-                primarySeekBarProgressUpdater();
-                loading_dialog.dismiss();
-                CreateNotification.createNotification(ManualActivity.this, song, R.drawable.pause_btn_black, false, "manual");
-            }
-        });
+            public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
 
-        mediaPlayer.setOnBufferingUpdateListener(new MediaPlayer.OnBufferingUpdateListener() {
-            @Override
-            public void onBufferingUpdate(MediaPlayer mediaPlayer, int i) {
-                seekBar.setSecondaryProgress(i);
-            }
-        });
-
-        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mediaPlayer) {
-                btn_play_pause.setImageResource(R.drawable.play_btn_black);
-                CreateNotification.createNotification(ManualActivity.this, song, R.drawable.play_btn_black, false, "manual");
-            }
-        });
-
-
-        seekBar.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-                if (mediaPlayer.isPlaying()) {
-                    SeekBar sb = (SeekBar) view;
-                    int playPositionInMillisecconds = (mediaFileLengthInMilliseconds / 100) * sb.getProgress();
-                    mediaPlayer.seekTo(playPositionInMillisecconds);
+                if (playbackState == Player.STATE_BUFFERING) {
+                    loading_dialog.show();
+                    Toast.makeText(ManualActivity.this, "Buffering....", Toast.LENGTH_SHORT).show();
+                    CreateNotification.createNotification(ManualActivity.this, songs.get(index), R.drawable.play_btn_black, false, true, "manual");
                 }
-                return false;
-            }
-        });
 
-        btn_play_pause.setOnClickListener(new View.OnClickListener() {
+                if (playbackState == Player.STATE_READY) {
+                    seekBar.setSecondaryProgress((int) exoPlayer.getBufferedPosition());
+                    mediaFileLengthInMilliseconds = (int) exoPlayer.getDuration();
+                    tv_total_time.setText(milliSecondsToTimer(mediaFileLengthInMilliseconds));
+                    primarySeekBarProgressUpdater();
+                }
+
+                if (playbackState == Player.STATE_ENDED) {
+                    btn_play_pause.setImageResource(R.drawable.play_btn_black);
+                    CreateNotification.createNotification(ManualActivity.this, songs.get(index), R.drawable.play_btn_black, false, false, "manual");
+                }
+
+                if (playWhenReady && playbackState == Player.STATE_READY) {
+                    // media actually playing
+                    loading_dialog.dismiss();
+                    btn_play_pause.setImageResource(R.drawable.pause_btn_black);
+                    btn_next_song.setEnabled(true);
+                    btn_prev_song.setEnabled(true);
+                    alphaAnimation(btn_next_song, 0, 1f);
+                    alphaAnimation(btn_prev_song, 0, 1f);
+                    CreateNotification.createNotification(ManualActivity.this, songs.get(index), R.drawable.pause_btn_black, false, false, "manual");
+                } else if (playWhenReady) {
+                    // might be idle (plays after prepare()),
+                    // buffering (plays when data available)
+                    // or ended (plays when seek away from end)
+                    Toast.makeText(ManualActivity.this, "Buffering", Toast.LENGTH_SHORT).show();
+                } else {
+                    // player paused in any state
+                    btn_play_pause.setImageResource(R.drawable.play_btn_black);
+                    btn_next_song.setEnabled(false);
+                    btn_prev_song.setEnabled(false);
+                    alphaAnimation(btn_next_song, 1f, 0);
+                    alphaAnimation(btn_prev_song, 1f, 0);
+                    CreateNotification.createNotification(ManualActivity.this, songs.get(index), R.drawable.play_btn_black, false, false, "manual");
+                }
+            }
+
             @Override
-            public void onClick(View view) {
-                playPauseSong(song);
+            public void onPlayerError(ExoPlaybackException error) {
+                Toast.makeText(ManualActivity.this, "Error: " + error.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }
 
-    private void playPauseSong(SongModel song) {
+    @SuppressLint("ClickableViewAccessibility")
+    private void setUpExoPlayer(SongModel song) {
+        MediaSource mediaSource = new ExtractorMediaSource(Uri.parse(song.getUrl()), dataSourceFactory, extractorsFactory, null, Throwable::printStackTrace);
+        exoPlayer.prepare(mediaSource);
+        exoPlayer.setPlayWhenReady(true);
+
+        seekBar.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                if (isExoPlaying()) {
+                    SeekBar sb = (SeekBar) view;
+                    int playPositionInMillisecconds = (mediaFileLengthInMilliseconds / 100) * sb.getProgress();
+                    exoPlayer.seekTo(playPositionInMillisecconds);
+                }
+                return false;
+            }
+        });
+    }
+
+    private void playPauseSong() {
         setReduceSizeAnimation(btn_play_pause);
         setRegainSizeAnimation(btn_play_pause);
 
-        if (!mediaPlayer.isPlaying()) {
-            mediaPlayer.start();
-            btn_play_pause.setImageResource(R.drawable.pause_btn_black);
-            btn_next_song.setEnabled(true);
-            btn_prev_song.setEnabled(true);
-            alphaAnimation(btn_next_song, 0, 1f);
-            alphaAnimation(btn_prev_song, 0, 1f);
-            CreateNotification.createNotification(ManualActivity.this, song, R.drawable.pause_btn_black, false, "manual");
-
+        if (!isExoPlaying()) {
+            startPlayer();
         } else {
-            mediaPlayer.pause();
-            btn_play_pause.setImageResource(R.drawable.play_btn_black);
-            btn_next_song.setEnabled(false);
-            btn_prev_song.setEnabled(false);
-            alphaAnimation(btn_next_song, 1f, 0);
-            alphaAnimation(btn_prev_song, 1f, 0);
-            CreateNotification.createNotification(ManualActivity.this, song, R.drawable.play_btn_black, false, "manual");
+            pausePlayer();
         }
         primarySeekBarProgressUpdater();
     }
@@ -399,8 +430,8 @@ public class ManualActivity extends AppCompatActivity {
 
             tv_sliding_view_song_name.setText(nextSong.getSongName() + " - " + artists);
             tv_sliding_view_song_name.setSelected(true);
-            CreateNotification.createNotification(ManualActivity.this, nextSong, R.drawable.play_btn_black, true, "manual");
-            setUpMediaPlayer(nextSong);
+            CreateNotification.createNotification(ManualActivity.this, nextSong, R.drawable.play_btn_black, true, false, "manual");
+            setUpExoPlayer(nextSong);
         }
     }
 
@@ -426,8 +457,8 @@ public class ManualActivity extends AppCompatActivity {
 
             tv_sliding_view_song_name.setText(prevSong.getSongName() + " - " + artists);
             tv_sliding_view_song_name.setSelected(true);
-            CreateNotification.createNotification(ManualActivity.this, prevSong, R.drawable.play_btn_black, true, "manual");
-            setUpMediaPlayer(prevSong);
+            CreateNotification.createNotification(ManualActivity.this, prevSong, R.drawable.play_btn_black, true, false, "manual");
+            setUpExoPlayer(prevSong);
         }
     }
 
@@ -461,7 +492,8 @@ public class ManualActivity extends AppCompatActivity {
                 }
                 tv_sliding_view_song_name.setText(song.getSongName() + " - " + artists);
                 tv_sliding_view_song_name.setSelected(true);
-                setUpMediaPlayer(song);
+                CreateNotification.createNotification(ManualActivity.this, song, R.drawable.play_btn_black, true, false, "manual");
+                setUpExoPlayer(song);
                 slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
                 setMargins(rv_songs, 0, 0, 0, 150);
             }
@@ -479,7 +511,7 @@ public class ManualActivity extends AppCompatActivity {
                     break;
 
                 case CreateNotification.ACTION_PLAY:
-                    playPauseSong(songs.get(index));
+                    playPauseSong();
                     break;
 
                 case CreateNotification.ACTION_NEXT:
@@ -488,6 +520,18 @@ public class ManualActivity extends AppCompatActivity {
             }
         }
     };
+
+    private void pausePlayer() {
+        exoPlayer.setPlayWhenReady(false);
+    }
+
+    private void startPlayer() {
+        exoPlayer.setPlayWhenReady(true);
+    }
+
+    private boolean isExoPlaying() {
+        return exoPlayer.getPlayWhenReady();
+    }
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -571,10 +615,8 @@ public class ManualActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         getSharedPreferences("released", MODE_PRIVATE).edit().putBoolean("released", true).commit();
-        mediaPlayer.release();
-        //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        exoPlayer.release();
         notificationManager.cancelAll();
-        //}
         unregisterReceiver(broadcastReceiver);
     }
 }

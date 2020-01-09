@@ -51,6 +51,7 @@ dependencies {
     implementation('com.github.chtgupta:FadeInTextView-Android:2.1.0') {
         exclude module: 'app'
     }
+    implementation 'com.google.android.exoplayer:exoplayer:2.11.1'
 }
 
 apply plugin: 'com.google.gms.google-services'

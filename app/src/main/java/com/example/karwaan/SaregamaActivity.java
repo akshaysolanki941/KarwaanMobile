@@ -10,11 +10,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.PowerManager;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
@@ -34,6 +33,23 @@ import com.bumptech.glide.Glide;
 import com.example.karwaan.Models.SongModel;
 import com.example.karwaan.Notification.CreateNotification;
 import com.example.karwaan.Services.OnClearFromRecentService;
+import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
+import com.google.android.exoplayer2.extractor.ExtractorsFactory;
+import com.google.android.exoplayer2.source.ExtractorMediaSource;
+import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
+import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
+import com.google.android.exoplayer2.trackselection.TrackSelection;
+import com.google.android.exoplayer2.upstream.BandwidthMeter;
+import com.google.android.exoplayer2.upstream.DataSource;
+import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
+import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
+import com.google.android.exoplayer2.upstream.TransferListener;
+import com.google.android.exoplayer2.util.Util;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.database.DataSnapshot;
@@ -59,7 +75,6 @@ public class SaregamaActivity extends AppCompatActivity {
     private ArrayList<SongModel> mainSongList = new ArrayList<>();
     private HashSet<String> artistHashSet = new HashSet<>();
     private DatabaseReference songRef;
-    private MediaPlayer mediaPlayer;
     private int index = 0;
     private ImageButton btn_play_pause, btn_next, btn_previous, btn_forward10, btn_backward10;
     private LottieAnimationView lottieAnimationView;
@@ -69,6 +84,12 @@ public class SaregamaActivity extends AppCompatActivity {
     private RelativeLayout rlParentLayout;
     private Boolean voiceModeEnabled;
     private NotificationManager notificationManager;
+
+    private ExoPlayer exoPlayer;
+    private BandwidthMeter bandwidthMeter;
+    private ExtractorsFactory extractorsFactory;
+    private TrackSelection.Factory trackSelectionfactory;
+    private DataSource.Factory dataSourceFactory;
 
     private SpeechRecognizer speechRecognizer;
     private Intent speechRecognizerIntent;
@@ -132,7 +153,7 @@ public class SaregamaActivity extends AppCompatActivity {
             initSpeechRecognition();
         }
 
-        initMediaPlayer();
+        initExoPlayer();
         getSongsList();
     }
 
@@ -142,7 +163,7 @@ public class SaregamaActivity extends AppCompatActivity {
 
         Glide.with(this).load(R.drawable.bg).into(bg);
 
-        if (!mediaPlayer.isPlaying()) {
+        if (!isExoPlaying()) {
             btn_play_pause.setImageResource(R.drawable.play_button);
             lottieAnimationView.pauseAnimation();
 
@@ -216,11 +237,96 @@ public class SaregamaActivity extends AppCompatActivity {
         });
     }
 
-    private void initMediaPlayer() {
-        mediaPlayer = new MediaPlayer();
-        mediaPlayer.setScreenOnWhilePlaying(true);
-        mediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
-        mediaPlayer.setVolume(1.0f, 1.0f);
+    private void initExoPlayer() {
+        bandwidthMeter = new DefaultBandwidthMeter();
+        extractorsFactory = new DefaultExtractorsFactory();
+        trackSelectionfactory = new AdaptiveTrackSelection.Factory(bandwidthMeter);
+        dataSourceFactory = new DefaultDataSourceFactory(this, Util.getUserAgent(this, getPackageName()), (TransferListener) bandwidthMeter);
+        exoPlayer = ExoPlayerFactory.newSimpleInstance(this, new DefaultTrackSelector(trackSelectionfactory));
+        exoPlayer.addListener(new Player.EventListener() {
+            @Override
+            public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+                switch (playbackState) {
+                    case Player.STATE_BUFFERING:
+                        loading_dialog.show();
+                        lottieAnimationView.pauseAnimation();
+                        Toast.makeText(SaregamaActivity.this, "Buffering....", Toast.LENGTH_SHORT).show();
+                        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, false, true, "saregama");
+                        break;
+
+                    case Player.STATE_ENDED:
+                        loading_dialog.show();
+                        lottieAnimationView.pauseAnimation();
+                        index++;
+                        if (index >= songList.size() + 1) {
+                            index = 0;
+                            Collections.shuffle(songList);
+                            playSongInExoPlayer(songList.get(index));
+                        } else {
+                            playSongInExoPlayer(songList.get(index));
+                        }
+                        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, true, false, "saregama");
+                        break;
+                }
+                if (playWhenReady && playbackState == Player.STATE_READY) {
+                    // media actually playing
+                    loading_dialog.dismiss();
+                    btn_play_pause.setImageResource(R.drawable.pause_button);
+                    alphaAnimation(lottieAnimationView, 0, 1f);
+                    lottieAnimationView.playAnimation();
+                    setRegainSizeAnimation(btn_play_pause);
+                    setRegainSizeAnimation(btn_next);
+                    setRegainSizeAnimation(btn_previous);
+                    setRegainSizeAnimation(btn_forward10);
+                    setRegainSizeAnimation(btn_backward10);
+                    translateAnimation(btn_next, btn_play_pause.getX() - btn_next.getX(), 0, 0, 0);
+                    translateAnimation(btn_previous, btn_play_pause.getX() - btn_previous.getX(), 0, 0, 0);
+                    translateAnimation(btn_forward10, btn_play_pause.getX() - btn_forward10.getX(), 0, 0, 0);
+                    translateAnimation(btn_backward10, btn_play_pause.getX() - btn_backward10.getX(), 0, 0, 0);
+                    alphaAnimation(btn_next, 0, 1f);
+                    alphaAnimation(btn_previous, 0, 1f);
+                    alphaAnimation(btn_forward10, 0, 1f);
+                    alphaAnimation(btn_backward10, 0, 1f);
+                    alphaAnimation(chipGroup, 0, 1f);
+                    chipGroup.setVisibility(View.VISIBLE);
+                    CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, false, false, "saregama");
+                } else if (playWhenReady) {
+                    // might be idle (plays after prepare()),
+                    // buffering (plays when data available)
+                    // or ended (plays when seek away from end)
+                    Toast.makeText(SaregamaActivity.this, "Buffering....", Toast.LENGTH_SHORT).show();
+                } else {
+                    // player paused in any state
+                    btn_play_pause.setImageResource(R.drawable.play_button);
+                    alphaAnimation(lottieAnimationView, 1f, 0);
+                    lottieAnimationView.pauseAnimation();
+                    setReduceSizeAnimation(btn_next);
+                    setReduceSizeAnimation(btn_previous);
+                    setReduceSizeAnimation(btn_forward10);
+                    setReduceSizeAnimation(btn_backward10);
+                    translateAnimation(btn_next, 0, btn_play_pause.getX() - btn_next.getX(), 0, 0);
+                    translateAnimation(btn_previous, 0, btn_play_pause.getX() - btn_previous.getX(), 0, 0);
+                    translateAnimation(btn_forward10, 0, btn_play_pause.getX() - btn_forward10.getX(), 0, 0);
+                    translateAnimation(btn_backward10, 0, btn_play_pause.getX() - btn_backward10.getX(), 0, 0);
+                    alphaAnimation(chipGroup, 1f, 0);
+                    chipGroup.setVisibility(View.GONE);
+                    CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, false, false, "saregama");
+                }
+            }
+
+            @Override
+            public void onPlayerError(ExoPlaybackException error) {
+                Toast.makeText(SaregamaActivity.this, "Error: " + error.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void playSongInExoPlayer(SongModel song) {
+        MediaSource mediaSource = new ExtractorMediaSource(Uri.parse(song.getUrl()), dataSourceFactory, extractorsFactory, null, Throwable::printStackTrace);
+        exoPlayer.prepare(mediaSource);
+        exoPlayer.setPlayWhenReady(true);
+        tv_saregama_song_details.setText(song.getSongName());
+        tv_saregama_song_details.setSelected(true);
     }
 
     private void initSpeechRecognition() {
@@ -366,62 +472,9 @@ public class SaregamaActivity extends AppCompatActivity {
 
     private void startRandomSongs() {
         Collections.shuffle(songList);
-        playSong(songList.get(index));
+        playSongInExoPlayer(songList.get(index));
 
-        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mediaPlayer) {
-                loading_dialog.show();
-                lottieAnimationView.pauseAnimation();
-                index++;
-                if (index >= songList.size() + 1) {
-                    index = 0;
-                    Collections.shuffle(songList);
-                    playSong(songList.get(index));
-                } else {
-                    playSong(songList.get(index));
-                }
-                CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, true, "saregama");
-            }
-        });
-        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, true, "saregama");
-    }
-
-    private void playSong(SongModel song) {
-
-        if (mediaPlayer.isPlaying()) {
-            mediaPlayer.stop();
-            mediaPlayer.reset();
-        } else if (!mediaPlayer.isPlaying()) {
-            mediaPlayer.stop();
-            mediaPlayer.reset();
-        }
-
-        try {
-            mediaPlayer.setDataSource(song.getUrl());
-            mediaPlayer.prepareAsync();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-            @Override
-            public void onPrepared(MediaPlayer mediaPlayer) {
-                mediaPlayer.start();
-                btn_play_pause.setImageResource(R.drawable.pause_button);
-                lottieAnimationView.playAnimation();
-                loading_dialog.dismiss();
-                setRegainSizeAnimation(btn_play_pause);
-                setRegainSizeAnimation(btn_next);
-                setRegainSizeAnimation(btn_previous);
-                setRegainSizeAnimation(btn_forward10);
-                setRegainSizeAnimation(btn_backward10);
-                CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, false, "saregama");
-            }
-        });
-
-        tv_saregama_song_details.setText(song.getSongName());
-        tv_saregama_song_details.setSelected(true);
+        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, true, false, "saregama");
     }
 
     private void getArtists() {
@@ -460,43 +513,10 @@ public class SaregamaActivity extends AppCompatActivity {
     }
 
     private void playPauseSong() {
-        if (!mediaPlayer.isPlaying()) {
-            mediaPlayer.start();
-            btn_play_pause.setImageResource(R.drawable.pause_button);
-            alphaAnimation(lottieAnimationView, 0, 1f);
-            lottieAnimationView.playAnimation();
-            setRegainSizeAnimation(btn_next);
-            setRegainSizeAnimation(btn_previous);
-            setRegainSizeAnimation(btn_forward10);
-            setRegainSizeAnimation(btn_backward10);
-            translateAnimation(btn_next, btn_play_pause.getX() - btn_next.getX(), 0, 0, 0);
-            translateAnimation(btn_previous, btn_play_pause.getX() - btn_previous.getX(), 0, 0, 0);
-            translateAnimation(btn_forward10, btn_play_pause.getX() - btn_forward10.getX(), 0, 0, 0);
-            translateAnimation(btn_backward10, btn_play_pause.getX() - btn_backward10.getX(), 0, 0, 0);
-            alphaAnimation(btn_next, 0, 1f);
-            alphaAnimation(btn_previous, 0, 1f);
-            alphaAnimation(btn_forward10, 0, 1f);
-            alphaAnimation(btn_backward10, 0, 1f);
-            alphaAnimation(chipGroup, 0, 1f);
-            chipGroup.setVisibility(View.VISIBLE);
-            CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, false, "saregama");
-
+        if (!isExoPlaying()) {
+            startPlayer();
         } else {
-            mediaPlayer.pause();
-            btn_play_pause.setImageResource(R.drawable.play_button);
-            alphaAnimation(lottieAnimationView, 1f, 0);
-            lottieAnimationView.pauseAnimation();
-            setReduceSizeAnimation(btn_next);
-            setReduceSizeAnimation(btn_previous);
-            setReduceSizeAnimation(btn_forward10);
-            setReduceSizeAnimation(btn_backward10);
-            translateAnimation(btn_next, 0, btn_play_pause.getX() - btn_next.getX(), 0, 0);
-            translateAnimation(btn_previous, 0, btn_play_pause.getX() - btn_previous.getX(), 0, 0);
-            translateAnimation(btn_forward10, 0, btn_play_pause.getX() - btn_forward10.getX(), 0, 0);
-            translateAnimation(btn_backward10, 0, btn_play_pause.getX() - btn_backward10.getX(), 0, 0);
-            alphaAnimation(chipGroup, 1f, 0);
-            chipGroup.setVisibility(View.GONE);
-            CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, false, "saregama");
+            pausePlayer();
         }
     }
 
@@ -507,11 +527,11 @@ public class SaregamaActivity extends AppCompatActivity {
         if (index >= songList.size()) {
             index = 0;
             Collections.shuffle(songList);
-            playSong(songList.get(index));
+            playSongInExoPlayer(songList.get(index));
         } else {
-            playSong(songList.get(index));
+            playSongInExoPlayer(songList.get(index));
         }
-        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, true, "saregama");
+        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, true, false, "saregama");
     }
 
     private void previousSong() {
@@ -521,11 +541,11 @@ public class SaregamaActivity extends AppCompatActivity {
         if (index <= -1) {
             index = 0;
             Collections.shuffle(songList);
-            playSong(songList.get(index));
+            playSongInExoPlayer(songList.get(index));
         } else {
-            playSong(songList.get(index));
+            playSongInExoPlayer(songList.get(index));
         }
-        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, true, "saregama");
+        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, true, false, "saregama");
     }
 
     private void skip10SongsForward() {
@@ -536,11 +556,11 @@ public class SaregamaActivity extends AppCompatActivity {
         if (index >= songList.size()) {
             index = 0;
             Collections.shuffle(songList);
-            playSong(songList.get(index));
+            playSongInExoPlayer(songList.get(index));
         } else {
-            playSong(songList.get(index));
+            playSongInExoPlayer(songList.get(index));
         }
-        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, true, "saregama");
+        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, true, false, "saregama");
     }
 
     private void skip10SongsBackward() {
@@ -551,11 +571,23 @@ public class SaregamaActivity extends AppCompatActivity {
         if (index <= -1) {
             index = 0;
             Collections.shuffle(songList);
-            playSong(songList.get(index));
+            playSongInExoPlayer(songList.get(index));
         } else {
-            playSong(songList.get(index));
+            playSongInExoPlayer(songList.get(index));
         }
-        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, true, "saregama");
+        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, true, false, "saregama");
+    }
+
+    private void pausePlayer() {
+        exoPlayer.setPlayWhenReady(false);
+    }
+
+    private void startPlayer() {
+        exoPlayer.setPlayWhenReady(true);
+    }
+
+    private boolean isExoPlaying() {
+        return exoPlayer.getPlayWhenReady();
     }
 
     BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
@@ -632,21 +664,19 @@ public class SaregamaActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        mediaPlayer.release();
+        exoPlayer.release();
         lottieAnimationView.pauseAnimation();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        mediaPlayer.release();
+        exoPlayer.release();
         lottieAnimationView.pauseAnimation();
         if (speechRecognizer != null) {
             speechRecognizer.cancel();
         }
-        // if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         notificationManager.cancelAll();
-        //}
         unregisterReceiver(broadcastReceiver);
     }
 }
