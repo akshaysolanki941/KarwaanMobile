@@ -17,6 +17,7 @@ import android.os.Handler;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
+import android.text.SpannableStringBuilder;
 import android.view.View;
 import android.view.Window;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -325,7 +326,17 @@ public class SaregamaActivity extends AppCompatActivity {
         MediaSource mediaSource = new ExtractorMediaSource(Uri.parse(song.getUrl()), dataSourceFactory, extractorsFactory, null, Throwable::printStackTrace);
         exoPlayer.prepare(mediaSource);
         exoPlayer.setPlayWhenReady(true);
-        tv_saregama_song_details.setText(song.getSongName());
+        SpannableStringBuilder artists = new SpannableStringBuilder();
+        ArrayList<String> artistList = song.getArtists();
+        for (int i = 0; i < artistList.size(); i++) {
+            String a = artistList.get(i);
+            if (i == artistList.size() - 1) {
+                artists.append(a);
+            } else {
+                artists.append(a).append(" | ");
+            }
+        }
+        tv_saregama_song_details.setText(song.getSongName() + " - " + artists);
         tv_saregama_song_details.setSelected(true);
     }
 
@@ -501,7 +512,7 @@ public class SaregamaActivity extends AppCompatActivity {
         chip.setLayoutParams(layoutParams);
         chip.setId(View.generateViewId());
         chip.setText(title);
-        chip.setTextAppearance(R.style.chipTextAppearance);
+        //chip.setTextAppearance(R.style.chipTextAppearance);
         chip.setCloseIconEnabled(false);
         chip.setClickable(true);
         chip.setCheckable(true);

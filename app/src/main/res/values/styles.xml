@@ -13,7 +13,7 @@
     </style>
 
     <style name="chipTextAppearanceBold" parent="TextAppearance.MaterialComponents.Chip">
-        <item name="android:fontFamily">@font/overpass_semi_bold</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
 </resources>

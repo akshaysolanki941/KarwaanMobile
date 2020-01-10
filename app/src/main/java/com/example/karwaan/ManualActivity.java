@@ -291,7 +291,7 @@ public class ManualActivity extends AppCompatActivity {
         chip.setLayoutParams(layoutParams);
         chip.setId(View.generateViewId());
         chip.setText(title);
-        chip.setTextAppearance(R.style.chipTextAppearance);
+        //chip.setTextAppearance(R.style.chipTextAppearance);
         chip.setCloseIconEnabled(false);
         chip.setClickable(true);
         chip.setCheckable(true);
@@ -358,7 +358,7 @@ public class ManualActivity extends AppCompatActivity {
                     // might be idle (plays after prepare()),
                     // buffering (plays when data available)
                     // or ended (plays when seek away from end)
-                    Toast.makeText(ManualActivity.this, "Buffering", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ManualActivity.this, "Buffering....", Toast.LENGTH_SHORT).show();
                 } else {
                     // player paused in any state
                     btn_play_pause.setImageResource(R.drawable.play_btn_black);

@@ -3,6 +3,7 @@ package com.example.karwaan.Adapters;
 import android.animation.AnimatorInflater;
 import android.animation.AnimatorSet;
 import android.content.Context;
+import android.text.SpannableStringBuilder;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +24,7 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
 
     private ArrayList<SongModel> songs;
     private Context context;
+    private int lastPosition = 0;
 
     public RVSongsAdapter() {
     }
@@ -43,8 +45,19 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
     public void onBindViewHolder(@NonNull final RVSongsAdapter.ViewHolder holder, final int position) {
 
         SongModel song = songs.get(position);
-
         holder.tv_song_name.setText(song.getSongName());
+
+        SpannableStringBuilder artists = new SpannableStringBuilder();
+        ArrayList<String> artistList = song.getArtists();
+        for (int i = 0; i < artistList.size(); i++) {
+            String a = artistList.get(i);
+            if (i == artistList.size() - 1) {
+                artists.append(a);
+            } else {
+                artists.append(a).append(" | ");
+            }
+        }
+        holder.tv_artist.setText(artists);
 
         setEnterAnimation(holder.itemView, position);
 
@@ -67,12 +80,13 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
 
     class ViewHolder extends RecyclerView.ViewHolder {
 
-        TextView tv_song_name;
+        TextView tv_song_name, tv_artist;
 
         private ViewHolder(@NonNull View itemView) {
             super(itemView);
 
             tv_song_name = (TextView) itemView.findViewById(R.id.tv_song_name);
+            tv_artist = itemView.findViewById(R.id.tv_artist);
 
         }
     }
