@@ -68,6 +68,18 @@
 
     </HorizontalScrollView>
 
+    <TextView
+        android:id="@+id/tv_total_songs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/horizontalScroll"
+        android:layout_margin="10dp"
+        android:fontFamily="@font/overpass_semi_bold_italic"
+        android:padding="3dp"
+        android:text="Total songs: 501"
+        android:textAlignment="center"
+        android:textColor="#fff" />
+
     <ImageButton
         android:id="@+id/btn_play_pause"
         android:layout_width="90dp"

@@ -74,7 +74,7 @@ import androidx.recyclerview.widget.RecyclerView;
 public class ManualActivity extends AppCompatActivity {
 
     private Toolbar toolbar;
-    private TextView toolbar_title, tv_sliding_view_song_name, tv_current_time, tv_total_time;
+    private TextView toolbar_title, tv_sliding_view_song_name, tv_current_time, tv_total_time, tv_total_songs;
     private RecyclerView rv_songs;
     private DatabaseReference songsRef;
     private ArrayList<SongModel> songs = new ArrayList<>();
@@ -132,6 +132,8 @@ public class ManualActivity extends AppCompatActivity {
         seekBar = (SeekBar) findViewById(R.id.seekBar);
         tv_current_time = findViewById(R.id.tv_current_time);
         tv_total_time = findViewById(R.id.tv_total_time);
+        tv_total_songs = findViewById(R.id.tv_total_songs);
+        tv_total_songs.setVisibility(View.GONE);
         tv_sliding_view_song_name = findViewById(R.id.tv_sliding_view_song_name);
         tv_sliding_view_song_name.setText("Select a song to play");
         chipGroup = findViewById(R.id.chipGroup);
@@ -238,6 +240,8 @@ public class ManualActivity extends AppCompatActivity {
                     mainSongsList.add(new SongModel(url, songName, artistsList));
                 }
                 if (!mainSongsList.isEmpty()) {
+                    tv_total_songs.setText("Total Songs: " + mainSongsList.size());
+                    tv_total_songs.setVisibility(View.VISIBLE);
                     songs.clear();
                     songs.addAll(mainSongsList);
                     getArtists();
@@ -257,14 +261,15 @@ public class ManualActivity extends AppCompatActivity {
     }
 
     private void search(CharSequence text) {
+        songs.clear();
         String query = text.toString().toLowerCase();
         ArrayList<SongModel> searchSongNames = new ArrayList<>();
         for (SongModel song : mainSongsList) {
             if (song.getSongName().toLowerCase().contains(query)) {
-                searchSongNames.add(song);
+                songs.add(song);
             }
         }
-        rv_songs.setAdapter(new RVSongsAdapter(searchSongNames, ManualActivity.this));
+        rv_songs.setAdapter(new RVSongsAdapter(songs, ManualActivity.this));
     }
 
     private void getArtists() {
@@ -615,6 +620,7 @@ public class ManualActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         getSharedPreferences("released", MODE_PRIVATE).edit().putBoolean("released", true).commit();
+        pausePlayer();
         exoPlayer.release();
         notificationManager.cancelAll();
         unregisterReceiver(broadcastReceiver);

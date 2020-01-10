@@ -58,6 +58,7 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
             }
         }
         holder.tv_artist.setText(artists);
+        holder.tv_artist.setSelected(true);
 
         setEnterAnimation(holder.itemView, position);
 

@@ -71,7 +71,7 @@ import androidx.appcompat.widget.Toolbar;
 public class SaregamaActivity extends AppCompatActivity {
 
     private Toolbar toolbar;
-    private TextView toolbar_title, tv_saregama_song_details;
+    private TextView toolbar_title, tv_saregama_song_details, tv_total_songs;
     private ArrayList<SongModel> songList = new ArrayList<>();
     private ArrayList<SongModel> mainSongList = new ArrayList<>();
     private HashSet<String> artistHashSet = new HashSet<>();
@@ -119,6 +119,8 @@ public class SaregamaActivity extends AppCompatActivity {
         lottieAnimationView = (LottieAnimationView) findViewById(R.id.lottie_animation_view);
         bg = findViewById(R.id.bg);
         tv_saregama_song_details = findViewById(R.id.tv_saregama_song_details);
+        tv_total_songs = findViewById(R.id.tv_total_songs);
+        tv_total_songs.setVisibility(View.GONE);
         chipGroup = findViewById(R.id.chipGroup);
 
         loading_dialog = new Dialog(this);
@@ -218,6 +220,7 @@ public class SaregamaActivity extends AppCompatActivity {
             if (selectedChip != null) {
                 String selectedArtist = selectedChip.getText().toString();
                 if (selectedArtist.equals("All Artists")) {
+                    tv_total_songs.setText("Total Songs: " + mainSongList.size());
                     songList.clear();
                     songList.addAll(mainSongList);
                     startRandomSongs();
@@ -232,6 +235,7 @@ public class SaregamaActivity extends AppCompatActivity {
                         }
                     }
                     songList.addAll(artistSongsList);
+                    tv_total_songs.setText("Total Songs: " + artistSongsList.size());
                     startRandomSongs();
                 }
             }
@@ -468,15 +472,22 @@ public class SaregamaActivity extends AppCompatActivity {
                     }
                     mainSongList.add(new SongModel(url, songName, artistsList));
                 }
-                getArtists();
-                songList.clear();
-                songList.addAll(mainSongList);
-                startRandomSongs();
+                if (!mainSongList.isEmpty()) {
+                    tv_total_songs.setText("Total Songs: " + mainSongList.size());
+                    tv_total_songs.setVisibility(View.VISIBLE);
+                    getArtists();
+                    songList.clear();
+                    songList.addAll(mainSongList);
+                    startRandomSongs();
+                } else {
+                    Toast.makeText(SaregamaActivity.this, "No Songs Found", Toast.LENGTH_SHORT).show();
+                }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
                 Toast.makeText(SaregamaActivity.this, databaseError.getMessage(), Toast.LENGTH_SHORT).show();
+                loading_dialog.dismiss();
             }
         });
     }
@@ -682,6 +693,7 @@ public class SaregamaActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        pausePlayer();
         exoPlayer.release();
         lottieAnimationView.pauseAnimation();
         if (speechRecognizer != null) {
