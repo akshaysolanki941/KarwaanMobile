@@ -329,8 +329,8 @@ public class ManualActivity extends AppCompatActivity {
 
                 if (playbackState == Player.STATE_BUFFERING) {
                     loading_dialog.show();
-                    Toast.makeText(ManualActivity.this, "Buffering....", Toast.LENGTH_SHORT).show();
-                    CreateNotification.createNotification(ManualActivity.this, songs.get(index), R.drawable.play_btn_black, false, true, "manual");
+                    //  Toast.makeText(ManualActivity.this, "Buffering....", Toast.LENGTH_SHORT).show();
+                    CreateNotification.createNotification(ManualActivity.this, songs.get(index), R.drawable.play_btn_black, false, true, false, "manual");
                 }
 
                 if (playbackState == Player.STATE_READY) {
@@ -342,7 +342,7 @@ public class ManualActivity extends AppCompatActivity {
 
                 if (playbackState == Player.STATE_ENDED) {
                     btn_play_pause.setImageResource(R.drawable.play_btn_black);
-                    CreateNotification.createNotification(ManualActivity.this, songs.get(index), R.drawable.play_btn_black, false, false, "manual");
+                    CreateNotification.createNotification(ManualActivity.this, songs.get(index), R.drawable.play_btn_black, false, false, true, "manual");
                 }
 
                 if (playWhenReady && playbackState == Player.STATE_READY) {
@@ -353,12 +353,12 @@ public class ManualActivity extends AppCompatActivity {
                     btn_prev_song.setEnabled(true);
                     alphaAnimation(btn_next_song, 0, 1f);
                     alphaAnimation(btn_prev_song, 0, 1f);
-                    CreateNotification.createNotification(ManualActivity.this, songs.get(index), R.drawable.pause_btn_black, false, false, "manual");
+                    CreateNotification.createNotification(ManualActivity.this, songs.get(index), R.drawable.pause_btn_black, false, false, false, "manual");
                 } else if (playWhenReady) {
                     // might be idle (plays after prepare()),
                     // buffering (plays when data available)
                     // or ended (plays when seek away from end)
-                    Toast.makeText(ManualActivity.this, "Buffering....", Toast.LENGTH_SHORT).show();
+                    // Toast.makeText(ManualActivity.this, "Buffering....", Toast.LENGTH_SHORT).show();
                 } else {
                     // player paused in any state
                     btn_play_pause.setImageResource(R.drawable.play_btn_black);
@@ -366,7 +366,7 @@ public class ManualActivity extends AppCompatActivity {
                     btn_prev_song.setEnabled(false);
                     alphaAnimation(btn_next_song, 1f, 0);
                     alphaAnimation(btn_prev_song, 1f, 0);
-                    CreateNotification.createNotification(ManualActivity.this, songs.get(index), R.drawable.play_btn_black, false, false, "manual");
+                    CreateNotification.createNotification(ManualActivity.this, songs.get(index), R.drawable.play_btn_black, false, false, true, "manual");
                 }
             }
 
@@ -430,7 +430,7 @@ public class ManualActivity extends AppCompatActivity {
 
             tv_sliding_view_song_name.setText(nextSong.getSongName() + " - " + artists);
             tv_sliding_view_song_name.setSelected(true);
-            CreateNotification.createNotification(ManualActivity.this, nextSong, R.drawable.play_btn_black, true, false, "manual");
+            CreateNotification.createNotification(ManualActivity.this, nextSong, R.drawable.play_btn_black, true, false, false, "manual");
             setUpExoPlayer(nextSong);
         }
     }
@@ -457,7 +457,7 @@ public class ManualActivity extends AppCompatActivity {
 
             tv_sliding_view_song_name.setText(prevSong.getSongName() + " - " + artists);
             tv_sliding_view_song_name.setSelected(true);
-            CreateNotification.createNotification(ManualActivity.this, prevSong, R.drawable.play_btn_black, true, false, "manual");
+            CreateNotification.createNotification(ManualActivity.this, prevSong, R.drawable.play_btn_black, true, false, false, "manual");
             setUpExoPlayer(prevSong);
         }
     }
@@ -492,7 +492,7 @@ public class ManualActivity extends AppCompatActivity {
                 }
                 tv_sliding_view_song_name.setText(song.getSongName() + " - " + artists);
                 tv_sliding_view_song_name.setSelected(true);
-                CreateNotification.createNotification(ManualActivity.this, song, R.drawable.play_btn_black, true, false, "manual");
+                CreateNotification.createNotification(ManualActivity.this, song, R.drawable.play_btn_black, true, false, false, "manual");
                 setUpExoPlayer(song);
                 slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
                 setMargins(rv_songs, 0, 0, 0, 150);

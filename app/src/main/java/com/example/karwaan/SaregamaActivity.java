@@ -129,7 +129,7 @@ public class SaregamaActivity extends AppCompatActivity {
         loading_dialog.setCanceledOnTouchOutside(false);
         loading_dialog.setCancelable(false);
 
-        notificationManager = getSystemService(NotificationManager.class);
+        notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel();
         }
@@ -251,8 +251,8 @@ public class SaregamaActivity extends AppCompatActivity {
                     case Player.STATE_BUFFERING:
                         loading_dialog.show();
                         lottieAnimationView.pauseAnimation();
-                        Toast.makeText(SaregamaActivity.this, "Buffering....", Toast.LENGTH_SHORT).show();
-                        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, false, true, "saregama");
+                        // Toast.makeText(SaregamaActivity.this, "Buffering....", Toast.LENGTH_SHORT).show();
+                        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, false, true, false, "saregama");
                         break;
 
                     case Player.STATE_ENDED:
@@ -266,7 +266,7 @@ public class SaregamaActivity extends AppCompatActivity {
                         } else {
                             playSongInExoPlayer(songList.get(index));
                         }
-                        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, true, false, "saregama");
+                        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, true, false, false, "saregama");
                         break;
                 }
                 if (playWhenReady && playbackState == Player.STATE_READY) {
@@ -290,12 +290,12 @@ public class SaregamaActivity extends AppCompatActivity {
                     alphaAnimation(btn_backward10, 0, 1f);
                     alphaAnimation(chipGroup, 0, 1f);
                     chipGroup.setVisibility(View.VISIBLE);
-                    CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, false, false, "saregama");
+                    CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, false, false, false, "saregama");
                 } else if (playWhenReady) {
                     // might be idle (plays after prepare()),
                     // buffering (plays when data available)
                     // or ended (plays when seek away from end)
-                    Toast.makeText(SaregamaActivity.this, "Buffering....", Toast.LENGTH_SHORT).show();
+                    //  Toast.makeText(SaregamaActivity.this, "Buffering....", Toast.LENGTH_SHORT).show();
                 } else {
                     // player paused in any state
                     btn_play_pause.setImageResource(R.drawable.play_button);
@@ -311,7 +311,7 @@ public class SaregamaActivity extends AppCompatActivity {
                     translateAnimation(btn_backward10, 0, btn_play_pause.getX() - btn_backward10.getX(), 0, 0);
                     alphaAnimation(chipGroup, 1f, 0);
                     chipGroup.setVisibility(View.GONE);
-                    CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, false, false, "saregama");
+                    CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, false, false, true, "saregama");
                 }
             }
 
@@ -485,7 +485,7 @@ public class SaregamaActivity extends AppCompatActivity {
         Collections.shuffle(songList);
         playSongInExoPlayer(songList.get(index));
 
-        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, true, false, "saregama");
+        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.pause_btn_black, true, false, false, "saregama");
     }
 
     private void getArtists() {
@@ -542,7 +542,7 @@ public class SaregamaActivity extends AppCompatActivity {
         } else {
             playSongInExoPlayer(songList.get(index));
         }
-        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, true, false, "saregama");
+        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, true, false, false, "saregama");
     }
 
     private void previousSong() {
@@ -556,7 +556,7 @@ public class SaregamaActivity extends AppCompatActivity {
         } else {
             playSongInExoPlayer(songList.get(index));
         }
-        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, true, false, "saregama");
+        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, true, false, false, "saregama");
     }
 
     private void skip10SongsForward() {
@@ -571,7 +571,7 @@ public class SaregamaActivity extends AppCompatActivity {
         } else {
             playSongInExoPlayer(songList.get(index));
         }
-        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, true, false, "saregama");
+        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, true, false, false, "saregama");
     }
 
     private void skip10SongsBackward() {
@@ -586,7 +586,7 @@ public class SaregamaActivity extends AppCompatActivity {
         } else {
             playSongInExoPlayer(songList.get(index));
         }
-        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, true, false, "saregama");
+        CreateNotification.createNotification(SaregamaActivity.this, songList.get(index), R.drawable.play_btn_black, true, false, false, "saregama");
     }
 
     private void pausePlayer() {

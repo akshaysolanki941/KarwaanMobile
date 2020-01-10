@@ -40,7 +40,7 @@ public class CreateNotification {
     private static NotificationCompat.Builder builder2;
     private static NotificationManagerCompat notificationManagerCompat;
 
-    public static void createNotification(Context context, SongModel song, int playbutton, Boolean isLoading, Boolean isBuffering, String type) {
+    public static void createNotification(Context context, SongModel song, int playbutton, Boolean isLoading, Boolean isBuffering, Boolean isPaused, String type) {
 
         if (isLoading) {
             new GetMetaData(context, song, playbutton, type).execute();
@@ -118,8 +118,7 @@ public class CreateNotification {
                         .setShowActionsInCompactView(1, 2, 3)
                         .setMediaSession(mediaSessionCompat.getSessionToken()))
                 .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .setOngoing(true);
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
 
         builder2 = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_queue_music_black_24dp)
@@ -136,8 +135,15 @@ public class CreateNotification {
                         .setShowActionsInCompactView(0, 1, 2)
                         .setMediaSession(mediaSessionCompat.getSessionToken()))
                 .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .setOngoing(true);
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+
+        if (isPaused) {
+            builder1.setOngoing(false);
+            builder2.setOngoing(false);
+        } else {
+            builder1.setOngoing(true);
+            builder2.setOngoing(true);
+        }
 
         if (type.equals("saregama")) {
             notification = builder1.build();
