@@ -110,7 +110,7 @@ public class ManualActivity extends AppCompatActivity {
         toolbar = (Toolbar) findViewById(R.id.toolBar);
         toolbar_title = (TextView) findViewById(R.id.toolbar_title);
         setSupportActionBar(toolbar);
-        toolbar_title.setText("Maunal Mode");
+        toolbar_title.setText(getString(R.string.manual_toolbar));
         getSupportActionBar().setDisplayShowTitleEnabled(false);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
@@ -141,7 +141,7 @@ public class ManualActivity extends AppCompatActivity {
         rv_songs.setHasFixedSize(true);
         rv_songs.setLayoutManager(new LinearLayoutManager(this));
 
-        notificationManager = getSystemService(NotificationManager.class);
+        notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel();
         }
@@ -240,7 +240,7 @@ public class ManualActivity extends AppCompatActivity {
                     mainSongsList.add(new SongModel(url, songName, artistsList));
                 }
                 if (!mainSongsList.isEmpty()) {
-                    tv_total_songs.setText("Total Songs: " + mainSongsList.size());
+                    tv_total_songs.setText(getResources().getString(R.string.total_songs).concat(String.valueOf(mainSongsList.size())));
                     tv_total_songs.setVisibility(View.VISIBLE);
                     songs.clear();
                     songs.addAll(mainSongsList);
@@ -263,7 +263,6 @@ public class ManualActivity extends AppCompatActivity {
     private void search(CharSequence text) {
         songs.clear();
         String query = text.toString().toLowerCase();
-        ArrayList<SongModel> searchSongNames = new ArrayList<>();
         for (SongModel song : mainSongsList) {
             if (song.getSongName().toLowerCase().contains(query)) {
                 songs.add(song);
@@ -621,8 +620,12 @@ public class ManualActivity extends AppCompatActivity {
         super.onDestroy();
         getSharedPreferences("released", MODE_PRIVATE).edit().putBoolean("released", true).commit();
         pausePlayer();
-        exoPlayer.release();
-        notificationManager.cancelAll();
+        if (exoPlayer != null) {
+            exoPlayer.release();
+        }
+        if (notificationManager != null) {
+            notificationManager.cancelAll();
+        }
         unregisterReceiver(broadcastReceiver);
     }
 }

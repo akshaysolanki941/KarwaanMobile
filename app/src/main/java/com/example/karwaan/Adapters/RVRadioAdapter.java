@@ -3,16 +3,15 @@ package com.example.karwaan.Adapters;
 import android.animation.AnimatorInflater;
 import android.animation.AnimatorSet;
 import android.content.Context;
-import android.text.SpannableStringBuilder;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
 import android.widget.TextView;
 
-import com.example.karwaan.ManualActivity;
-import com.example.karwaan.Models.SongModel;
+import com.example.karwaan.Models.RadioModel;
 import com.example.karwaan.R;
+import com.example.karwaan.RadioActivity;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -20,74 +19,60 @@ import java.util.Random;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHolder> {
+public class RVRadioAdapter extends RecyclerView.Adapter<RVRadioAdapter.ViewHolder> {
 
-    private ArrayList<SongModel> songs;
+    private ArrayList<RadioModel> radioList;
     private Context context;
-    private int lastPosition = 0;
 
-    public RVSongsAdapter() {
+    public RVRadioAdapter() {
     }
 
-    public RVSongsAdapter(ArrayList<SongModel> songs, Context context) {
+    public RVRadioAdapter(ArrayList<RadioModel> radioList, Context context) {
+        this.radioList = radioList;
         this.context = context;
-        this.songs = songs;
     }
 
     @NonNull
     @Override
-    public RVSongsAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
-        View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.rv_songs_item, viewGroup, false);
-        return new RVSongsAdapter.ViewHolder(view);
+    public RVRadioAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
+        View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.rv_radio_item, viewGroup, false);
+        return new RVRadioAdapter.ViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RVSongsAdapter.ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull RVRadioAdapter.ViewHolder holder, int position) {
 
-        SongModel song = songs.get(position);
-        holder.tv_song_name.setText(song.getSongName());
-
-        SpannableStringBuilder artists = new SpannableStringBuilder();
-        ArrayList<String> artistList = song.getArtists();
-        for (int i = 0; i < artistList.size(); i++) {
-            String a = artistList.get(i);
-            if (i == artistList.size() - 1) {
-                artists.append(a);
-            } else {
-                artists.append(a).append(" | ");
-            }
-        }
-        holder.tv_artist.setText(artists);
-        holder.tv_artist.setSelected(true);
+        RadioModel radio = radioList.get(position);
 
         setEnterAnimation(holder.itemView, position);
 
+        holder.tv_radio_name.setText(radio.getRadioName());
+
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-
+            public void onClick(View view) {
                 setReduceSizeAnimation(holder.itemView);
                 setRegainSizeAnimation(holder.itemView);
 
-                ((ManualActivity) context).holderItemOnClick(position);
+                ((RadioActivity) context).holderItemOnClick(position);
             }
         });
+
     }
 
     @Override
     public int getItemCount() {
-        return songs.size();
+        return radioList.size();
     }
 
     class ViewHolder extends RecyclerView.ViewHolder {
 
-        TextView tv_song_name, tv_artist;
+        TextView tv_radio_name;
 
         private ViewHolder(@NonNull View itemView) {
             super(itemView);
 
-            tv_song_name = (TextView) itemView.findViewById(R.id.tv_song_name);
-            tv_artist = itemView.findViewById(R.id.tv_artist);
+            tv_radio_name = (TextView) itemView.findViewById(R.id.tv_radio_name);
 
         }
     }

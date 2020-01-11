@@ -12,4 +12,15 @@
         \n\n<b>forward:</b> <i>skips 10 songs in forward direction</i>
         \n\n<b>backward:</b> <i>skips 10 songs in backward direction</i>
     </string>
+
+    <string name="total_songs">"Total Songs: "</string>
+    <string name="open_source_licenses">Open Source Licenses</string>
+    <string name="enable_voice_mode">Enable Voice Mode</string>
+    <string name="radio">RADIO</string>
+    <string name="manual_mode">MANUAL MODE</string>
+    <string name="saregama_mode">SAREGAMA MODE</string>
+    <string name="radio_toolbar">Radio</string>
+    <string name="manual_toolbar">Maunal Mode</string>
+    <string name="saregama_toolbar">Saregama Mode</string>
+    <string name="select_a_radio">Select a radio</string>
 </resources>

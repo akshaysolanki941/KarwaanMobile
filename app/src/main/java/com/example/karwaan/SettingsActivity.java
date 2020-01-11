@@ -4,8 +4,10 @@ import android.Manifest;
 import android.app.Dialog;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebView;
 import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -15,6 +17,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -23,7 +26,7 @@ import androidx.core.content.ContextCompat;
 public class SettingsActivity extends AppCompatActivity {
 
     private Toolbar toolbar;
-    private TextView toolbar_title;
+    private TextView toolbar_title, tv_open_source_licenses;
     private Switch switch_enable_voice_mode;
     private ImageView bg;
     private ImageButton btn_help_voice;
@@ -43,6 +46,7 @@ public class SettingsActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         bg = findViewById(R.id.bg);
+        tv_open_source_licenses = findViewById(R.id.tv_open_source_licenses);
         btn_help_voice = findViewById(R.id.btn_help_voice);
         dialog_voice_help = new Dialog(this);
 
@@ -97,6 +101,13 @@ public class SettingsActivity extends AppCompatActivity {
                 dialog_voice_help.show();
             }
         });
+
+        tv_open_source_licenses.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                displayLicensesAlertDialog();
+            }
+        });
     }
 
     private void checkVoiceCommandPermission() {
@@ -148,6 +159,18 @@ public class SettingsActivity extends AppCompatActivity {
             }
         }
     }
+
+
+    private void displayLicensesAlertDialog() {
+        WebView view = (WebView) LayoutInflater.from(this).inflate(R.layout.dialog_licenses, null);
+        view.loadUrl("file:///android_asset/open_source_licenses.html");
+        new AlertDialog.Builder(this, R.style.Theme_AppCompat_Light_Dialog_Alert)
+                .setTitle("Open Source Licenses")
+                .setView(view)
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
+    }
+
 
     @Override
     public boolean onSupportNavigateUp() {

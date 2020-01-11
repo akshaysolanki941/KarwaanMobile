@@ -55,7 +55,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/toolBar"
         android:layout_marginTop="10dp"
-        android:layout_marginRight="10dp"
+        android:layout_marginEnd="10dp"
         android:layout_marginBottom="10dp"
         android:layout_toEndOf="@+id/btn_help_voice"
         android:background="@drawable/switch_bg"
@@ -64,8 +64,21 @@
         android:paddingTop="10dp"
         android:paddingEnd="10dp"
         android:paddingBottom="10dp"
-        android:text="Enable Voice Mode"
+        android:text="@string/enable_voice_mode"
         android:textColor="#fff"
         android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/tv_open_source_licenses"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="10dp"
+        android:background="@drawable/switch_bg"
+        android:fontFamily="@font/overpass_semi_bold"
+        android:padding="6dp"
+        android:text="@string/open_source_licenses"
+        android:textAlignment="center"
+        android:textSize="15sp" />
 
 </RelativeLayout>

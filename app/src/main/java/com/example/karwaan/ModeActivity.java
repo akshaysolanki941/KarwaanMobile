@@ -11,7 +11,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -27,8 +26,7 @@ public class ModeActivity extends AppCompatActivity {
 
     private Toolbar toolbar;
     private TextView toolbar_title;
-    private Button btn_saregama_mode, btn_maunal_mode;
-    private RelativeLayout rl_saregama_mode, rl_manual_mode;
+    private RelativeLayout rl_saregama_mode, rl_manual_mode, rl_radio_mode;
     private ImageView bg;
 
 
@@ -43,10 +41,9 @@ public class ModeActivity extends AppCompatActivity {
         toolbar_title.setText("Karwaan Mobile");
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
-        btn_saregama_mode = (Button) findViewById(R.id.btn_saregama_mode);
-        btn_maunal_mode = (Button) findViewById(R.id.btn_manual_mode);
         rl_saregama_mode = findViewById(R.id.rl_saregama_mode);
         rl_manual_mode = findViewById(R.id.rl_manual_mode);
+        rl_radio_mode = findViewById(R.id.rl_radio_mode);
         bg = findViewById(R.id.bg);
 
         setReduceSizeAnimation(toolbar_title);
@@ -60,6 +57,10 @@ public class ModeActivity extends AppCompatActivity {
         setReduceSizeAnimation(rl_manual_mode);
         alphaAnimation(rl_manual_mode, 0, 1f);
         setRegainSizeAnimation(rl_manual_mode);
+
+        setReduceSizeAnimation(rl_radio_mode);
+        alphaAnimation(rl_radio_mode, 0, 1f);
+        setRegainSizeAnimation(rl_radio_mode);
     }
 
     @Override
@@ -84,6 +85,17 @@ public class ModeActivity extends AppCompatActivity {
             public void onClick(View view) {
                 if (isNetworkConnected()) {
                     startActivity(new Intent(ModeActivity.this, ManualActivity.class));
+                } else {
+                    Toast.makeText(ModeActivity.this, "No internet connection", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        rl_radio_mode.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (isNetworkConnected()) {
+                    startActivity(new Intent(ModeActivity.this, RadioActivity.class));
                 } else {
                     Toast.makeText(ModeActivity.this, "No internet connection", Toast.LENGTH_SHORT).show();
                 }

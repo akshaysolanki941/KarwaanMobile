@@ -17,6 +17,7 @@ import android.os.Handler;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
+import android.speech.tts.TextToSpeech;
 import android.text.SpannableStringBuilder;
 import android.view.View;
 import android.view.Window;
@@ -96,6 +97,8 @@ public class SaregamaActivity extends AppCompatActivity {
     private Intent speechRecognizerIntent;
     private String keeper = "";
 
+    private TextToSpeech textToSpeech;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,7 +108,7 @@ public class SaregamaActivity extends AppCompatActivity {
         toolbar = (Toolbar) findViewById(R.id.toolBar);
         toolbar_title = (TextView) findViewById(R.id.toolbar_title);
         setSupportActionBar(toolbar);
-        toolbar_title.setText("Saregama Mode");
+        toolbar_title.setText(getString(R.string.saregama_toolbar));
         getSupportActionBar().setDisplayShowTitleEnabled(false);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
@@ -135,6 +138,15 @@ public class SaregamaActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel();
         }
+
+        textToSpeech = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int i) {
+                if (i != TextToSpeech.ERROR) {
+                    textToSpeech.setLanguage(Locale.getDefault());
+                }
+            }
+        });
 
         setReduceSizeAnimation(btn_play_pause);
         setReduceSizeAnimation(btn_next);
@@ -220,7 +232,7 @@ public class SaregamaActivity extends AppCompatActivity {
             if (selectedChip != null) {
                 String selectedArtist = selectedChip.getText().toString();
                 if (selectedArtist.equals("All Artists")) {
-                    tv_total_songs.setText("Total Songs: " + mainSongList.size());
+                    tv_total_songs.setText(getResources().getString(R.string.total_songs).concat(String.valueOf(mainSongList.size())));
                     songList.clear();
                     songList.addAll(mainSongList);
                     startRandomSongs();
@@ -235,7 +247,7 @@ public class SaregamaActivity extends AppCompatActivity {
                         }
                     }
                     songList.addAll(artistSongsList);
-                    tv_total_songs.setText("Total Songs: " + artistSongsList.size());
+                    tv_total_songs.setText(getResources().getString(R.string.total_songs).concat(String.valueOf(artistSongsList.size())));
                     startRandomSongs();
                 }
             }
@@ -340,7 +352,7 @@ public class SaregamaActivity extends AppCompatActivity {
                 artists.append(a).append(" | ");
             }
         }
-        tv_saregama_song_details.setText(song.getSongName() + " - " + artists);
+        tv_saregama_song_details.setText(song.getSongName().concat(" - ").concat(String.valueOf(artists)));
         tv_saregama_song_details.setSelected(true);
     }
 
@@ -473,7 +485,7 @@ public class SaregamaActivity extends AppCompatActivity {
                     mainSongList.add(new SongModel(url, songName, artistsList));
                 }
                 if (!mainSongList.isEmpty()) {
-                    tv_total_songs.setText("Total Songs: " + mainSongList.size());
+                    tv_total_songs.setText(getResources().getString(R.string.total_songs).concat(String.valueOf(mainSongList.size())));
                     tv_total_songs.setVisibility(View.VISIBLE);
                     getArtists();
                     songList.clear();
@@ -571,6 +583,7 @@ public class SaregamaActivity extends AppCompatActivity {
     }
 
     private void skip10SongsForward() {
+        textToSpeech.speak("Ten songs skipped", TextToSpeech.QUEUE_FLUSH, null, null);
         Toast.makeText(SaregamaActivity.this, "Skipping 10 songs in forward direction", Toast.LENGTH_SHORT).show();
         loading_dialog.show();
         lottieAnimationView.pauseAnimation();
@@ -586,6 +599,7 @@ public class SaregamaActivity extends AppCompatActivity {
     }
 
     private void skip10SongsBackward() {
+        textToSpeech.speak("Ten songs skipped", TextToSpeech.QUEUE_FLUSH, null, null);
         Toast.makeText(SaregamaActivity.this, "Skipping 10 songs in backward direction", Toast.LENGTH_SHORT).show();
         loading_dialog.show();
         lottieAnimationView.pauseAnimation();
@@ -694,12 +708,20 @@ public class SaregamaActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         pausePlayer();
-        exoPlayer.release();
+        if (exoPlayer != null) {
+            exoPlayer.release();
+        }
+        if (textToSpeech != null) {
+            textToSpeech.stop();
+            textToSpeech.shutdown();
+        }
         lottieAnimationView.pauseAnimation();
         if (speechRecognizer != null) {
             speechRecognizer.cancel();
         }
-        notificationManager.cancelAll();
+        if (notificationManager != null) {
+            notificationManager.cancelAll();
+        }
         unregisterReceiver(broadcastReceiver);
     }
 }
