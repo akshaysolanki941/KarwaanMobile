@@ -3,13 +3,18 @@ package com.example.karwaan;
 import android.animation.AnimatorInflater;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.app.Dialog;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -17,6 +22,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -26,8 +34,10 @@ public class ModeActivity extends AppCompatActivity {
 
     private Toolbar toolbar;
     private TextView toolbar_title;
+    private ImageView loading_gif_imageView;
     private RelativeLayout rl_saregama_mode, rl_manual_mode, rl_radio_mode;
     private ImageView bg;
+    private Dialog loading_dialog;
 
 
     @Override
@@ -40,6 +50,14 @@ public class ModeActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         toolbar_title.setText("Karwaan Mobile");
         getSupportActionBar().setDisplayShowTitleEnabled(false);
+
+        loading_dialog = new Dialog(this);
+        loading_dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        loading_dialog.setContentView(R.layout.loading_dialog);
+        loading_gif_imageView = (ImageView) loading_dialog.findViewById(R.id.loading_gif_imageView);
+        Glide.with(getApplicationContext()).load(R.drawable.loading).placeholder(R.drawable.loading).into(loading_gif_imageView);
+        loading_dialog.setCanceledOnTouchOutside(false);
+        loading_dialog.setCancelable(false);
 
         rl_saregama_mode = findViewById(R.id.rl_saregama_mode);
         rl_manual_mode = findViewById(R.id.rl_manual_mode);
@@ -61,6 +79,8 @@ public class ModeActivity extends AppCompatActivity {
         setReduceSizeAnimation(rl_radio_mode);
         alphaAnimation(rl_radio_mode, 0, 1f);
         setRegainSizeAnimation(rl_radio_mode);
+
+        setUpFirebaseMessaging();
     }
 
     @Override
@@ -113,6 +133,28 @@ public class ModeActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.settings_menu, menu);
         return true;
+    }
+
+    private void setUpFirebaseMessaging() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel("Messaging", "Messaging", NotificationManager.IMPORTANCE_DEFAULT);
+
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            if (manager != null) {
+                manager.createNotificationChannel(channel);
+            }
+        }
+
+        FirebaseMessaging.getInstance().subscribeToTopic("general")
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        String msg = "Successful";
+                        if (!task.isSuccessful()) {
+                            msg = "Failed";
+                        }
+                    }
+                });
     }
 
     @Override

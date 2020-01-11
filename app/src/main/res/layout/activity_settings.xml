@@ -69,6 +69,21 @@
         android:textSize="18sp" />
 
     <TextView
+        android:id="@+id/tv_update"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/tv_open_source_licenses"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:background="@drawable/switch_bg"
+        android:fontFamily="@font/overpass_semi_bold"
+        android:padding="6dp"
+        android:text="@string/update_app"
+        android:textAlignment="center"
+        android:textColor="#fff"
+        android:textSize="15sp" />
+
+    <TextView
         android:id="@+id/tv_open_source_licenses"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -79,6 +94,7 @@
         android:padding="6dp"
         android:text="@string/open_source_licenses"
         android:textAlignment="center"
+        android:textColor="#fff"
         android:textSize="15sp" />
 
 </RelativeLayout>

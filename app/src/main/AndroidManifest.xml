@@ -48,6 +48,13 @@
         <receiver android:name=".Services.NotificationActionService" />
 
         <service android:name=".Services.OnClearFromRecentService" />
+
+
+        <service android:name=".FirebaseMessaging.MessagingService">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

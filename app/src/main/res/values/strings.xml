@@ -23,4 +23,7 @@
     <string name="manual_toolbar">Maunal Mode</string>
     <string name="saregama_toolbar">Saregama Mode</string>
     <string name="select_a_radio">Select a radio</string>
+
+
+    <string name="update_app">UPDATE APP (ignore if already updated)</string>
 </resources>

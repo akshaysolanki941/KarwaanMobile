@@ -2,7 +2,9 @@ package com.example.karwaan;
 
 import android.Manifest;
 import android.app.Dialog;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,7 +18,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -26,7 +34,7 @@ import androidx.core.content.ContextCompat;
 public class SettingsActivity extends AppCompatActivity {
 
     private Toolbar toolbar;
-    private TextView toolbar_title, tv_open_source_licenses;
+    private TextView toolbar_title, tv_open_source_licenses, tv_update;
     private Switch switch_enable_voice_mode;
     private ImageView bg;
     private ImageButton btn_help_voice;
@@ -47,6 +55,8 @@ public class SettingsActivity extends AppCompatActivity {
 
         bg = findViewById(R.id.bg);
         tv_open_source_licenses = findViewById(R.id.tv_open_source_licenses);
+        tv_update = findViewById(R.id.tv_update);
+        tv_update.setVisibility(View.GONE);
         btn_help_voice = findViewById(R.id.btn_help_voice);
         dialog_voice_help = new Dialog(this);
 
@@ -61,6 +71,8 @@ public class SettingsActivity extends AppCompatActivity {
             switch_enable_voice_mode.setChecked(false);
             btn_help_voice.setVisibility(View.GONE);
         }
+
+        checkForUpdates();
     }
 
     @Override
@@ -169,6 +181,38 @@ public class SettingsActivity extends AppCompatActivity {
                 .setView(view)
                 .setPositiveButton(android.R.string.ok, null)
                 .show();
+    }
+
+    private void checkForUpdates() {
+        DatabaseReference updateRef = FirebaseDatabase.getInstance().getReference("Update");
+        updateRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                String available = dataSnapshot.child("available").getValue(String.class);
+                if (!available.isEmpty()) {
+                    if (available.equals("yes")) {
+                        tv_update.setVisibility(View.VISIBLE);
+                        tv_update.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                String link = dataSnapshot.child("googleSiteLink").getValue(String.class);
+                                if (!link.startsWith("http://") && !link.startsWith("https://")) {
+                                    link = "http://" + link;
+                                }
+                                Intent i = new Intent(Intent.ACTION_VIEW);
+                                i.setData(Uri.parse(link));
+                                startActivity(i);
+                            }
+                        });
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Toast.makeText(SettingsActivity.this, databaseError.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
 
