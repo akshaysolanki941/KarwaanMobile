@@ -13,17 +13,20 @@
         \n\n<b>backward:</b> <i>skips 10 songs in backward direction</i>
     </string>
 
+    <string name="skip_10_help">
+        There is a button @ in the app as well as in the notifications. The default function of this button is to forward or rewind the song by 10 seconds.
+        If this setting is enabled then this button will skip 10 songs.
+    </string>
+
     <string name="total_songs">"Total Songs: "</string>
     <string name="open_source_licenses">Open Source Licenses</string>
     <string name="enable_voice_mode">Enable Voice Mode</string>
-    <string name="radio">RADIO</string>
     <string name="manual_mode">MANUAL MODE</string>
     <string name="saregama_mode">SAREGAMA MODE</string>
-    <string name="radio_toolbar">Radio</string>
     <string name="manual_toolbar">Maunal Mode</string>
     <string name="saregama_toolbar">Saregama Mode</string>
-    <string name="select_a_radio">Select a radio</string>
 
 
     <string name="update_app">UPDATE APP (ignore if already updated)</string>
+    <string name="enable_10_songs_skipping">Enable 10 songs skipping</string>
 </resources>

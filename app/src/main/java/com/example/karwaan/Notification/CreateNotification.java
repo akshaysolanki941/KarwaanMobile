@@ -122,7 +122,7 @@ public class CreateNotification {
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
 
-        builder2 = new NotificationCompat.Builder(context, CHANNEL_ID)
+       /* builder2 = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_queue_music_black_24dp)
                 .setContentTitle(title)
                 .setContentText(artist)
@@ -137,24 +137,23 @@ public class CreateNotification {
                         .setShowActionsInCompactView(0, 1, 2)
                         .setMediaSession(mediaSessionCompat.getSessionToken()))
                 .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);*/
 
         if (isPaused || playbutton == R.drawable.play_btn_black) {
             builder1.setOngoing(false);
-            builder2.setOngoing(false);
         } else {
             builder1.setOngoing(true);
-            builder2.setOngoing(true);
         }
 
         if (type.equals("saregama")) {
-            notification = builder1.build();
+            builder1.setContentIntent(pendingIntentSaregamaActivity);
         }
 
         if (type.equals("manual")) {
-            notification = builder2.build();
+            builder1.setContentIntent(pendingIntentManualActivity);
         }
 
+        notification = builder1.build();
         notificationManagerCompat.notify(999, notification);
     }
 
@@ -191,7 +190,7 @@ public class CreateNotification {
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
 
-            if (type.equals("saregama")) {
+           /* if (type.equals("saregama")) {
                 builder1.setLargeIcon(bitmap);
                 notification = builder1.build();
             }
@@ -199,8 +198,9 @@ public class CreateNotification {
             if (type.equals("manual")) {
                 builder2.setLargeIcon(bitmap);
                 notification = builder2.build();
-            }
-
+            }*/
+            builder1.setLargeIcon(bitmap);
+            notification = builder1.build();
             notificationManagerCompat.notify(999, notification);
         }
     }

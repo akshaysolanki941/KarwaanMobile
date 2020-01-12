@@ -3,23 +3,24 @@ package com.example.karwaan;
 import android.animation.AnimatorInflater;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
-import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
+import android.os.RemoteException;
+import android.support.v4.media.MediaBrowserCompat;
+import android.support.v4.media.MediaMetadataCompat;
+import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 import android.text.Editable;
-import android.text.SpannableStringBuilder;
 import android.text.TextWatcher;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -28,7 +29,6 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -36,24 +36,7 @@ import com.bumptech.glide.Glide;
 import com.example.karwaan.Adapters.RVSongsAdapter;
 import com.example.karwaan.Models.SongModel;
 import com.example.karwaan.Notification.CreateNotification;
-import com.example.karwaan.Services.OnClearFromRecentService;
-import com.google.android.exoplayer2.ExoPlaybackException;
-import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.ExoPlayerFactory;
-import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
-import com.google.android.exoplayer2.extractor.ExtractorsFactory;
-import com.google.android.exoplayer2.source.ExtractorMediaSource;
-import com.google.android.exoplayer2.source.MediaSource;
-import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
-import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
-import com.google.android.exoplayer2.trackselection.TrackSelection;
-import com.google.android.exoplayer2.upstream.BandwidthMeter;
-import com.google.android.exoplayer2.upstream.DataSource;
-import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
-import com.google.android.exoplayer2.upstream.TransferListener;
-import com.google.android.exoplayer2.util.Util;
+import com.example.karwaan.Services.ManualPlaybackService;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.database.DataSnapshot;
@@ -69,6 +52,7 @@ import java.util.HashSet;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -82,25 +66,15 @@ public class ManualActivity extends AppCompatActivity {
     private ArrayList<SongModel> mainSongsList = new ArrayList<>();
     private HashSet<String> artistHashSet = new HashSet<>();
     private SlidingUpPanelLayout slidingUpPanelLayout;
-    private ImageButton btn_play_pause, btn_next_song, btn_prev_song;
-    private SeekBar seekBar;
+    private ImageButton btn_play_pause, btn_next_song, btn_prev_song, btn_forward_10, btn_backward_10;
     private Dialog loading_dialog;
     private ImageView loading_gif_imageView, bg;
     private ChipGroup chipGroup;
     private EditText et_search;
 
-    private ExoPlayer exoPlayer;
-    private BandwidthMeter bandwidthMeter;
-    private ExtractorsFactory extractorsFactory;
-    private TrackSelection.Factory trackSelectionfactory;
-    private DataSource.Factory dataSourceFactory;
-
-    private int mediaFileLengthInMilliseconds;
-    private final Handler handler = new Handler();
-    private int index;
-    private MediaSessionCompat mediaSessionCompat;
-
     private NotificationManager notificationManager;
+    private MediaBrowserCompat mediaBrowser;
+    private MediaControllerCompat mediaController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -131,7 +105,8 @@ public class ManualActivity extends AppCompatActivity {
         btn_play_pause = (ImageButton) findViewById(R.id.btn_play_pause);
         btn_next_song = findViewById(R.id.btn_next_song);
         btn_prev_song = findViewById(R.id.btn_prev_song);
-        seekBar = (SeekBar) findViewById(R.id.seekBar);
+        btn_forward_10 = findViewById(R.id.btn_forward_10);
+        btn_backward_10 = findViewById(R.id.btn_backward_10);
         tv_current_time = findViewById(R.id.tv_current_time);
         tv_total_time = findViewById(R.id.tv_total_time);
         tv_total_songs = findViewById(R.id.tv_total_songs);
@@ -148,13 +123,14 @@ public class ManualActivity extends AppCompatActivity {
             createNotificationChannel();
         }
 
-        registerReceiver(broadcastReceiver, new IntentFilter("SONGS"));
-        startService(new Intent(getBaseContext(), OnClearFromRecentService.class));
+        LocalBroadcastManager.getInstance(this).registerReceiver(broadcast, new IntentFilter("loadingDismiss"));
+        LocalBroadcastManager.getInstance(this).registerReceiver(broadcast1, new IntentFilter("updateCurrentTime"));
 
-        mediaSessionCompat = new MediaSessionCompat(this, "tag");
-
-        initExoPlayer();
+        mediaBrowser = new MediaBrowserCompat(this, new ComponentName(this, ManualPlaybackService.class), connectionCallbacks, null);
+        mediaBrowser.connect();
         getSongs();
+
+        getSharedPreferences("firstTimeCreated", MODE_PRIVATE).edit().putBoolean("firstTimeCreated", true).commit();
     }
 
     @Override
@@ -163,21 +139,6 @@ public class ManualActivity extends AppCompatActivity {
 
         Glide.with(this).load(R.drawable.bg).into(bg);
 
-        btn_play_pause.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                playPauseSong();
-            }
-        });
-
-        btn_next_song.setOnClickListener(v -> {
-            nextSong();
-        });
-
-        btn_prev_song.setOnClickListener(v -> {
-            prevSong();
-        });
-
         chipGroup.setOnCheckedChangeListener((chipGroup, i) -> {
             loading_dialog.show();
             Chip selectedChip = chipGroup.findViewById(i);
@@ -185,6 +146,9 @@ public class ManualActivity extends AppCompatActivity {
             setRegainSizeAnimation(selectedChip);
             if (selectedChip != null) {
                 String selectedArtist = selectedChip.getText().toString();
+                Intent intent = new Intent("chip");
+                intent.putExtra("chip", selectedArtist);
+                LocalBroadcastManager.getInstance(ManualActivity.this).sendBroadcast(intent);
                 if (selectedArtist.equals("All Artists")) {
                     songs.clear();
                     songs.addAll(mainSongsList);
@@ -249,6 +213,9 @@ public class ManualActivity extends AppCompatActivity {
                     songs.clear();
                     songs.addAll(mainSongsList);
                     getArtists();
+                    Intent i = new Intent("mainSongList");
+                    i.putExtra("mainSongList", songs);
+                    LocalBroadcastManager.getInstance(ManualActivity.this).sendBroadcast(i);
                     rv_songs.setAdapter(new RVSongsAdapter(songs, ManualActivity.this));
                 } else {
                     Toast.makeText(ManualActivity.this, "No songs found", Toast.LENGTH_SHORT).show();
@@ -272,6 +239,9 @@ public class ManualActivity extends AppCompatActivity {
                 songs.add(song);
             }
         }
+        Intent i = new Intent("searchList");
+        i.putExtra("search", query);
+        LocalBroadcastManager.getInstance(ManualActivity.this).sendBroadcast(i);
         rv_songs.setAdapter(new RVSongsAdapter(songs, ManualActivity.this));
     }
 
@@ -310,236 +280,183 @@ public class ManualActivity extends AppCompatActivity {
         chipGroup.addView(chip);
     }
 
-    private void primarySeekBarProgressUpdater() {
-        if (!getSharedPreferences("released", MODE_PRIVATE).getBoolean("released", true))
-            if (isExoPlaying()) {
-                seekBar.setProgress((int) (((float) exoPlayer.getCurrentPosition() / mediaFileLengthInMilliseconds) * 100));
-                tv_current_time.setText(milliSecondsToTimer(exoPlayer.getCurrentPosition()));
-                Runnable notification = new Runnable() {
-                    public void run() {
-                        primarySeekBarProgressUpdater();
+    private final MediaBrowserCompat.ConnectionCallback connectionCallbacks =
+            new MediaBrowserCompat.ConnectionCallback() {
+                @Override
+                public void onConnected() {
+                    MediaSessionCompat.Token token = mediaBrowser.getSessionToken();
+                    MediaControllerCompat mediaController = null;
+                    try {
+                        mediaController = new MediaControllerCompat(ManualActivity.this, token);
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
                     }
-                };
-                handler.postDelayed(notification, 1000);
-            }
-    }
 
-    private void initExoPlayer() {
-        bandwidthMeter = new DefaultBandwidthMeter();
-        extractorsFactory = new DefaultExtractorsFactory();
-        trackSelectionfactory = new AdaptiveTrackSelection.Factory(bandwidthMeter);
-        dataSourceFactory = new DefaultDataSourceFactory(this, Util.getUserAgent(this, getPackageName()), (TransferListener) bandwidthMeter);
-        exoPlayer = ExoPlayerFactory.newSimpleInstance(this, new DefaultTrackSelector(trackSelectionfactory));
+                    MediaControllerCompat.setMediaController(ManualActivity.this, mediaController);
+                    buildTransportControls();
+                }
 
-        exoPlayer.addListener(new Player.EventListener() {
+                @Override
+                public void onConnectionSuspended() {
+                    // The Service has crashed. Disable transport controls until it automatically reconnects
+                    Toast.makeText(ManualActivity.this, "connection suspended", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onConnectionFailed() {
+                    Toast.makeText(ManualActivity.this, "connection failed", Toast.LENGTH_SHORT).show();
+                    // The Service has refused our connection
+                }
+            };
+
+    void buildTransportControls() {
+        btn_play_pause.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-
-                if (playbackState == Player.STATE_BUFFERING) {
-                    loading_dialog.show();
-                    //  Toast.makeText(ManualActivity.this, "Buffering....", Toast.LENGTH_SHORT).show();
-                    CreateNotification.createNotification(ManualActivity.this, mediaSessionCompat, songs.get(index), R.drawable.play_btn_black, false, true, false, "manual");
-                }
-
-                if (playbackState == Player.STATE_READY) {
-                    seekBar.setSecondaryProgress((int) exoPlayer.getBufferedPosition());
-                    mediaFileLengthInMilliseconds = (int) exoPlayer.getDuration();
-                    tv_total_time.setText(milliSecondsToTimer(mediaFileLengthInMilliseconds));
-                    primarySeekBarProgressUpdater();
-                }
-
-                if (playbackState == Player.STATE_ENDED) {
-                    btn_play_pause.setImageResource(R.drawable.play_btn_black);
-                    CreateNotification.createNotification(ManualActivity.this, mediaSessionCompat, songs.get(index), R.drawable.play_btn_black, false, false, true, "manual");
-                }
-
-                if (playWhenReady && playbackState == Player.STATE_READY) {
-                    // media actually playing
-                    loading_dialog.dismiss();
-                    btn_play_pause.setImageResource(R.drawable.pause_btn_black);
-                    btn_next_song.setEnabled(true);
-                    btn_prev_song.setEnabled(true);
-                    alphaAnimation(btn_next_song, 0, 1f);
-                    alphaAnimation(btn_prev_song, 0, 1f);
-                    CreateNotification.createNotification(ManualActivity.this, mediaSessionCompat, songs.get(index), R.drawable.pause_btn_black, false, false, false, "manual");
-                } else if (playWhenReady) {
-                    // might be idle (plays after prepare()),
-                    // buffering (plays when data available)
-                    // or ended (plays when seek away from end)
-                    // Toast.makeText(ManualActivity.this, "Buffering....", Toast.LENGTH_SHORT).show();
+            public void onClick(View view) {
+                setReduceSizeAnimation(btn_play_pause);
+                setRegainSizeAnimation(btn_play_pause);
+                int pbState = MediaControllerCompat.getMediaController(ManualActivity.this).getPlaybackState().getState();
+                if (pbState == PlaybackStateCompat.STATE_PLAYING) {
+                    MediaControllerCompat.getMediaController(ManualActivity.this).getTransportControls().pause();
                 } else {
-                    // player paused in any state
-                    btn_play_pause.setImageResource(R.drawable.play_btn_black);
-                    btn_next_song.setEnabled(false);
-                    btn_prev_song.setEnabled(false);
-                    alphaAnimation(btn_next_song, 1f, 0);
-                    alphaAnimation(btn_prev_song, 1f, 0);
-                    CreateNotification.createNotification(ManualActivity.this, mediaSessionCompat, songs.get(index), R.drawable.play_btn_black, false, false, true, "manual");
+                    MediaControllerCompat.getMediaController(ManualActivity.this).getTransportControls().play();
                 }
-            }
-
-            @Override
-            public void onPlayerError(ExoPlaybackException error) {
-                Toast.makeText(ManualActivity.this, "Error: " + error.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
-    }
 
-    @SuppressLint("ClickableViewAccessibility")
-    private void setUpExoPlayer(SongModel song) {
-        MediaSource mediaSource = new ExtractorMediaSource(Uri.parse(song.getUrl()), dataSourceFactory, extractorsFactory, null, Throwable::printStackTrace);
-        exoPlayer.prepare(mediaSource);
-        exoPlayer.setPlayWhenReady(true);
-
-        seekBar.setOnTouchListener(new View.OnTouchListener() {
+        btn_next_song.setOnClickListener(new View.OnClickListener() {
             @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-                if (isExoPlaying()) {
-                    SeekBar sb = (SeekBar) view;
-                    int playPositionInMillisecconds = (mediaFileLengthInMilliseconds / 100) * sb.getProgress();
-                    exoPlayer.seekTo(playPositionInMillisecconds);
-                }
-                return false;
+            public void onClick(View view) {
+                MediaControllerCompat.getMediaController(ManualActivity.this).getTransportControls().skipToNext();
             }
         });
-    }
 
-    private void playPauseSong() {
-        setReduceSizeAnimation(btn_play_pause);
-        setRegainSizeAnimation(btn_play_pause);
-
-        if (!isExoPlaying()) {
-            startPlayer();
-        } else {
-            pausePlayer();
-        }
-        primarySeekBarProgressUpdater();
-    }
-
-    private void nextSong() {
-        loading_dialog.show();
-        if (index + 1 >= songs.size()) {
-            Toast.makeText(ManualActivity.this, "This is the last song", Toast.LENGTH_SHORT).show();
-            loading_dialog.dismiss();
-        } else {
-            index++;
-            SongModel nextSong = songs.get(index);
-            ArrayList<String> artistList = nextSong.getArtists();
-            SpannableStringBuilder artists = new SpannableStringBuilder();
-
-            for (int i = 0; i < artistList.size(); i++) {
-                String artist = artistList.get(i);
-                if (i == artistList.size() - 1) {
-                    artists.append(artist);
-                } else {
-                    artists.append(artist).append(" | ");
-                }
-            }
-
-            tv_sliding_view_song_name.setText(nextSong.getSongName() + " - " + artists);
-            tv_sliding_view_song_name.setSelected(true);
-            CreateNotification.createNotification(ManualActivity.this, mediaSessionCompat, nextSong, R.drawable.play_btn_black, true, false, false, "manual");
-            setUpExoPlayer(nextSong);
-        }
-    }
-
-    private void prevSong() {
-        loading_dialog.show();
-        if (index - 1 < 0) {
-            Toast.makeText(ManualActivity.this, "This is the first song", Toast.LENGTH_SHORT).show();
-            loading_dialog.dismiss();
-        } else {
-            index--;
-            SongModel prevSong = songs.get(index);
-            ArrayList<String> artistList = prevSong.getArtists();
-            SpannableStringBuilder artists = new SpannableStringBuilder();
-
-            for (int i = 0; i < artistList.size(); i++) {
-                String artist = artistList.get(i);
-                if (i == artistList.size() - 1) {
-                    artists.append(artist);
-                } else {
-                    artists.append(artist).append(" | ");
-                }
-            }
-
-            tv_sliding_view_song_name.setText(prevSong.getSongName() + " - " + artists);
-            tv_sliding_view_song_name.setSelected(true);
-            CreateNotification.createNotification(ManualActivity.this, mediaSessionCompat, prevSong, R.drawable.play_btn_black, true, false, false, "manual");
-            setUpExoPlayer(prevSong);
-        }
-    }
-
-    public void holderItemOnClick(int position) {
-        SongModel song = songs.get(position);
-        new Handler().postDelayed(new Runnable() {
+        btn_prev_song.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void run() {
-                loading_dialog.show();
-                index = position;
+            public void onClick(View view) {
+                MediaControllerCompat.getMediaController(ManualActivity.this).getTransportControls().skipToPrevious();
+            }
+        });
 
-                ArrayList<String> artistList = song.getArtists();
-                SpannableStringBuilder artists = new SpannableStringBuilder();
+        btn_forward_10.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                MediaControllerCompat.getMediaController(ManualActivity.this).getTransportControls().fastForward();
+            }
+        });
 
-                for (int i = 0; i < artistList.size(); i++) {
-                    String artist = artistList.get(i);
-                    if (i == artistList.size() - 1) {
-                        artists.append(artist);
-                    } else {
-                        artists.append(artist).append(" | ");
+        btn_backward_10.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                MediaControllerCompat.getMediaController(ManualActivity.this).getTransportControls().rewind();
+            }
+        });
+        mediaController = MediaControllerCompat.getMediaController(ManualActivity.this);
+        mediaController.registerCallback(controllerCallback);
+    }
+
+    MediaControllerCompat.Callback controllerCallback =
+            new MediaControllerCompat.Callback() {
+                @Override
+                public void onMetadataChanged(MediaMetadataCompat metadata) {
+                    String title = metadata.getString(MediaMetadataCompat.METADATA_KEY_TITLE);
+                    String artist = metadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST);
+                    long duration = metadata.getLong(MediaMetadataCompat.METADATA_KEY_DURATION);
+                    tv_sliding_view_song_name.setText(title.concat(" - ").concat(artist));
+                    tv_sliding_view_song_name.setSelected(true);
+                    tv_total_time.setText(milliSecondsToTimer(duration));
+                }
+
+                @Override
+                public void onPlaybackStateChanged(PlaybackStateCompat state) {
+                    switch (state.getState()) {
+                        case PlaybackStateCompat.STATE_PLAYING:
+                            loading_dialog.dismiss();
+                            btn_play_pause.setImageResource(R.drawable.pause_btn_black);
+                            btn_next_song.setEnabled(true);
+                            btn_prev_song.setEnabled(true);
+                            btn_forward_10.setEnabled(true);
+                            btn_backward_10.setEnabled(true);
+                            alphaAnimation(btn_next_song, 0, 1f);
+                            alphaAnimation(btn_prev_song, 0, 1f);
+                            alphaAnimation(btn_forward_10, 0, 1f);
+                            alphaAnimation(btn_backward_10, 0, 1f);
+
+                            if (!btn_next_song.isEnabled()) {
+                                btn_next_song.setEnabled(true);
+                                alphaAnimation(btn_next_song, 0, 1f);
+                            }
+                            if (!btn_prev_song.isEnabled()) {
+                                btn_prev_song.setEnabled(true);
+                                alphaAnimation(btn_prev_song, 0, 1f);
+                            }
+                            if (slidingUpPanelLayout.getPanelState() != SlidingUpPanelLayout.PanelState.EXPANDED || slidingUpPanelLayout.getPanelState() == SlidingUpPanelLayout.PanelState.ANCHORED) {
+                                slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
+                                if (getSharedPreferences("firstTimeCreated", MODE_PRIVATE).getBoolean("firstTimeCreated", false)) {
+                                    setMargins(rv_songs, 0, 0, 0, 150);
+                                    getSharedPreferences("firstTimeCreated", MODE_PRIVATE).edit().putBoolean("firstTimeCreated", false).commit();
+                                }
+                            }
+                            break;
+
+                        case PlaybackStateCompat.STATE_PAUSED:
+                            btn_play_pause.setImageResource(R.drawable.play_btn_black);
+                            btn_next_song.setEnabled(false);
+                            btn_prev_song.setEnabled(false);
+                            btn_forward_10.setEnabled(false);
+                            btn_backward_10.setEnabled(false);
+                            alphaAnimation(btn_next_song, 1f, 0);
+                            alphaAnimation(btn_prev_song, 1f, 0);
+                            alphaAnimation(btn_forward_10, 1f, 0);
+                            alphaAnimation(btn_backward_10, 1f, 0);
+                            break;
+
+                        case PlaybackStateCompat.STATE_SKIPPING_TO_NEXT:
+                            loading_dialog.show();
+                            break;
+
+                        case PlaybackStateCompat.STATE_SKIPPING_TO_PREVIOUS:
+                            loading_dialog.show();
+                            break;
+
+                        case PlaybackStateCompat.STATE_FAST_FORWARDING:
+                            loading_dialog.show();
+                            break;
+
+                        case PlaybackStateCompat.STATE_REWINDING:
+                            loading_dialog.show();
+                            break;
+
+                        case PlaybackStateCompat.STATE_STOPPED:
+                            btn_play_pause.setImageResource(R.drawable.play_btn_black);
+                            break;
+
+                        case PlaybackStateCompat.STATE_BUFFERING:
+                            loading_dialog.show();
+                            break;
                     }
                 }
+            };
 
-                if (!btn_next_song.isEnabled()) {
-                    btn_next_song.setEnabled(true);
-                    alphaAnimation(btn_next_song, 0, 1f);
-                }
-                if (!btn_prev_song.isEnabled()) {
-                    btn_prev_song.setEnabled(true);
-                    alphaAnimation(btn_prev_song, 0, 1f);
-                }
-                tv_sliding_view_song_name.setText(song.getSongName() + " - " + artists);
-                tv_sliding_view_song_name.setSelected(true);
-                CreateNotification.createNotification(ManualActivity.this, mediaSessionCompat, song, R.drawable.play_btn_black, true, false, false, "manual");
-                setUpExoPlayer(song);
-                slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
-                setMargins(rv_songs, 0, 0, 0, 150);
-            }
-        }, 100);
-    }
-
-    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+    private BroadcastReceiver broadcast = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            String action = intent.getExtras().getString("actionname");
-
-            switch (action) {
-                case CreateNotification.ACTION_PREVIOUS:
-                    prevSong();
-                    break;
-
-                case CreateNotification.ACTION_PLAY:
-                    playPauseSong();
-                    break;
-
-                case CreateNotification.ACTION_NEXT:
-                    nextSong();
-                    break;
+            String action = intent.getAction();
+            if (action.equals("loadingDismiss")) {
+                loading_dialog.dismiss();
             }
         }
     };
 
-    private void pausePlayer() {
-        exoPlayer.setPlayWhenReady(false);
-    }
-
-    private void startPlayer() {
-        exoPlayer.setPlayWhenReady(true);
-    }
-
-    private boolean isExoPlaying() {
-        return exoPlayer.getPlayWhenReady();
-    }
+    private BroadcastReceiver broadcast1 = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals("updateCurrentTime")) {
+                tv_current_time.setText(milliSecondsToTimer(intent.getLongExtra("updateCurrentTime", 0)));
+            }
+        }
+    };
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -623,13 +540,12 @@ public class ManualActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         getSharedPreferences("released", MODE_PRIVATE).edit().putBoolean("released", true).commit();
-        pausePlayer();
-        if (exoPlayer != null) {
-            exoPlayer.release();
-        }
         if (notificationManager != null) {
             notificationManager.cancelAll();
         }
-        unregisterReceiver(broadcastReceiver);
+        if (MediaControllerCompat.getMediaController(ManualActivity.this) != null) {
+            MediaControllerCompat.getMediaController(ManualActivity.this).unregisterCallback(controllerCallback);
+        }
+        mediaBrowser.disconnect();
     }
 }

@@ -77,6 +77,8 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
     private int volumeLevel;
     private AudioManager audioManager;
 
+    private Boolean skip10SongsEnabled;
+
     public SaregamaPlaybackService() {
     }
 
@@ -135,7 +137,10 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
                     .setOnAudioFocusChangeListener(afChangeListener)
                     .setAudioAttributes(attrs)
                     .build();
+            audioManager.requestAudioFocus(audioFocusRequest);
         }
+
+        skip10SongsEnabled = getSharedPreferences("skip10SongsEnabled", MODE_PRIVATE).getBoolean("skip10SongsEnabled", false);
     }
 
     private MediaSessionCompat.Callback callback = new MediaSessionCompat.Callback() {
@@ -357,32 +362,53 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
     }
 
     private void skip10SongsForward() {
-        textToSpeech.speak("Ten songs skipped", TextToSpeech.QUEUE_FLUSH, null, null);
-        Toast.makeText(getBaseContext(), "Skipping 10 songs in forward direction", Toast.LENGTH_SHORT).show();
-        index += 10;
-        if (index >= songList.size()) {
-            index = 0;
-            Collections.shuffle(songList);
-            playSongInExoPlayer(songList.get(index));
+        if (skip10SongsEnabled) {
+            textToSpeech.speak("Ten songs skipped", TextToSpeech.QUEUE_FLUSH, null, null);
+            Toast.makeText(getBaseContext(), "Skipping 10 songs in forward direction", Toast.LENGTH_SHORT).show();
+            index += 10;
+            if (index >= songList.size()) {
+                index = 0;
+                Collections.shuffle(songList);
+                playSongInExoPlayer(songList.get(index));
+            } else {
+                playSongInExoPlayer(songList.get(index));
+            }
+            CreateNotification.createNotification(getBaseContext(), mediaSession, songList.get(index), R.drawable.play_btn_black, true, false, false, "saregama");
         } else {
-            playSongInExoPlayer(songList.get(index));
+            long position = exoPlayer.getCurrentPosition() + 10000;
+            if (position < exoPlayer.getDuration()) {
+                exoPlayer.seekTo(position);
+                Toast.makeText(this, "Forwarded 10 seconds", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Song is about to end", Toast.LENGTH_SHORT).show();
+            }
         }
-        CreateNotification.createNotification(getBaseContext(), mediaSession, songList.get(index), R.drawable.play_btn_black, true, false, false, "saregama");
     }
 
     private void skip10SongsBackward() {
-        textToSpeech.speak("Ten songs skipped", TextToSpeech.QUEUE_FLUSH, null, null);
-        Toast.makeText(getBaseContext(), "Skipping 10 songs in backward direction", Toast.LENGTH_SHORT).show();
-        index -= 10;
-        if (index <= -1) {
-            index = 0;
-            Collections.shuffle(songList);
-            playSongInExoPlayer(songList.get(index));
+        if (skip10SongsEnabled) {
+            textToSpeech.speak("Ten songs skipped", TextToSpeech.QUEUE_FLUSH, null, null);
+            Toast.makeText(getBaseContext(), "Skipping 10 songs in backward direction", Toast.LENGTH_SHORT).show();
+            index -= 10;
+            if (index <= -1) {
+                index = 0;
+                Collections.shuffle(songList);
+                playSongInExoPlayer(songList.get(index));
+            } else {
+                playSongInExoPlayer(songList.get(index));
+            }
+            CreateNotification.createNotification(getBaseContext(), mediaSession, songList.get(index), R.drawable.play_btn_black, true, false, false, "saregama");
         } else {
-            playSongInExoPlayer(songList.get(index));
+            long position = exoPlayer.getCurrentPosition() - 10000;
+            if (position > 0) {
+                exoPlayer.seekTo(position);
+                Toast.makeText(this, "Rewinded 10 seconds", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Song starting position", Toast.LENGTH_SHORT).show();
+            }
         }
-        CreateNotification.createNotification(getBaseContext(), mediaSession, songList.get(index), R.drawable.play_btn_black, true, false, false, "saregama");
     }
+
 
     private void pausePlayer() {
         exoPlayer.setPlayWhenReady(false);

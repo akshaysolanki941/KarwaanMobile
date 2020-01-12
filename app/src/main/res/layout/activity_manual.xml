@@ -211,8 +211,8 @@
 
             <ImageButton
                 android:id="@+id/btn_next_song"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
+                android:layout_width="55dp"
+                android:layout_height="55dp"
                 android:layout_below="@+id/tv_sliding_view_song_name"
                 android:layout_centerInParent="true"
                 android:layout_toEndOf="@+id/btn_play_pause"
@@ -221,46 +221,63 @@
 
             <ImageButton
                 android:id="@+id/btn_prev_song"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
+                android:layout_width="55dp"
+                android:layout_height="55dp"
                 android:layout_below="@+id/tv_sliding_view_song_name"
                 android:layout_centerInParent="true"
                 android:layout_toStartOf="@+id/btn_play_pause"
                 android:background="@drawable/round_btn_white"
                 android:src="@drawable/rewind_black" />
 
+            <ImageButton
+                android:id="@+id/btn_forward_10"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_below="@+id/tv_sliding_view_song_name"
+                android:layout_centerInParent="true"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_toEndOf="@+id/btn_next_song"
+                android:background="@drawable/round_btn_white"
+                android:src="@drawable/forward_10_black" />
+
+            <ImageButton
+                android:id="@+id/btn_backward_10"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_below="@+id/tv_sliding_view_song_name"
+                android:layout_centerInParent="true"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_toStartOf="@+id/btn_prev_song"
+                android:background="@drawable/round_btn_white"
+                android:src="@drawable/replay_10_black" />
+
+            <TextView
+                android:id="@+id/tv_current_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/btn_prev_song"
+                android:layout_margin="5dp"
+                android:layout_toStartOf="@+id/btn_play_pause"
+                android:fontFamily="@font/ubuntu_regular"
+                android:padding="2dp"
+                android:text="00:00"
+                android:textColor="#fff" />
+
+            <TextView
+                android:id="@+id/tv_total_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/btn_next_song"
+                android:layout_margin="5dp"
+                android:layout_toEndOf="@+id/btn_play_pause"
+                android:fontFamily="@font/ubuntu_regular"
+                android:padding="2dp"
+                android:text="00:00"
+                android:textColor="#fff" />
+
         </RelativeLayout>
-
-        <SeekBar
-            android:id="@+id/seekBar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/rl"
-            android:layout_margin="10dp" />
-
-        <TextView
-            android:id="@+id/tv_current_time"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/seekBar"
-            android:layout_margin="5dp"
-            android:fontFamily="@font/ubuntu_regular"
-            android:padding="2dp"
-            android:text="00:00"
-            android:textColor="#fff" />
-
-        <TextView
-            android:id="@+id/tv_total_time"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/seekBar"
-            android:layout_alignParentEnd="true"
-            android:layout_margin="5dp"
-            android:fontFamily="@font/ubuntu_regular"
-            android:padding="2dp"
-            android:text="00:00"
-            android:textColor="#fff" />
-
     </RelativeLayout>
 
 </com.sothree.slidinguppanel.SlidingUpPanelLayout>

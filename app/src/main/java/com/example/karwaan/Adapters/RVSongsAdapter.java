@@ -3,6 +3,7 @@ package com.example.karwaan.Adapters;
 import android.animation.AnimatorInflater;
 import android.animation.AnimatorSet;
 import android.content.Context;
+import android.content.Intent;
 import android.text.SpannableStringBuilder;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,7 +11,6 @@ import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
 import android.widget.TextView;
 
-import com.example.karwaan.ManualActivity;
 import com.example.karwaan.Models.SongModel;
 import com.example.karwaan.R;
 
@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import androidx.annotation.NonNull;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHolder> {
@@ -69,7 +70,10 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
                 setReduceSizeAnimation(holder.itemView);
                 setRegainSizeAnimation(holder.itemView);
 
-                ((ManualActivity) context).holderItemOnClick(position);
+               // ((ManualActivity) context).holderItemOnClick(position);
+                Intent i = new Intent("holderItemOnClick");
+                i.putExtra("holderItemOnClick", position);
+                LocalBroadcastManager.getInstance(context).sendBroadcast(i);
             }
         });
     }

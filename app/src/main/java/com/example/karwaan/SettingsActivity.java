@@ -4,8 +4,12 @@ import android.Manifest;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.ImageSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,9 +39,9 @@ public class SettingsActivity extends AppCompatActivity {
 
     private Toolbar toolbar;
     private TextView toolbar_title, tv_open_source_licenses, tv_update;
-    private Switch switch_enable_voice_mode;
+    private Switch switch_enable_voice_mode, switch_change_10;
     private ImageView bg;
-    private ImageButton btn_help_voice;
+    private ImageButton btn_help_voice, btn_help_10;
     private Dialog dialog_voice_help;
     private static final int RECORD_AUDIO_REQUEST_CODE = 5486;
 
@@ -58,10 +62,13 @@ public class SettingsActivity extends AppCompatActivity {
         tv_update = findViewById(R.id.tv_update);
         tv_update.setVisibility(View.GONE);
         btn_help_voice = findViewById(R.id.btn_help_voice);
+        btn_help_10 = findViewById(R.id.btn_help_10);
         dialog_voice_help = new Dialog(this);
 
         switch_enable_voice_mode = findViewById(R.id.switch_enable_voice_mode);
+        switch_change_10 = findViewById(R.id.switch_change_10);
         Boolean voiceModeEnable = getSharedPreferences("voiceModeEnabled", MODE_PRIVATE).getBoolean("voiceModeEnabled", false);
+        Boolean skip10SongsEnabled = getSharedPreferences("skip10SongsEnabled", MODE_PRIVATE).getBoolean("skip10SongsEnabled", false);
         if (voiceModeEnable) {
             setMargins(switch_enable_voice_mode, 0, 20, 20, 20);
             switch_enable_voice_mode.setChecked(true);
@@ -70,6 +77,16 @@ public class SettingsActivity extends AppCompatActivity {
             setMargins(switch_enable_voice_mode, 20, 20, 20, 20);
             switch_enable_voice_mode.setChecked(false);
             btn_help_voice.setVisibility(View.GONE);
+        }
+
+        if (skip10SongsEnabled) {
+            setMargins(switch_change_10, 0, 20, 20, 20);
+            switch_change_10.setChecked(true);
+            btn_help_10.setVisibility(View.VISIBLE);
+        } else {
+            setMargins(switch_change_10, 20, 20, 20, 20);
+            switch_change_10.setChecked(false);
+            btn_help_10.setVisibility(View.GONE);
         }
 
         checkForUpdates();
@@ -108,6 +125,42 @@ public class SettingsActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 dialog_voice_help.setContentView(R.layout.dialog_voice_help);
+                dialog_voice_help.setCanceledOnTouchOutside(true);
+                dialog_voice_help.setCancelable(true);
+                dialog_voice_help.show();
+            }
+        });
+
+        switch_change_10.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if (b) {
+                    setMargins(switch_change_10, 0, 20, 20, 20);
+                    btn_help_10.setVisibility(View.VISIBLE);
+                    getSharedPreferences("skip10SongsEnabled", MODE_PRIVATE).edit().putBoolean("skip10SongsEnabled", true).commit();
+                    Toast.makeText(SettingsActivity.this, "10 songs skipping enabled", Toast.LENGTH_SHORT).show();
+                } else {
+                    setMargins(switch_change_10, 20, 20, 20, 20);
+                    btn_help_10.setVisibility(View.GONE);
+                    getSharedPreferences("skip10SongsEnabled", MODE_PRIVATE).edit().putBoolean("skip10SongsEnabled", false).commit();
+                    Toast.makeText(SettingsActivity.this, "10 songs skipping disabled", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        btn_help_10.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                dialog_voice_help.setContentView(R.layout.dialog_skip_10_help);
+
+                TextView tv_dialog_10_help = dialog_voice_help.findViewById(R.id.tv_dialog_10_help);
+                SpannableString spannableString = new SpannableString(getString(R.string.skip_10_help));
+                Drawable d = getResources().getDrawable(R.drawable.forward_10_black);
+                d.setBounds(0, 0, d.getIntrinsicWidth(), d.getIntrinsicHeight());
+                ImageSpan span = new ImageSpan(d, ImageSpan.ALIGN_BOTTOM);
+                spannableString.setSpan(span, spannableString.toString().indexOf("@"), spannableString.toString().indexOf("@") + 1, Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+                tv_dialog_10_help.setText(spannableString);
+
                 dialog_voice_help.setCanceledOnTouchOutside(true);
                 dialog_voice_help.setCancelable(true);
                 dialog_voice_help.show();
