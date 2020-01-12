@@ -1,8 +1,9 @@
 package com.example.karwaan.Models;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class SongModel {
+public class SongModel implements Serializable {
 
     private String url, songName;
     private ArrayList<String> artists;

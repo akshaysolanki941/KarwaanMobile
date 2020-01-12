@@ -21,7 +21,6 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
-        <activity android:name=".RadioActivity"></activity>
         <activity
             android:name=".SettingsActivity"
             android:screenOrientation="portrait" />
@@ -49,6 +48,12 @@
 
         <service android:name=".Services.OnClearFromRecentService" />
 
+
+        <service android:name=".Services.SaregamaPlaybackService">
+            <intent-filter>
+                <action android:name="android.media.browse.MediaBrowserService" />
+            </intent-filter>
+        </service>
 
         <service android:name=".FirebaseMessaging.MessagingService">
             <intent-filter>

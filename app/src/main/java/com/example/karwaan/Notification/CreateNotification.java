@@ -40,7 +40,9 @@ public class CreateNotification {
     private static NotificationCompat.Builder builder2;
     private static NotificationManagerCompat notificationManagerCompat;
 
-    public static void createNotification(Context context, SongModel song, int playbutton, Boolean isLoading, Boolean isBuffering, Boolean isPaused, String type) {
+    //public static void createNotification(Context context, SongModel song, int playbutton, Boolean isLoading, Boolean isBuffering, Boolean isPaused, String type) {
+
+    public static void createNotification(Context context, MediaSessionCompat mediaSessionCompat, SongModel song, int playbutton, Boolean isLoading, Boolean isBuffering, Boolean isPaused, String type) {
 
         if (isLoading) {
             new GetMetaData(context, song, playbutton, type).execute();
@@ -48,7 +50,7 @@ public class CreateNotification {
         }
 
         notificationManagerCompat = NotificationManagerCompat.from(context);
-        MediaSessionCompat mediaSessionCompat = new MediaSessionCompat(context, "tag");
+        // MediaSessionCompat mediaSessionCompat = new MediaSessionCompat(context, "tag");
 
         PendingIntent pendingIntentPrevious;
         Intent intentPrevious = new Intent(context, NotificationActionService.class).setAction(ACTION_PREVIOUS);
@@ -137,7 +139,7 @@ public class CreateNotification {
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
 
-        if (isPaused) {
+        if (isPaused || playbutton == R.drawable.play_btn_black) {
             builder1.setOngoing(false);
             builder2.setOngoing(false);
         } else {
