@@ -11,7 +11,6 @@
     sothree:umanoOverlay="true"
     sothree:umanoPanelHeight="60dp"
     sothree:umanoParallaxOffset="100dp"
-    sothree:umanoScrollableView="@+id/seekBar"
     sothree:umanoShadowHeight="4dp">
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -185,7 +184,7 @@
                 android:layout_marginLeft="10dp"
                 android:layout_marginTop="8dp"
                 android:layout_marginRight="10dp"
-                android:layout_marginBottom="12dp"
+                android:layout_marginBottom="16dp"
                 android:ellipsize="marquee"
                 android:focusable="true"
                 android:focusableInTouchMode="true"

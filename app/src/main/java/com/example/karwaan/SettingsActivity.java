@@ -12,7 +12,6 @@ import android.text.SpannableString;
 import android.text.style.ImageSpan;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.CompoundButton;
 import android.widget.ImageButton;
@@ -70,21 +69,17 @@ public class SettingsActivity extends AppCompatActivity {
         Boolean voiceModeEnable = getSharedPreferences("voiceModeEnabled", MODE_PRIVATE).getBoolean("voiceModeEnabled", false);
         Boolean skip10SongsEnabled = getSharedPreferences("skip10SongsEnabled", MODE_PRIVATE).getBoolean("skip10SongsEnabled", false);
         if (voiceModeEnable) {
-            setMargins(switch_enable_voice_mode, 0, 20, 20, 20);
             switch_enable_voice_mode.setChecked(true);
             btn_help_voice.setVisibility(View.VISIBLE);
         } else {
-            setMargins(switch_enable_voice_mode, 20, 20, 20, 20);
             switch_enable_voice_mode.setChecked(false);
             btn_help_voice.setVisibility(View.GONE);
         }
 
         if (skip10SongsEnabled) {
-            setMargins(switch_change_10, 0, 20, 20, 20);
             switch_change_10.setChecked(true);
             btn_help_10.setVisibility(View.VISIBLE);
         } else {
-            setMargins(switch_change_10, 20, 20, 20, 20);
             switch_change_10.setChecked(false);
             btn_help_10.setVisibility(View.GONE);
         }
@@ -107,13 +102,11 @@ public class SettingsActivity extends AppCompatActivity {
                         checkVoiceCommandPermission();
                         getSharedPreferences("firstTimeEnable", MODE_PRIVATE).edit().putBoolean("firstTimeEnable", false).commit();
                     } else {
-                        setMargins(switch_enable_voice_mode, 0, 20, 20, 20);
                         btn_help_voice.setVisibility(View.VISIBLE);
                         getSharedPreferences("voiceModeEnabled", MODE_PRIVATE).edit().putBoolean("voiceModeEnabled", true).commit();
                         Toast.makeText(SettingsActivity.this, "Voice Mode Enabled", Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    setMargins(switch_enable_voice_mode, 20, 20, 20, 20);
                     btn_help_voice.setVisibility(View.GONE);
                     getSharedPreferences("voiceModeEnabled", MODE_PRIVATE).edit().putBoolean("voiceModeEnabled", false).commit();
                     Toast.makeText(SettingsActivity.this, "Voice Mode Disabled", Toast.LENGTH_SHORT).show();
@@ -135,12 +128,10 @@ public class SettingsActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                 if (b) {
-                    setMargins(switch_change_10, 0, 20, 20, 20);
                     btn_help_10.setVisibility(View.VISIBLE);
                     getSharedPreferences("skip10SongsEnabled", MODE_PRIVATE).edit().putBoolean("skip10SongsEnabled", true).commit();
                     Toast.makeText(SettingsActivity.this, "10 songs skipping enabled", Toast.LENGTH_SHORT).show();
                 } else {
-                    setMargins(switch_change_10, 20, 20, 20, 20);
                     btn_help_10.setVisibility(View.GONE);
                     getSharedPreferences("skip10SongsEnabled", MODE_PRIVATE).edit().putBoolean("skip10SongsEnabled", false).commit();
                     Toast.makeText(SettingsActivity.this, "10 songs skipping disabled", Toast.LENGTH_SHORT).show();
@@ -193,21 +184,12 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 
-    private void setMargins(View view, int left, int top, int right, int bottom) {
-        if (view.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
-            ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
-            p.setMargins(left, top, right, bottom);
-            view.requestLayout();
-        }
-    }
-
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         switch (requestCode) {
             case RECORD_AUDIO_REQUEST_CODE: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // permission was granted, yay!
-                    setMargins(switch_enable_voice_mode, 0, 20, 20, 20);
                     btn_help_voice.setVisibility(View.VISIBLE);
                     getSharedPreferences("voiceModeEnabled", MODE_PRIVATE).edit().putBoolean("voiceModeEnabled", true).commit();
                     Toast.makeText(SettingsActivity.this, "Voice Mode Enabled", Toast.LENGTH_SHORT).show();
@@ -215,7 +197,6 @@ public class SettingsActivity extends AppCompatActivity {
                     // permission denied, boo! Disable the functionality that depends on this permission.
                     Toast.makeText(this, "Permissions Denied to record audio", Toast.LENGTH_LONG).show();
                     switch_enable_voice_mode.setChecked(false);
-                    setMargins(switch_enable_voice_mode, 20, 20, 20, 20);
                     btn_help_voice.setVisibility(View.GONE);
                     getSharedPreferences("voiceModeEnabled", MODE_PRIVATE).edit().putBoolean("voiceModeEnabled", false).commit();
                     Toast.makeText(SettingsActivity.this, "Voice Mode Disabled", Toast.LENGTH_SHORT).show();

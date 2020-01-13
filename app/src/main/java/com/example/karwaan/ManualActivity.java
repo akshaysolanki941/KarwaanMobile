@@ -35,7 +35,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.example.karwaan.Adapters.RVSongsAdapter;
 import com.example.karwaan.Models.SongModel;
-import com.example.karwaan.Notification.CreateNotification;
+import com.example.karwaan.Notification.Constants;
 import com.example.karwaan.Services.ManualPlaybackService;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
@@ -460,7 +460,7 @@ public class ManualActivity extends AppCompatActivity {
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel notificationChannel = new NotificationChannel(CreateNotification.CHANNEL_ID, "Karvaan Music Notifications", NotificationManager.IMPORTANCE_LOW);
+            NotificationChannel notificationChannel = new NotificationChannel(Constants.CHANNEL_ID, "Karvaan Music Notifications", NotificationManager.IMPORTANCE_LOW);
 
             if (notificationManager != null) {
                 notificationManager.createNotificationChannel(notificationChannel);

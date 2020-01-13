@@ -35,7 +35,7 @@ import android.widget.Toast;
 import com.airbnb.lottie.LottieAnimationView;
 import com.bumptech.glide.Glide;
 import com.example.karwaan.Models.SongModel;
-import com.example.karwaan.Notification.CreateNotification;
+import com.example.karwaan.Notification.Constants;
 import com.example.karwaan.Services.SaregamaPlaybackService;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
@@ -156,13 +156,13 @@ public class SaregamaActivity extends AppCompatActivity {
             setRegainSizeAnimation(selectedChip);
             if (selectedChip != null) {
                 String selectedArtist = selectedChip.getText().toString();
+                Intent chipIntent = new Intent("chipSelect");
+                chipIntent.putExtra("chipSelect", selectedArtist);
+                LocalBroadcastManager.getInstance(this).sendBroadcast(chipIntent);
                 if (selectedArtist.equals("All Artists")) {
                     tv_total_songs.setText(getResources().getString(R.string.total_songs).concat(String.valueOf(mainSongList.size())));
                     songList.clear();
                     songList.addAll(mainSongList);
-                    Intent chipIntent = new Intent("chip");
-                    chipIntent.putExtra("list", songList);
-                    LocalBroadcastManager.getInstance(this).sendBroadcast(chipIntent);
                 } else {
                     songList.clear();
                     for (SongModel song : mainSongList) {
@@ -174,43 +174,39 @@ public class SaregamaActivity extends AppCompatActivity {
                         }
                     }
                     songList.addAll(artistSongsList);
-                    Intent chipIntent = new Intent("chip");
-                    chipIntent.putExtra("list", songList);
-                    LocalBroadcastManager.getInstance(this).sendBroadcast(chipIntent);
                     tv_total_songs.setText(getResources().getString(R.string.total_songs).concat(String.valueOf(artistSongsList.size())));
                 }
             }
         });
     }
 
-    private final MediaBrowserCompat.ConnectionCallback connectionCallbacks =
-            new MediaBrowserCompat.ConnectionCallback() {
-                @Override
-                public void onConnected() {
-                    MediaSessionCompat.Token token = mediaBrowser.getSessionToken();
-                    MediaControllerCompat mediaController = null;
-                    try {
-                        mediaController = new MediaControllerCompat(SaregamaActivity.this, token);
-                    } catch (RemoteException e) {
-                        e.printStackTrace();
-                    }
+    private final MediaBrowserCompat.ConnectionCallback connectionCallbacks = new MediaBrowserCompat.ConnectionCallback() {
+        @Override
+        public void onConnected() {
+            MediaSessionCompat.Token token = mediaBrowser.getSessionToken();
+            MediaControllerCompat mediaController = null;
+            try {
+                mediaController = new MediaControllerCompat(SaregamaActivity.this, token);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
 
-                    MediaControllerCompat.setMediaController(SaregamaActivity.this, mediaController);
-                    buildTransportControls();
-                }
+            MediaControllerCompat.setMediaController(SaregamaActivity.this, mediaController);
+            buildTransportControls();
+        }
 
-                @Override
-                public void onConnectionSuspended() {
-                    // The Service has crashed. Disable transport controls until it automatically reconnects
-                    Toast.makeText(SaregamaActivity.this, "connection suspended", Toast.LENGTH_SHORT).show();
-                }
+        @Override
+        public void onConnectionSuspended() {
+            // The Service has crashed. Disable transport controls until it automatically reconnects
+            Toast.makeText(SaregamaActivity.this, "connection suspended", Toast.LENGTH_SHORT).show();
+        }
 
-                @Override
-                public void onConnectionFailed() {
-                    Toast.makeText(SaregamaActivity.this, "connection failed", Toast.LENGTH_SHORT).show();
-                    // The Service has refused our connection
-                }
-            };
+        @Override
+        public void onConnectionFailed() {
+            Toast.makeText(SaregamaActivity.this, "connection failed", Toast.LENGTH_SHORT).show();
+            // The Service has refused our connection
+        }
+    };
 
     void buildTransportControls() {
         btn_play_pause.setOnClickListener(new View.OnClickListener() {
@@ -471,6 +467,9 @@ public class SaregamaActivity extends AppCompatActivity {
                     getArtists();
                     songList.clear();
                     songList.addAll(mainSongList);
+                    Intent i = new Intent("mainSongList");
+                    i.putExtra("mainSongList", mainSongList);
+                    LocalBroadcastManager.getInstance(SaregamaActivity.this).sendBroadcast(i);
                 } else {
                     Toast.makeText(SaregamaActivity.this, "No Songs Found", Toast.LENGTH_SHORT).show();
                 }
@@ -521,7 +520,7 @@ public class SaregamaActivity extends AppCompatActivity {
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel notificationChannel = new NotificationChannel(CreateNotification.CHANNEL_ID, "Karvaan Music Notifications", NotificationManager.IMPORTANCE_LOW);
+            NotificationChannel notificationChannel = new NotificationChannel(Constants.CHANNEL_ID, "Karvaan Music Notifications", NotificationManager.IMPORTANCE_LOW);
 
             if (notificationManager != null) {
                 notificationManager.createNotificationChannel(notificationChannel);
