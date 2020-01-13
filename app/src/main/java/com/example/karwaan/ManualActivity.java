@@ -32,6 +32,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.airbnb.lottie.LottieAnimationView;
 import com.bumptech.glide.Glide;
 import com.example.karwaan.Adapters.RVSongsAdapter;
 import com.example.karwaan.Models.SongModel;
@@ -68,13 +69,17 @@ public class ManualActivity extends AppCompatActivity {
     private SlidingUpPanelLayout slidingUpPanelLayout;
     private ImageButton btn_play_pause, btn_next_song, btn_prev_song, btn_forward_10, btn_backward_10;
     private Dialog loading_dialog;
-    private ImageView loading_gif_imageView, bg;
+    private ImageView bg;
     private ChipGroup chipGroup;
     private EditText et_search;
+    private LottieAnimationView lottie_animation_view;
 
     private NotificationManager notificationManager;
     private MediaBrowserCompat mediaBrowser;
     private MediaControllerCompat mediaController;
+
+   /* private AudioWaveView wave;
+    long total_duration;  */
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,8 +98,8 @@ public class ManualActivity extends AppCompatActivity {
         loading_dialog = new Dialog(this);
         loading_dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         loading_dialog.setContentView(R.layout.loading_dialog);
-        loading_gif_imageView = (ImageView) loading_dialog.findViewById(R.id.loading_gif_imageView);
-        Glide.with(getApplicationContext()).load(R.drawable.loading).placeholder(R.drawable.loading).into(loading_gif_imageView);
+        lottie_animation_view = loading_dialog.findViewById(R.id.lottie_animation_view);
+        lottie_animation_view.playAnimation();
         loading_dialog.setCanceledOnTouchOutside(false);
         loading_dialog.setCancelable(false);
 
@@ -118,6 +123,8 @@ public class ManualActivity extends AppCompatActivity {
         rv_songs.setHasFixedSize(true);
         rv_songs.setLayoutManager(new LinearLayoutManager(this));
 
+        // wave = findViewById(R.id.wave);
+
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel();
@@ -125,9 +132,11 @@ public class ManualActivity extends AppCompatActivity {
 
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcast, new IntentFilter("loadingDismiss"));
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcast1, new IntentFilter("updateCurrentTime"));
+        //  LocalBroadcastManager.getInstance(this).registerReceiver(broadcast2, new IntentFilter("waveData"));
 
         mediaBrowser = new MediaBrowserCompat(this, new ComponentName(this, ManualPlaybackService.class), connectionCallbacks, null);
         mediaBrowser.connect();
+
         getSongs();
 
         getSharedPreferences("firstTimeCreated", MODE_PRIVATE).edit().putBoolean("firstTimeCreated", true).commit();
@@ -136,6 +145,8 @@ public class ManualActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
+
+        //getSongs();
 
         Glide.with(this).load(R.drawable.bg).into(bg);
 
@@ -194,7 +205,6 @@ public class ManualActivity extends AppCompatActivity {
             mainSongsList.clear();
         }
         songsRef = FirebaseDatabase.getInstance().getReference("Songs");
-        songsRef.keepSynced(true);
         songsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -365,6 +375,7 @@ public class ManualActivity extends AppCompatActivity {
                     tv_sliding_view_song_name.setText(title.concat(" - ").concat(artist));
                     tv_sliding_view_song_name.setSelected(true);
                     tv_total_time.setText(milliSecondsToTimer(duration));
+                    // total_duration = duration;
                 }
 
                 @Override
@@ -454,9 +465,23 @@ public class ManualActivity extends AppCompatActivity {
             String action = intent.getAction();
             if (action.equals("updateCurrentTime")) {
                 tv_current_time.setText(milliSecondsToTimer(intent.getLongExtra("updateCurrentTime", 0)));
+                //wave.setProgress((((float) intent.getLongExtra("updateCurrentTime", 0) / total_duration) * 100));
             }
         }
     };
+
+ /*   private BroadcastReceiver broadcast2 = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals("waveData")) {
+                byte[] data = intent.getByteArrayExtra("waveData");
+                if (data != null) {
+                    wave.setRawData(data);
+                }
+            }
+        }
+    }; */
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -527,6 +552,7 @@ public class ManualActivity extends AppCompatActivity {
             slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
         } else {
             super.onBackPressed();
+            finish();
         }
     }
 
@@ -543,6 +569,7 @@ public class ManualActivity extends AppCompatActivity {
         if (notificationManager != null) {
             notificationManager.cancelAll();
         }
+        rv_songs.setAdapter(null);
         if (MediaControllerCompat.getMediaController(ManualActivity.this) != null) {
             MediaControllerCompat.getMediaController(ManualActivity.this).unregisterCallback(controllerCallback);
         }

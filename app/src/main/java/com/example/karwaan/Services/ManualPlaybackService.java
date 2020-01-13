@@ -104,6 +104,8 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
     private int volumeLevel;
     private float volume;
 
+    private byte[] data;
+
     @Nullable
     @Override
     public BrowserRoot onGetRoot(@NonNull String clientPackageName, int clientUid, @Nullable Bundle rootHints) {
@@ -270,6 +272,8 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
                             .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, exoPlayer.getDuration());
                     mediaSession.setMetadata(mediaMetadata.build());
                     showCurrentTime();
+
+                   // new GetByteArrayData().execute();
                 }
 
                 if (playbackState == Player.STATE_ENDED) {
@@ -627,6 +631,62 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
         volume += deltaVolume;
 
     }
+
+  /*  private class GetByteArrayData extends AsyncTask<Void, Void, Void> {
+
+        ByteArrayOutputStream byteArrayOutputStream;
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            URL url = null;
+            try {
+                url = new URL(songs.get(index).getUrl());
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+            //Open the stream for the file.
+            InputStream inputStream = null;
+            try {
+                if (url != null) {
+                    inputStream = url.openStream();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            //For appending incoming bytes
+            byteArrayOutputStream = new ByteArrayOutputStream();
+            int read = 0;
+            while (read != -1) { //While there is more data
+                //Read in bytes to data buffer
+                try {
+                    if (inputStream != null) {
+                        read = inputStream.read();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                //Write to output stream
+                byteArrayOutputStream.write(read);
+            }
+            try {
+                inputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+
+            data = byteArrayOutputStream.toByteArray();
+            Toast.makeText(getBaseContext(), "done", Toast.LENGTH_SHORT).show();
+            Intent i = new Intent("waveData");
+            i.putExtra("waveData", data);
+            LocalBroadcastManager.getInstance(getBaseContext()).sendBroadcast(i);
+        }
+    }  */
 
     private void createNotification(Context context, MediaSessionCompat mediaSessionCompat, SongModel song, int playbutton, Boolean isLoading, Boolean isBuffering) {
 

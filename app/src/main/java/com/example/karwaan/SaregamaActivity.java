@@ -63,8 +63,8 @@ public class SaregamaActivity extends AppCompatActivity {
     private HashSet<String> artistHashSet = new HashSet<>();
     private DatabaseReference songRef;
     private ImageButton btn_play_pause, btn_next, btn_previous, btn_forward10, btn_backward10;
-    private LottieAnimationView lottieAnimationView;
-    private ImageView bg, loading_gif_imageView;
+    private LottieAnimationView lottieAnimationView, lottie_animation_view;
+    private ImageView bg;
     private Dialog loading_dialog;
     private ChipGroup chipGroup;
     private RelativeLayout rlParentLayout;
@@ -108,8 +108,8 @@ public class SaregamaActivity extends AppCompatActivity {
         loading_dialog = new Dialog(this);
         loading_dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         loading_dialog.setContentView(R.layout.loading_dialog);
-        loading_gif_imageView = (ImageView) loading_dialog.findViewById(R.id.loading_gif_imageView);
-        Glide.with(getApplicationContext()).load(R.drawable.loading).placeholder(R.drawable.loading).into(loading_gif_imageView);
+        lottie_animation_view = loading_dialog.findViewById(R.id.lottie_animation_view);
+        lottie_animation_view.playAnimation();
         loading_dialog.setCanceledOnTouchOutside(false);
         loading_dialog.setCancelable(false);
 

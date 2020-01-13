@@ -21,6 +21,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.airbnb.lottie.LottieAnimationView;
 import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -34,7 +35,7 @@ public class ModeActivity extends AppCompatActivity {
 
     private Toolbar toolbar;
     private TextView toolbar_title;
-    private ImageView loading_gif_imageView;
+    private LottieAnimationView lottie_animation_view;
     private RelativeLayout rl_saregama_mode, rl_manual_mode;
     private ImageView bg;
     private Dialog loading_dialog;
@@ -54,8 +55,8 @@ public class ModeActivity extends AppCompatActivity {
         loading_dialog = new Dialog(this);
         loading_dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         loading_dialog.setContentView(R.layout.loading_dialog);
-        loading_gif_imageView = (ImageView) loading_dialog.findViewById(R.id.loading_gif_imageView);
-        Glide.with(getApplicationContext()).load(R.drawable.loading).placeholder(R.drawable.loading).into(loading_gif_imageView);
+        lottie_animation_view = loading_dialog.findViewById(R.id.lottie_animation_view);
+        lottie_animation_view.playAnimation();
         loading_dialog.setCanceledOnTouchOutside(false);
         loading_dialog.setCancelable(false);
 
