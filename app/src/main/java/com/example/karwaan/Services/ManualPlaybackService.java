@@ -101,10 +101,7 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
     private ArrayList<SongModel> songs = new ArrayList<>();
     private final Handler handler = new Handler();
     private AudioManager audioManager;
-    private int volumeLevel;
     private float volume;
-
-    private byte[] data;
 
     @Nullable
     @Override
@@ -166,6 +163,7 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcast2, new IntentFilter("searchList"));
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcast3, new IntentFilter("chip"));
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcast4, new IntentFilter("holderItemOnClick"));
+        LocalBroadcastManager.getInstance(this).registerReceiver(broadcast5, new IntentFilter("seekChanged"));
 
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
@@ -272,8 +270,8 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
                             .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, exoPlayer.getDuration());
                     mediaSession.setMetadata(mediaMetadata.build());
                     showCurrentTime();
-
-                   // new GetByteArrayData().execute();
+                    updateColorSeekbar();
+                    updateSeekBar();
                 }
 
                 if (playbackState == Player.STATE_ENDED) {
@@ -316,7 +314,7 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
 
     private void playPauseSong() {
         if (!isExoPlaying()) {
-            AudioAttributes attrs = new AudioAttributes.Builder()
+           /* AudioAttributes attrs = new AudioAttributes.Builder()
                     .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                     .build();
             AudioFocusRequest audioFocusRequest = null;
@@ -336,8 +334,10 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
                 startFadeIn();
                 if (audioManager != null) {
                     volumeLevel = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-                }
-            }
+                }*/
+            exoPlayer.setVolume(0);
+            startPlayer();
+            startFadeIn();
         } else {
             pausePlayer();
         }
@@ -441,6 +441,34 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
                 }
             };
             handler.postDelayed(notification, 1000);
+        }
+    }
+
+    private void updateSeekBar() {
+        if (isExoPlaying()) {
+            Intent i = new Intent("updateSeekbar");
+            i.putExtra("currentPosition", exoPlayer.getCurrentPosition());
+            i.putExtra("bufferedPosition", exoPlayer.getContentBufferedPosition());
+            LocalBroadcastManager.getInstance(this).sendBroadcast(i);
+            Runnable notification = new Runnable() {
+                public void run() {
+                    updateSeekBar();
+                }
+            };
+            handler.postDelayed(notification, 1);
+        }
+    }
+
+    private void updateColorSeekbar() {
+        if (isExoPlaying()) {
+            Intent i = new Intent("updateColorSeekbar");
+            LocalBroadcastManager.getInstance(this).sendBroadcast(i);
+            Runnable notification = new Runnable() {
+                public void run() {
+                    updateColorSeekbar();
+                }
+            };
+            handler.postDelayed(notification, 2200);
         }
     }
 
@@ -553,6 +581,15 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
             if (intent.getAction().equals("holderItemOnClick")) {
                 int position = intent.getIntExtra("holderItemOnClick", 0);
                 holderItemOnClick(position);
+            }
+        }
+    };
+
+    private BroadcastReceiver broadcast5 = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals("seekChanged")) {
+                exoPlayer.seekTo(intent.getIntExtra("seekTo", 0));
             }
         }
     };
@@ -803,6 +840,7 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
             notification = builder1.build();
             startForeground(999, notification);
         }
+
     }
 
     private void pausePlayer() {

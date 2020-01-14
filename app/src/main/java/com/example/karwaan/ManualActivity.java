@@ -11,6 +11,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.XmlResourceParser;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.RemoteException;
@@ -29,10 +31,12 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.airbnb.lottie.LottieAnimationView;
+import com.akexorcist.roundcornerprogressbar.RoundCornerProgressBar;
 import com.bumptech.glide.Glide;
 import com.example.karwaan.Adapters.RVSongsAdapter;
 import com.example.karwaan.Models.SongModel;
@@ -47,8 +51,13 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
+import org.xmlpull.v1.XmlPullParserException;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -78,8 +87,9 @@ public class ManualActivity extends AppCompatActivity {
     private MediaBrowserCompat mediaBrowser;
     private MediaControllerCompat mediaController;
 
-   /* private AudioWaveView wave;
-    long total_duration;  */
+    private RoundCornerProgressBar seekbar;
+    private SeekBar seekBarInvisible;
+    private List<Integer> allColors;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,6 +134,8 @@ public class ManualActivity extends AppCompatActivity {
         rv_songs.setLayoutManager(new LinearLayoutManager(this));
 
         // wave = findViewById(R.id.wave);
+        seekbar = findViewById(R.id.seekBar);
+        seekBarInvisible = findViewById(R.id.seekBarInvisible);
 
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -132,12 +144,18 @@ public class ManualActivity extends AppCompatActivity {
 
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcast, new IntentFilter("loadingDismiss"));
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcast1, new IntentFilter("updateCurrentTime"));
-        //  LocalBroadcastManager.getInstance(this).registerReceiver(broadcast2, new IntentFilter("waveData"));
+        LocalBroadcastManager.getInstance(this).registerReceiver(broadcast3, new IntentFilter("updateColorSeekbar"));
+        LocalBroadcastManager.getInstance(this).registerReceiver(broadcast2, new IntentFilter("updateSeekbar"));
 
         mediaBrowser = new MediaBrowserCompat(this, new ComponentName(this, ManualPlaybackService.class), connectionCallbacks, null);
         mediaBrowser.connect();
 
         getSongs();
+        try {
+            allColors = getAllMaterialColors();
+        } catch (IOException | XmlPullParserException e) {
+            e.printStackTrace();
+        }
 
         getSharedPreferences("firstTimeCreated", MODE_PRIVATE).edit().putBoolean("firstTimeCreated", true).commit();
     }
@@ -193,6 +211,27 @@ public class ManualActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable editable) {
+
+            }
+        });
+
+        seekBarInvisible.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                if (b) {
+                    Intent intent = new Intent("seekChanged");
+                    intent.putExtra("seekTo", i);
+                    LocalBroadcastManager.getInstance(ManualActivity.this).sendBroadcast(intent);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
 
             }
         });
@@ -375,7 +414,8 @@ public class ManualActivity extends AppCompatActivity {
                     tv_sliding_view_song_name.setText(title.concat(" - ").concat(artist));
                     tv_sliding_view_song_name.setSelected(true);
                     tv_total_time.setText(milliSecondsToTimer(duration));
-                    // total_duration = duration;
+                    seekbar.setMax((float) duration);
+                    seekBarInvisible.setMax((int) duration);
                 }
 
                 @Override
@@ -465,23 +505,56 @@ public class ManualActivity extends AppCompatActivity {
             String action = intent.getAction();
             if (action.equals("updateCurrentTime")) {
                 tv_current_time.setText(milliSecondsToTimer(intent.getLongExtra("updateCurrentTime", 0)));
-                //wave.setProgress((((float) intent.getLongExtra("updateCurrentTime", 0) / total_duration) * 100));
+                seekBarInvisible.setProgress((int) intent.getLongExtra("updateCurrentTime", 0));
             }
         }
     };
 
- /*   private BroadcastReceiver broadcast2 = new BroadcastReceiver() {
+    private BroadcastReceiver broadcast2 = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            if (action.equals("waveData")) {
-                byte[] data = intent.getByteArrayExtra("waveData");
-                if (data != null) {
-                    wave.setRawData(data);
-                }
+            if (action.equals("updateSeekbar")) {
+                seekbar.setSecondaryProgress((float) intent.getLongExtra("bufferedPosition", 0));
+                seekbar.setProgress((float) intent.getLongExtra("currentPosition", 0));
             }
         }
-    }; */
+    };
+
+    private BroadcastReceiver broadcast3 = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals("updateColorSeekbar")) {
+                int randomIndex = new Random().nextInt(allColors.size());
+                int randomColor = allColors.get(randomIndex);
+                seekbar.setProgressColor(randomColor);
+                seekbar.setSecondaryProgressColor(manipulateColor(randomColor, 0.5f));
+            }
+        }
+    };
+
+    private List<Integer> getAllMaterialColors() throws IOException, XmlPullParserException {
+        XmlResourceParser xrp = getResources().getXml(R.xml.materialcolor);
+        List<Integer> allColors = new ArrayList<>();
+        int nextEvent;
+        while ((nextEvent = xrp.next()) != XmlResourceParser.END_DOCUMENT) {
+            String s = xrp.getName();
+            if ("color".equals(s)) {
+                String color = xrp.nextText();
+                allColors.add(Color.parseColor(color));
+            }
+        }
+        return allColors;
+    }
+
+    public int manipulateColor(int color, float factor) {
+        int a = Color.alpha(color);
+        int r = Math.round(Color.red(color) * factor);
+        int g = Math.round(Color.green(color) * factor);
+        int b = Math.round(Color.blue(color) * factor);
+        return Color.argb(a, Math.min(r, 255), Math.min(g, 255), Math.min(b, 255));
+    }
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

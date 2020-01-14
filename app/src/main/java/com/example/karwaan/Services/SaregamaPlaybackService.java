@@ -297,7 +297,7 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
 
     private void playPauseSong() {
         if (!isExoPlaying()) {
-            AudioAttributes attrs = new AudioAttributes.Builder()
+            /*AudioAttributes attrs = new AudioAttributes.Builder()
                     .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                     .build();
             AudioFocusRequest audioFocusRequest = null;
@@ -318,7 +318,10 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
                 if (audioManager != null) {
                     volumeLevel = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
                 }
-            }
+            }*/
+            exoPlayer.setVolume(0);
+            startPlayer();
+            startFadeIn();
         } else {
             pausePlayer();
         }

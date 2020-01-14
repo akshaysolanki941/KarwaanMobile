@@ -177,20 +177,20 @@
             android:layout_height="wrap_content"
             android:padding="6dp">
 
-           <!-- <rm.com.audiowave.AudioWaveView
-                android:id="@+id/wave"
-                android:layout_width="match_parent"
-                android:layout_height="80dp"
-                android:layout_below="@+id/tv_sliding_view_song_name"
-                android:layout_margin="16dp"
-                app:animateExpansion="true"
-                app:chunkHeight="76dp"
-                app:chunkRadius="1dp"
-                app:chunkSpacing="1dp"
-                app:chunkWidth="3dp"
-                app:minChunkHeight="20dp"
-                app:touchable="true"
-                app:waveColor="@android:color/white" /> -->
+            <!-- <rm.com.audiowave.AudioWaveView
+                 android:id="@+id/wave"
+                 android:layout_width="match_parent"
+                 android:layout_height="80dp"
+                 android:layout_below="@+id/tv_sliding_view_song_name"
+                 android:layout_margin="16dp"
+                 app:animateExpansion="true"
+                 app:chunkHeight="76dp"
+                 app:chunkRadius="1dp"
+                 app:chunkSpacing="1dp"
+                 app:chunkWidth="3dp"
+                 app:minChunkHeight="20dp"
+                 app:touchable="true"
+                 app:waveColor="@android:color/white" /> -->
 
             <TextView
                 android:id="@+id/tv_sliding_view_song_name"
@@ -290,6 +290,27 @@
                 android:padding="2dp"
                 android:text="00:00"
                 android:textColor="#fff" />
+
+            <com.akexorcist.roundcornerprogressbar.RoundCornerProgressBar
+                android:id="@+id/seekBar"
+                android:layout_width="match_parent"
+                android:layout_height="20dp"
+                android:layout_below="@+id/tv_current_time"
+                android:layout_centerInParent="true"
+                android:layout_margin="10dp"
+                app:rcBackgroundPadding="2dp"
+                app:rcProgressColor="#02C7E9"
+                app:rcRadius="6dp"
+                app:rcSecondaryProgressColor="#01758F" />
+
+            <SeekBar
+                android:id="@+id/seekBarInvisible"
+                android:layout_width="match_parent"
+                android:layout_height="20dp"
+                android:layout_below="@+id/tv_current_time"
+                android:layout_centerInParent="true"
+                android:layout_margin="10dp"
+                android:alpha="0" />
 
         </RelativeLayout>
     </RelativeLayout>
