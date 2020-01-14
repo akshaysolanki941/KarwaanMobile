@@ -270,7 +270,6 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
                             .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, exoPlayer.getDuration());
                     mediaSession.setMetadata(mediaMetadata.build());
                     showCurrentTime();
-                    updateColorSeekbar();
                     updateSeekBar();
                 }
 
@@ -456,19 +455,6 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
                 }
             };
             handler.postDelayed(notification, 1);
-        }
-    }
-
-    private void updateColorSeekbar() {
-        if (isExoPlaying()) {
-            Intent i = new Intent("updateColorSeekbar");
-            LocalBroadcastManager.getInstance(this).sendBroadcast(i);
-            Runnable notification = new Runnable() {
-                public void run() {
-                    updateColorSeekbar();
-                }
-            };
-            handler.postDelayed(notification, 2200);
         }
     }
 

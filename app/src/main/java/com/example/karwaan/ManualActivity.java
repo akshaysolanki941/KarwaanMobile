@@ -15,6 +15,7 @@ import android.content.res.XmlResourceParser;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.RemoteException;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
@@ -144,7 +145,6 @@ public class ManualActivity extends AppCompatActivity {
 
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcast, new IntentFilter("loadingDismiss"));
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcast1, new IntentFilter("updateCurrentTime"));
-        LocalBroadcastManager.getInstance(this).registerReceiver(broadcast3, new IntentFilter("updateColorSeekbar"));
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcast2, new IntentFilter("updateSeekbar"));
 
         mediaBrowser = new MediaBrowserCompat(this, new ComponentName(this, ManualPlaybackService.class), connectionCallbacks, null);
@@ -158,13 +158,13 @@ public class ManualActivity extends AppCompatActivity {
         }
 
         getSharedPreferences("firstTimeCreated", MODE_PRIVATE).edit().putBoolean("firstTimeCreated", true).commit();
+
+        updateSeekbarColor();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-
-        //getSongs();
 
         Glide.with(this).load(R.drawable.bg).into(bg);
 
@@ -521,18 +521,18 @@ public class ManualActivity extends AppCompatActivity {
         }
     };
 
-    private BroadcastReceiver broadcast3 = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (action.equals("updateColorSeekbar")) {
-                int randomIndex = new Random().nextInt(allColors.size());
-                int randomColor = allColors.get(randomIndex);
-                seekbar.setProgressColor(randomColor);
-                seekbar.setSecondaryProgressColor(manipulateColor(randomColor, 0.5f));
+    private void updateSeekbarColor() {
+        int randomIndex = new Random().nextInt(allColors.size());
+        int randomColor = allColors.get(randomIndex);
+        seekbar.setProgressColor(randomColor);
+        seekbar.setSecondaryProgressColor(manipulateColor(randomColor, 0.5f));
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                updateSeekbarColor();
             }
-        }
-    };
+        }, 2200);
+    }
 
     private List<Integer> getAllMaterialColors() throws IOException, XmlPullParserException {
         XmlResourceParser xrp = getResources().getXml(R.xml.materialcolor);

@@ -49,7 +49,7 @@ public class ModeActivity extends AppCompatActivity {
         toolbar = (Toolbar) findViewById(R.id.toolBar);
         toolbar_title = (TextView) findViewById(R.id.toolbar_title);
         setSupportActionBar(toolbar);
-        toolbar_title.setText("Karwaan Mobile");
+        toolbar_title.setText(getString(R.string.app_name));
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
         loading_dialog = new Dialog(this);
@@ -147,6 +147,10 @@ public class ModeActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.menu_settings:
                 startActivity(new Intent(ModeActivity.this, SettingsActivity.class));
+                break;
+
+            case R.id.menu_about:
+                startActivity(new Intent(ModeActivity.this, AboutActivity.class));
                 break;
         }
         return super.onOptionsItemSelected(item);
