@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioAttributes;
@@ -19,6 +20,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.speech.tts.TextToSpeech;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
@@ -27,6 +29,8 @@ import android.support.v4.media.session.PlaybackStateCompat;
 import android.text.SpannableStringBuilder;
 import android.widget.Toast;
 
+import com.example.karwaan.Equalizer.EqualizerSettings;
+import com.example.karwaan.Equalizer.Settings;
 import com.example.karwaan.ManualActivity;
 import com.example.karwaan.Models.SongModel;
 import com.example.karwaan.Notification.Constants;
@@ -48,6 +52,7 @@ import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.upstream.TransferListener;
 import com.google.android.exoplayer2.util.Util;
+import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -69,6 +74,7 @@ import static com.example.karwaan.Notification.Constants.ACTION_NEXT;
 import static com.example.karwaan.Notification.Constants.ACTION_PLAY;
 import static com.example.karwaan.Notification.Constants.ACTION_PREVIOUS;
 import static com.example.karwaan.Notification.Constants.CHANNEL_ID;
+import static com.example.karwaan.SaregamaActivity.PREF_KEY;
 
 public class ManualPlaybackService extends MediaBrowserServiceCompat {
 
@@ -102,6 +108,8 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
     private final Handler handler = new Handler();
     private AudioManager audioManager;
     private float volume;
+
+    private int audioSessionID = 0;
 
     @Nullable
     @Override
@@ -284,6 +292,14 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
                     mediaSession.setPlaybackState(stateBuilder.build());
                     // media actually playing
                     createNotification(getBaseContext(), mediaSession, songs.get(index), R.drawable.pause_btn_black, false, false);
+
+                    audioSessionID = exoPlayer.getAudioSessionId();
+                    if (audioSessionID > 0) {
+                        Intent i = new Intent("audioSessionIDManual");
+                        i.putExtra("audioSessionIDManual", audioSessionID);
+                        LocalBroadcastManager.getInstance(getBaseContext()).sendBroadcast(i);
+                    }
+
                 } else if (playWhenReady) {
                     // might be idle (plays after prepare()),
                     // buffering (plays when data available)
@@ -571,6 +587,22 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
         }
     };
 
+    private void saveEqualizerSettings() {
+        if (Settings.equalizerModel != null) {
+            EqualizerSettings settings = new EqualizerSettings();
+            settings.bassStrength = Settings.equalizerModel.getBassStrength();
+            settings.presetPos = Settings.equalizerModel.getPresetPos();
+            settings.reverbPreset = Settings.equalizerModel.getReverbPreset();
+            settings.seekbarpos = Settings.equalizerModel.getSeekbarpos();
+            settings.isEqualizerEnabled = Settings.equalizerModel.isEqualizerEnabled();
+
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+            Gson gson = new Gson();
+            preferences.edit().putString(PREF_KEY, gson.toJson(settings)).apply();
+        }
+    }
+
     private BroadcastReceiver broadcast5 = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -842,14 +874,9 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
     }
 
     @Override
-    public void onTaskRemoved(Intent rootIntent) {
-        super.onTaskRemoved(rootIntent);
-        onDestroy();
-    }
-
-    @Override
     public void onDestroy() {
         super.onDestroy();
+        saveEqualizerSettings();
         pausePlayer();
         if (exoPlayer != null) {
             exoPlayer.release();

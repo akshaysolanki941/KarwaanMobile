@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioAttributes;
@@ -17,6 +18,7 @@ import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.speech.tts.TextToSpeech;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
@@ -25,6 +27,8 @@ import android.support.v4.media.session.PlaybackStateCompat;
 import android.text.SpannableStringBuilder;
 import android.widget.Toast;
 
+import com.example.karwaan.Equalizer.EqualizerSettings;
+import com.example.karwaan.Equalizer.Settings;
 import com.example.karwaan.Models.SongModel;
 import com.example.karwaan.R;
 import com.example.karwaan.SaregamaActivity;
@@ -45,6 +49,7 @@ import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.upstream.TransferListener;
 import com.google.android.exoplayer2.util.Util;
+import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -67,6 +72,7 @@ import static com.example.karwaan.Notification.Constants.ACTION_NEXT;
 import static com.example.karwaan.Notification.Constants.ACTION_PLAY;
 import static com.example.karwaan.Notification.Constants.ACTION_PREVIOUS;
 import static com.example.karwaan.Notification.Constants.CHANNEL_ID;
+import static com.example.karwaan.SaregamaActivity.PREF_KEY;
 
 public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
 
@@ -96,6 +102,7 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
     private float volume = 0;
     private int volumeLevel = 0;
     private AudioManager audioManager;
+    private int audioSessionID = 0;
 
     private Boolean skip10SongsEnabled;
 
@@ -263,6 +270,15 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
                     stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, 0, 0);
                     mediaSession.setPlaybackState(stateBuilder.build());
                     createNotification(getBaseContext(), mediaSession, songList.get(index), R.drawable.pause_btn_black, false, false);
+
+
+                    audioSessionID = exoPlayer.getAudioSessionId();
+                    if (audioSessionID > 0) {
+                        Intent i = new Intent("audioSessionID");
+                        i.putExtra("audioSessionID", audioSessionID);
+                        LocalBroadcastManager.getInstance(getBaseContext()).sendBroadcast(i);
+                    }
+
                 } else if (playWhenReady) {
                     // might be idle (plays after prepare()),
                     // buffering (plays when data available)
@@ -371,6 +387,9 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
                 Toast.makeText(this, "Forwarded 10 seconds", Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(this, "Song is about to end", Toast.LENGTH_SHORT).show();
+                Intent i = new Intent("loadingDismiss");
+                i.putExtra("loadingDismiss", "loadingDismiss");
+                LocalBroadcastManager.getInstance(this).sendBroadcast(i);
             }
         }
     }
@@ -395,6 +414,9 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
                 Toast.makeText(this, "Rewinded 10 seconds", Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(this, "Song starting position", Toast.LENGTH_SHORT).show();
+                Intent i = new Intent("loadingDismiss");
+                i.putExtra("loadingDismiss", "loadingDismiss");
+                LocalBroadcastManager.getInstance(this).sendBroadcast(i);
             }
         }
     }
@@ -503,6 +525,22 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
             }
         }
     };
+
+    private void saveEqualizerSettings() {
+        if (Settings.equalizerModel != null) {
+            EqualizerSettings settings = new EqualizerSettings();
+            settings.bassStrength = Settings.equalizerModel.getBassStrength();
+            settings.presetPos = Settings.equalizerModel.getPresetPos();
+            settings.reverbPreset = Settings.equalizerModel.getReverbPreset();
+            settings.seekbarpos = Settings.equalizerModel.getSeekbarpos();
+            settings.isEqualizerEnabled = Settings.equalizerModel.isEqualizerEnabled();
+
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+            Gson gson = new Gson();
+            preferences.edit().putString(PREF_KEY, gson.toJson(settings)).apply();
+        }
+    }
 
     private AudioManager.OnAudioFocusChangeListener afChangeListener = new AudioManager.OnAudioFocusChangeListener() {
         public void onAudioFocusChange(int focusChange) {
@@ -700,6 +738,7 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        saveEqualizerSettings();
         pausePlayer();
         if (exoPlayer != null) {
             exoPlayer.release();

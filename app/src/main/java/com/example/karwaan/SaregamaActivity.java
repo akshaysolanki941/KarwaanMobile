@@ -3,16 +3,24 @@ package com.example.karwaan;
 import android.animation.AnimatorInflater;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.media.audiofx.BassBoost;
+import android.media.audiofx.Equalizer;
+import android.media.audiofx.PresetReverb;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.RemoteException;
+import android.preference.PreferenceManager;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
@@ -21,6 +29,8 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -34,6 +44,10 @@ import android.widget.Toast;
 
 import com.airbnb.lottie.LottieAnimationView;
 import com.bumptech.glide.Glide;
+import com.example.karwaan.Equalizer.DialogEqualizerFragment;
+import com.example.karwaan.Equalizer.EqualizerModel;
+import com.example.karwaan.Equalizer.EqualizerSettings;
+import com.example.karwaan.Equalizer.Settings;
 import com.example.karwaan.Models.SongModel;
 import com.example.karwaan.Notification.Constants;
 import com.example.karwaan.Services.SaregamaPlaybackService;
@@ -44,6 +58,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -52,6 +67,7 @@ import java.util.Locale;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 public class SaregamaActivity extends AppCompatActivity {
@@ -77,7 +93,13 @@ public class SaregamaActivity extends AppCompatActivity {
 
     private MediaBrowserCompat mediaBrowser;
     private MediaControllerCompat mediaController;
+    private int audioSessionID = 0;
+    public static final String PREF_KEY = "equalizer";
+    private DialogEqualizerFragment fragment;
 
+    private Equalizer mEqualizer;
+    private BassBoost bassBoost;
+    private PresetReverb presetReverb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -118,6 +140,9 @@ public class SaregamaActivity extends AppCompatActivity {
             createNotificationChannel();
         }
 
+        LocalBroadcastManager.getInstance(this).registerReceiver(audioSessionIDBroadcast, new IntentFilter("audioSessionID"));
+        LocalBroadcastManager.getInstance(this).registerReceiver(broadcast, new IntentFilter("loadingDismiss"));
+
         mediaBrowser = new MediaBrowserCompat(this, new ComponentName(this, SaregamaPlaybackService.class), connectionCallbacks, null);
 
         setReduceSizeAnimation(btn_play_pause);
@@ -139,6 +164,8 @@ public class SaregamaActivity extends AppCompatActivity {
 
         mediaBrowser.connect();
         getSongsList();
+
+        loadEqualizerSettings();
     }
 
     @Override
@@ -178,6 +205,23 @@ public class SaregamaActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.saregama_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_equilizer:
+                showEquilizerDialog();
+                break;
+
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private final MediaBrowserCompat.ConnectionCallback connectionCallbacks = new MediaBrowserCompat.ConnectionCallback() {
@@ -518,6 +562,75 @@ public class SaregamaActivity extends AppCompatActivity {
         chipGroup.addView(chip);
     }
 
+    private BroadcastReceiver audioSessionIDBroadcast = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals("audioSessionID")) {
+                audioSessionID = intent.getIntExtra("audioSessionID", 0);
+
+                mEqualizer = new Equalizer(0, audioSessionID);
+                bassBoost = new BassBoost(0, audioSessionID);
+                presetReverb = new PresetReverb(0, audioSessionID);
+
+                fragment = DialogEqualizerFragment.newBuilder()
+                        .setAudioSessionId(audioSessionID)
+                        .title(R.string.app_name)
+                        .themeColor(ContextCompat.getColor(SaregamaActivity.this, R.color.primaryColor))
+                        .textColor(ContextCompat.getColor(SaregamaActivity.this, R.color.textColor))
+                        .accentAlpha(ContextCompat.getColor(SaregamaActivity.this, R.color.playingCardColor))
+                        .darkColor(ContextCompat.getColor(SaregamaActivity.this, R.color.primaryDarkColor))
+                        .setAccentColor(ContextCompat.getColor(SaregamaActivity.this, R.color.secondaryColor))
+                        .build();
+            }
+        }
+    };
+
+    private BroadcastReceiver broadcast = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals("loadingDismiss")) {
+                loading_dialog.dismiss();
+                lottieAnimationView.playAnimation();
+            }
+        }
+    };
+
+    private void showEquilizerDialog() {
+        //if (fragment != null) {
+            fragment.show(getSupportFragmentManager(), "eq");
+        //} else {
+           // Toast.makeText(this, "Start a song first", Toast.LENGTH_SHORT).show();
+        //}
+    }
+
+    private void loadEqualizerSettings() {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        Gson gson = new Gson();
+        EqualizerSettings settings = gson.fromJson(preferences.getString(PREF_KEY, "{}"), EqualizerSettings.class);
+        EqualizerModel model = new EqualizerModel();
+        model.setBassStrength(settings.bassStrength);
+        model.setPresetPos(settings.presetPos);
+        model.setReverbPreset(settings.reverbPreset);
+        model.setSeekbarpos(settings.seekbarpos);
+        model.setEqualizerEnabled(settings.isEqualizerEnabled);
+
+        Settings.isEqualizerEnabled = settings.isEqualizerEnabled;
+        Settings.isEqualizerReloaded = true;
+        Settings.bassStrength = settings.bassStrength;
+        Settings.presetPos = settings.presetPos;
+        Settings.reverbPreset = settings.reverbPreset;
+        Settings.seekbarpos = settings.seekbarpos;
+        Settings.equalizerModel = model;
+    }
+
+    @SuppressLint("MissingSuperCall")
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        //No call for super(). Bug on API Level > 11.
+    }
+
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel notificationChannel = new NotificationChannel(Constants.CHANNEL_ID, "Karvaan Music Notifications", NotificationManager.IMPORTANCE_LOW);
@@ -575,6 +688,17 @@ public class SaregamaActivity extends AppCompatActivity {
         }
         if (notificationManager != null) {
             notificationManager.cancelAll();
+        }
+        if (mEqualizer != null) {
+            mEqualizer.release();
+        }
+
+        if (bassBoost != null) {
+            bassBoost.release();
+        }
+
+        if (presetReverb != null) {
+            presetReverb.release();
         }
         if (MediaControllerCompat.getMediaController(SaregamaActivity.this) != null) {
             MediaControllerCompat.getMediaController(SaregamaActivity.this).unregisterCallback(controllerCallback);

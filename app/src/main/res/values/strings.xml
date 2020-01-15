@@ -29,4 +29,6 @@
 
     <string name="update_app">UPDATE APP (ignore if already updated)</string>
     <string name="enable_10_songs_skipping">Enable 10 songs skipping</string>
+
+    <string name="eq">Equalizer</string>
 </resources>

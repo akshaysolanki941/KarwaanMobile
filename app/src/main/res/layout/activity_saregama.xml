@@ -31,7 +31,7 @@
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolBar"
         android:layout_width="match_parent"
-        android:layout_height="70dp"
+        android:layout_height="80dp"
         android:background="@drawable/toolbar_bg"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
 
@@ -43,7 +43,7 @@
             android:layout_gravity="center"
             android:fontFamily="cursive"
             android:textColor="#fff"
-            android:textSize="25dp"
+            android:textSize="25sp"
             android:textStyle="bold" />
 
     </androidx.appcompat.widget.Toolbar>
@@ -144,6 +144,5 @@
         android:textAlignment="center"
         android:textColor="#fff"
         android:textSize="18sp" />
-
 
 </RelativeLayout>

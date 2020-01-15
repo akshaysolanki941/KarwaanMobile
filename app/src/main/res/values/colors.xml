@@ -11,4 +11,14 @@
     <color name="bgGradientEnd">#d8000000</color>
 
     <color name="bgSolidDark">#55000000</color>
+
+
+    <color name="secondaryColor">#4caf50</color>
+    <color name="primaryColor">#212121</color>
+    <color name="primaryLightColor">#313131</color>
+    <color name="primaryDarkColor">#101010</color>
+    <color name="playingCardColor">#444caf50</color>
+    <color name="textColor">#FAFAFA</color>
+
+    <color name="colorWindowBackground">#000</color>
 </resources>

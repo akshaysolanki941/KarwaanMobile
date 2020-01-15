@@ -300,7 +300,7 @@
                 android:layout_margin="10dp"
                 app:rcBackgroundPadding="2dp"
                 app:rcProgressColor="#02C7E9"
-                app:rcRadius="6dp"
+                app:rcRadius="10dp"
                 app:rcSecondaryProgressColor="#01758F" />
 
             <SeekBar

@@ -11,12 +11,17 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.res.XmlResourceParser;
 import android.graphics.Color;
+import android.media.audiofx.BassBoost;
+import android.media.audiofx.Equalizer;
+import android.media.audiofx.PresetReverb;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.RemoteException;
+import android.preference.PreferenceManager;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
@@ -24,6 +29,8 @@ import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -40,6 +47,10 @@ import com.airbnb.lottie.LottieAnimationView;
 import com.akexorcist.roundcornerprogressbar.RoundCornerProgressBar;
 import com.bumptech.glide.Glide;
 import com.example.karwaan.Adapters.RVSongsAdapter;
+import com.example.karwaan.Equalizer.DialogEqualizerFragment;
+import com.example.karwaan.Equalizer.EqualizerModel;
+import com.example.karwaan.Equalizer.EqualizerSettings;
+import com.example.karwaan.Equalizer.Settings;
 import com.example.karwaan.Models.SongModel;
 import com.example.karwaan.Notification.Constants;
 import com.example.karwaan.Services.ManualPlaybackService;
@@ -50,6 +61,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.gson.Gson;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import org.xmlpull.v1.XmlPullParserException;
@@ -63,6 +75,7 @@ import java.util.Random;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -91,6 +104,14 @@ public class ManualActivity extends AppCompatActivity {
     private RoundCornerProgressBar seekbar;
     private SeekBar seekBarInvisible;
     private List<Integer> allColors;
+
+    private int audioSessionID = 0;
+    public static final String PREF_KEY = "equalizer";
+    private DialogEqualizerFragment fragment;
+
+    private Equalizer mEqualizer;
+    private BassBoost bassBoost;
+    private PresetReverb presetReverb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -146,11 +167,13 @@ public class ManualActivity extends AppCompatActivity {
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcast, new IntentFilter("loadingDismiss"));
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcast1, new IntentFilter("updateCurrentTime"));
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcast2, new IntentFilter("updateSeekbar"));
+        LocalBroadcastManager.getInstance(this).registerReceiver(audioSessionIDBroadcast, new IntentFilter("audioSessionIDManual"));
 
         mediaBrowser = new MediaBrowserCompat(this, new ComponentName(this, ManualPlaybackService.class), connectionCallbacks, null);
         mediaBrowser.connect();
 
         getSongs();
+
         try {
             allColors = getAllMaterialColors();
         } catch (IOException | XmlPullParserException e) {
@@ -160,6 +183,8 @@ public class ManualActivity extends AppCompatActivity {
         getSharedPreferences("firstTimeCreated", MODE_PRIVATE).edit().putBoolean("firstTimeCreated", true).commit();
 
         updateSeekbarColor();
+
+        loadEqualizerSettings();
     }
 
     @Override
@@ -521,6 +546,75 @@ public class ManualActivity extends AppCompatActivity {
         }
     };
 
+    private BroadcastReceiver audioSessionIDBroadcast = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals("audioSessionIDManual")) {
+                audioSessionID = intent.getIntExtra("audioSessionIDManual", 0);
+
+                mEqualizer = new Equalizer(0, audioSessionID);
+                bassBoost = new BassBoost(0, audioSessionID);
+                presetReverb = new PresetReverb(0, audioSessionID);
+
+                fragment = DialogEqualizerFragment.newBuilder()
+                        .setAudioSessionId(audioSessionID)
+                        .title(R.string.app_name)
+                        .themeColor(ContextCompat.getColor(ManualActivity.this, R.color.primaryColor))
+                        .textColor(ContextCompat.getColor(ManualActivity.this, R.color.textColor))
+                        .accentAlpha(ContextCompat.getColor(ManualActivity.this, R.color.playingCardColor))
+                        .darkColor(ContextCompat.getColor(ManualActivity.this, R.color.primaryDarkColor))
+                        .setAccentColor(ContextCompat.getColor(ManualActivity.this, R.color.secondaryColor))
+                        .build();
+            }
+        }
+    };
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.manual_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_equilizer_manual:
+                showEquilizerDialog();
+                break;
+
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void showEquilizerDialog() {
+        if (fragment != null) {
+            fragment.show(getSupportFragmentManager(), "eq");
+        } else {
+            Toast.makeText(this, "Start a song first", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void loadEqualizerSettings() {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        Gson gson = new Gson();
+        EqualizerSettings settings = gson.fromJson(preferences.getString(PREF_KEY, "{}"), EqualizerSettings.class);
+        EqualizerModel model = new EqualizerModel();
+        model.setBassStrength(settings.bassStrength);
+        model.setPresetPos(settings.presetPos);
+        model.setReverbPreset(settings.reverbPreset);
+        model.setSeekbarpos(settings.seekbarpos);
+        model.setEqualizerEnabled(settings.isEqualizerEnabled);
+
+        Settings.isEqualizerEnabled = settings.isEqualizerEnabled;
+        Settings.isEqualizerReloaded = true;
+        Settings.bassStrength = settings.bassStrength;
+        Settings.presetPos = settings.presetPos;
+        Settings.reverbPreset = settings.reverbPreset;
+        Settings.seekbarpos = settings.seekbarpos;
+        Settings.equalizerModel = model;
+    }
+
     private void updateSeekbarColor() {
         int randomIndex = new Random().nextInt(allColors.size());
         int randomColor = allColors.get(randomIndex);
@@ -531,7 +625,7 @@ public class ManualActivity extends AppCompatActivity {
             public void run() {
                 updateSeekbarColor();
             }
-        }, 2200);
+        }, 1800);
     }
 
     private List<Integer> getAllMaterialColors() throws IOException, XmlPullParserException {
@@ -641,6 +735,17 @@ public class ManualActivity extends AppCompatActivity {
         getSharedPreferences("released", MODE_PRIVATE).edit().putBoolean("released", true).commit();
         if (notificationManager != null) {
             notificationManager.cancelAll();
+        }
+        if (mEqualizer != null) {
+            mEqualizer.release();
+        }
+
+        if (bassBoost != null) {
+            bassBoost.release();
+        }
+
+        if (presetReverb != null) {
+            presetReverb.release();
         }
         rv_songs.setAdapter(null);
         if (MediaControllerCompat.getMediaController(ManualActivity.this) != null) {
