@@ -375,11 +375,12 @@ public class ManualActivity extends AppCompatActivity implements RVSongSwipeHelp
                 for (DataSnapshot ds : dataSnapshot.getChildren()) {
                     String songName = ds.child("songName").getValue(String.class);
                     String url = ds.child("url").getValue(String.class);
+                    String movie = ds.child("movie").getValue(String.class);
                     ArrayList<String> artistsList = new ArrayList<>();
                     for (DataSnapshot ds1 : ds.child("artists").getChildren()) {
                         artistsList.add(ds1.getValue(String.class));
                     }
-                    mainSongsList.add(new SongModel(url, songName, artistsList));
+                    mainSongsList.add(new SongModel(url, songName, movie, artistsList));
                 }
                 if (!mainSongsList.isEmpty()) {
                     tv_total_songs.setText(getResources().getString(R.string.total_songs).concat(String.valueOf(mainSongsList.size())));
@@ -410,6 +411,8 @@ public class ManualActivity extends AppCompatActivity implements RVSongSwipeHelp
         String query = text.toString().toLowerCase();
         for (SongModel song : mainSongsList) {
             if (song.getSongName().toLowerCase().contains(query)) {
+                songs.add(song);
+            } else if (song.getMovie().toLowerCase().contains(query)) {
                 songs.add(song);
             }
         }
@@ -535,8 +538,9 @@ public class ManualActivity extends AppCompatActivity implements RVSongSwipeHelp
                 public void onMetadataChanged(MediaMetadataCompat metadata) {
                     String title = metadata.getString(MediaMetadataCompat.METADATA_KEY_TITLE);
                     String artist = metadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST);
+                    String movie = metadata.getString(MediaMetadataCompat.METADATA_KEY_ALBUM);
                     long duration = metadata.getLong(MediaMetadataCompat.METADATA_KEY_DURATION);
-                    tv_sliding_view_song_name.setText(title.concat(" - ").concat(artist));
+                    tv_sliding_view_song_name.setText(title.concat(" (").concat(movie).concat(")").concat(" - ").concat(artist));
                     tv_sliding_view_song_name.setSelected(true);
                     tv_total_time.setText(milliSecondsToTimer(duration));
                     seekbar.setMax((float) duration);

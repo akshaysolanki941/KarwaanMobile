@@ -362,7 +362,8 @@ public class SaregamaActivity extends AppCompatActivity {
                 public void onMetadataChanged(MediaMetadataCompat metadata) {
                     String title = metadata.getString(MediaMetadataCompat.METADATA_KEY_TITLE);
                     String artist = metadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST);
-                    tv_saregama_song_details.setText(title.concat(" - ").concat(artist));
+                    String movie = metadata.getString(MediaMetadataCompat.METADATA_KEY_ALBUM);
+                    tv_saregama_song_details.setText(title.concat(" (").concat(movie).concat(")").concat(" - ").concat(artist));
                     tv_saregama_song_details.setSelected(true);
                 }
 
@@ -559,11 +560,12 @@ public class SaregamaActivity extends AppCompatActivity {
                 for (DataSnapshot ds : dataSnapshot.getChildren()) {
                     String songName = ds.child("songName").getValue(String.class);
                     String url = ds.child("url").getValue(String.class);
+                    String movie = ds.child("movie").getValue(String.class);
                     ArrayList<String> artistsList = new ArrayList<>();
                     for (DataSnapshot ds1 : ds.child("artists").getChildren()) {
                         artistsList.add(ds1.getValue(String.class));
                     }
-                    mainSongList.add(new SongModel(url, songName, artistsList));
+                    mainSongList.add(new SongModel(url, songName, movie, artistsList));
                 }
                 if (!mainSongList.isEmpty()) {
                     tv_total_songs.setText(getResources().getString(R.string.total_songs).concat(String.valueOf(mainSongList.size())));

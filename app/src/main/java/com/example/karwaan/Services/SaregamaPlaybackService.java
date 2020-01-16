@@ -262,7 +262,8 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
                         mediaSession.setPlaybackState(stateBuilder.build());
                         MediaMetadataCompat.Builder mediaMetadata = new MediaMetadataCompat.Builder()
                                 .putString(MediaMetadata.METADATA_KEY_TITLE, songList.get(index).getSongName())
-                                .putString(MediaMetadata.METADATA_KEY_ARTIST, String.valueOf(artists));
+                                .putString(MediaMetadata.METADATA_KEY_ARTIST, String.valueOf(artists))
+                                .putString(MediaMetadata.METADATA_KEY_ALBUM, songList.get(index).getMovie());
                         mediaSession.setMetadata(mediaMetadata.build());
                         break;
                 }

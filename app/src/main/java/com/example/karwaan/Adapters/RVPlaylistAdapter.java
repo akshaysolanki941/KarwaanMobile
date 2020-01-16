@@ -56,10 +56,10 @@ public class RVPlaylistAdapter extends RecyclerView.Adapter<RVPlaylistAdapter.Vi
             if (i == artistList.size() - 1) {
                 artists.append(a);
             } else {
-                artists.append(a).append(" | ");
+                artists.append(a).append(", ");
             }
         }
-        holder.tv_artist_playlist.setText(artists);
+        holder.tv_artist_playlist.setText(song.getMovie().concat(" | ").concat(String.valueOf(artists)));
         holder.tv_artist_playlist.setSelected(true);
 
         setEnterAnimation(holder.itemView, position);

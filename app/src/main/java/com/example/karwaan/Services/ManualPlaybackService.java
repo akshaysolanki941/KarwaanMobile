@@ -276,6 +276,7 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
                     MediaMetadataCompat.Builder mediaMetadata = new MediaMetadataCompat.Builder()
                             .putString(MediaMetadata.METADATA_KEY_TITLE, songs.get(index).getSongName())
                             .putString(MediaMetadata.METADATA_KEY_ARTIST, String.valueOf(artists))
+                            .putString(MediaMetadata.METADATA_KEY_ALBUM, songs.get(index).getMovie())
                             .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, exoPlayer.getDuration());
                     mediaSession.setMetadata(mediaMetadata.build());
                     showCurrentTime();
@@ -547,6 +548,8 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
                 String query = intent.getStringExtra("search");
                 for (SongModel song : mainSongsList) {
                     if (song.getSongName().toLowerCase().contains(query)) {
+                        songs.add(song);
+                    } else if (song.getMovie().toLowerCase().contains(query)) {
                         songs.add(song);
                     }
                 }

@@ -34,6 +34,7 @@
     <string name="my_playlist_chip">My Playlist</string>
     <string name="add_by_right_swiping_a_song">RIGHT SWIPE A SONG TO ADD IT IN YOUR PLAYLIST AND SWIPE RIGHT IN YOUR PLAYLIST TO REMOVE IT</string>
     <string name="remove_from_nplaylist">Remove from\nplaylist?</string>
-    <string name="add_this_song_nto_your_playlist">Add this song to\nyour playlist?</string>
+    <string name="add_this_song_nto_your_playlist">Add this song\nto your playlist?</string>
     <string name="playing_from_your_playlist">Playing from your playlist</string>
+    <string name="search_by_title_artist_or_movie">Search by title or movie</string>
 </resources>

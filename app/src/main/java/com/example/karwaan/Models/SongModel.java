@@ -5,15 +5,16 @@ import java.util.ArrayList;
 
 public class SongModel implements Serializable {
 
-    private String url, songName;
+    private String url, songName, movie;
     private ArrayList<String> artists;
 
     public SongModel() {
     }
 
-    public SongModel(String url, String songName, ArrayList<String> artists) {
+    public SongModel(String url, String songName, String movie, ArrayList<String> artists) {
         this.url = url;
         this.songName = songName;
+        this.movie = movie;
         this.artists = artists;
     }
 
@@ -23,6 +24,10 @@ public class SongModel implements Serializable {
 
     public String getSongName() {
         return songName;
+    }
+
+    public String getMovie() {
+        return movie;
     }
 
     public ArrayList<String> getArtists() {

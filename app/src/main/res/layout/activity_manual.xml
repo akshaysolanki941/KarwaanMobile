@@ -102,7 +102,7 @@
                                     android:layout_weight="1.7"
                                     android:background="@drawable/et_bg"
                                     android:fontFamily="@font/overpass_light"
-                                    android:hint="Search a Song"
+                                    android:hint="@string/search_by_title_artist_or_movie"
                                     android:imeOptions="actionSearch"
                                     android:inputType="text"
                                     android:textColor="#000"

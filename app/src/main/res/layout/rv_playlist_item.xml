@@ -36,7 +36,7 @@
                     android:layout_centerVertical="true"
                     android:fontFamily="@font/overpass_semi_bold"
                     android:text="@string/remove_from_nplaylist"
-                    android:textColor="#000" />
+                    android:textColor="#FF0000" />
 
             </RelativeLayout>
 

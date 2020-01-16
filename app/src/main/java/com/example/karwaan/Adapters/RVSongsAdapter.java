@@ -56,10 +56,10 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
             if (i == artistList.size() - 1) {
                 artists.append(a);
             } else {
-                artists.append(a).append(" | ");
+                artists.append(a).append(", ");
             }
         }
-        holder.tv_artist.setText(artists);
+        holder.tv_artist.setText(song.getMovie().concat(" | ").concat(String.valueOf(artists)));
         holder.tv_artist.setSelected(true);
 
         setEnterAnimation(holder.itemView, position);
