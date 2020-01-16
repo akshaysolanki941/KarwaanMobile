@@ -22,32 +22,32 @@ import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHolder> {
+public class RVPlaylistAdapter extends RecyclerView.Adapter<RVPlaylistAdapter.ViewHolder> {
 
-    private ArrayList<SongModel> songs;
+    private ArrayList<SongModel> songsPlaylist;
     private Context context;
     private int lastPosition = 0;
 
-    public RVSongsAdapter() {
+    public RVPlaylistAdapter() {
     }
 
-    public RVSongsAdapter(ArrayList<SongModel> songs, Context context) {
+    public RVPlaylistAdapter(ArrayList<SongModel> songsPlaylist, Context context) {
         this.context = context;
-        this.songs = songs;
+        this.songsPlaylist = songsPlaylist;
     }
 
     @NonNull
     @Override
-    public RVSongsAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
-        View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.rv_songs_item, viewGroup, false);
-        return new RVSongsAdapter.ViewHolder(view);
+    public RVPlaylistAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
+        View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.rv_playlist_item, viewGroup, false);
+        return new RVPlaylistAdapter.ViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RVSongsAdapter.ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull RVPlaylistAdapter.ViewHolder holder, int position) {
 
-        SongModel song = songs.get(position);
-        holder.tv_song_name.setText(song.getSongName());
+        SongModel song = songsPlaylist.get(position);
+        holder.tv_song_name_playlist.setText(song.getSongName());
 
         SpannableStringBuilder artists = new SpannableStringBuilder();
         ArrayList<String> artistList = song.getArtists();
@@ -59,8 +59,8 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
                 artists.append(a).append(" | ");
             }
         }
-        holder.tv_artist.setText(artists);
-        holder.tv_artist.setSelected(true);
+        holder.tv_artist_playlist.setText(artists);
+        holder.tv_artist_playlist.setSelected(true);
 
         setEnterAnimation(holder.itemView, position);
 
@@ -81,23 +81,28 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
 
     @Override
     public int getItemCount() {
-        return songs.size();
+        return songsPlaylist.size();
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
-        TextView tv_song_name, tv_artist;
+        TextView tv_song_name_playlist, tv_artist_playlist;
         public RelativeLayout foreground, background;
 
         private ViewHolder(@NonNull View itemView) {
             super(itemView);
 
-            tv_song_name = (TextView) itemView.findViewById(R.id.tv_song_name);
-            tv_artist = itemView.findViewById(R.id.tv_artist);
+            tv_song_name_playlist = (TextView) itemView.findViewById(R.id.tv_song_name_playlist);
+            tv_artist_playlist = itemView.findViewById(R.id.tv_artist_playlist);
             background = (RelativeLayout) itemView.findViewById(R.id.background);
             foreground = (RelativeLayout) itemView.findViewById(R.id.foreground);
 
         }
+    }
+
+    public void removeItem(int position) {
+        songsPlaylist.remove(position);
+        notifyItemRemoved(position);
     }
 
     private void setEnterAnimation(View viewToAnimate, int position) {

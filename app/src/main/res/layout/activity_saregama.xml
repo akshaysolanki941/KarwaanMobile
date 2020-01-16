@@ -53,7 +53,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/toolBar"
-        android:layout_marginTop="5dp"
+        android:layout_marginTop="2dp"
         android:layout_marginBottom="5dp"
         android:clipToPadding="false"
         android:padding="5dp"
@@ -73,12 +73,25 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/horizontalScroll"
-        android:layout_margin="10dp"
+        android:layout_margin="5dp"
         android:fontFamily="@font/overpass_semi_bold_italic"
         android:padding="3dp"
         android:text="Total songs: 501"
         android:textAlignment="center"
         android:textColor="#fff" />
+
+    <com.google.android.material.chip.Chip
+        android:id="@+id/chip_my_playlist"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/tv_total_songs"
+        android:layout_centerHorizontal="true"
+        android:layout_margin="5dp"
+        android:checkable="false"
+        android:clickable="true"
+        android:text="@string/my_playlist_chip"
+        android:textColor="#fff"
+        app:closeIconEnabled="false" />
 
     <ImageButton
         android:id="@+id/btn_play_pause"
@@ -125,6 +138,22 @@
         android:layout_toStartOf="@+id/btn_previous"
         android:background="@drawable/round_btn"
         android:src="@drawable/ic_replay_10_black_24dp" />
+
+    <TextView
+        android:id="@+id/tv_playing_from_playlist"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/tv_saregama_song_details"
+        android:layout_centerHorizontal="true"
+        android:layout_margin="5dp"
+        android:background="@drawable/switch_bg"
+        android:fontFamily="@font/overpass_semi_bold"
+        android:padding="10dp"
+        android:text="@string/playing_from_your_playlist"
+        android:textAlignment="center"
+        android:textColor="#fff"
+        android:textSize="14sp"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/tv_saregama_song_details"

@@ -50,6 +50,8 @@ import com.example.karwaan.Equalizer.EqualizerSettings;
 import com.example.karwaan.Equalizer.Settings;
 import com.example.karwaan.Models.SongModel;
 import com.example.karwaan.Notification.Constants;
+import com.example.karwaan.RoomDB.Word;
+import com.example.karwaan.RoomDB.WordViewModel;
 import com.example.karwaan.Services.SaregamaPlaybackService;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
@@ -62,18 +64,21 @@ import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 public class SaregamaActivity extends AppCompatActivity {
 
     private Toolbar toolbar;
-    private TextView toolbar_title, tv_saregama_song_details, tv_total_songs;
+    private TextView toolbar_title, tv_saregama_song_details, tv_total_songs, tv_playing_from_playlist;
     private ArrayList<SongModel> songList = new ArrayList<>();
     private ArrayList<SongModel> mainSongList = new ArrayList<>();
     private HashSet<String> artistHashSet = new HashSet<>();
@@ -83,6 +88,7 @@ public class SaregamaActivity extends AppCompatActivity {
     private ImageView bg;
     private Dialog loading_dialog;
     private ChipGroup chipGroup;
+    private Chip chip_my_playlist;
     private RelativeLayout rlParentLayout;
     private Boolean voiceModeEnabled;
     private NotificationManager notificationManager;
@@ -100,6 +106,8 @@ public class SaregamaActivity extends AppCompatActivity {
     private Equalizer mEqualizer;
     private BassBoost bassBoost;
     private PresetReverb presetReverb;
+
+    private WordViewModel mWordViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -123,9 +131,11 @@ public class SaregamaActivity extends AppCompatActivity {
         lottieAnimationView = (LottieAnimationView) findViewById(R.id.lottie_animation_view);
         bg = findViewById(R.id.bg);
         tv_saregama_song_details = findViewById(R.id.tv_saregama_song_details);
+        tv_playing_from_playlist = findViewById(R.id.tv_playing_from_playlist);
         tv_total_songs = findViewById(R.id.tv_total_songs);
         tv_total_songs.setVisibility(View.GONE);
         chipGroup = findViewById(R.id.chipGroup);
+        chip_my_playlist = findViewById(R.id.chip_my_playlist);
 
         loading_dialog = new Dialog(this);
         loading_dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -134,6 +144,8 @@ public class SaregamaActivity extends AppCompatActivity {
         lottie_animation_view.playAnimation();
         loading_dialog.setCanceledOnTouchOutside(false);
         loading_dialog.setCancelable(false);
+
+        mWordViewModel = ViewModelProviders.of(SaregamaActivity.this).get(WordViewModel.class);
 
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -162,6 +174,8 @@ public class SaregamaActivity extends AppCompatActivity {
             initSpeechRecognition();
         }
 
+        setVisibilityOfPlaylistChip();
+
         mediaBrowser.connect();
         getSongsList();
 
@@ -182,6 +196,12 @@ public class SaregamaActivity extends AppCompatActivity {
             setReduceSizeAnimation(selectedChip);
             setRegainSizeAnimation(selectedChip);
             if (selectedChip != null) {
+
+                chip_my_playlist.setChipStrokeWidth(0);
+                chip_my_playlist.setChipStrokeColorResource(R.color.black);
+                chip_my_playlist.setSelected(false);
+                tv_playing_from_playlist.setVisibility(View.GONE);
+
                 String selectedArtist = selectedChip.getText().toString();
                 Intent chipIntent = new Intent("chipSelect");
                 chipIntent.putExtra("chipSelect", selectedArtist);
@@ -203,6 +223,46 @@ public class SaregamaActivity extends AppCompatActivity {
                     songList.addAll(artistSongsList);
                     tv_total_songs.setText(getResources().getString(R.string.total_songs).concat(String.valueOf(artistSongsList.size())));
                 }
+            }
+        });
+
+        chip_my_playlist.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                setReduceSizeAnimation(chip_my_playlist);
+                setRegainSizeAnimation(chip_my_playlist);
+
+                chip_my_playlist.setChipStrokeWidth(1f);
+                chip_my_playlist.setChipStrokeColorResource(R.color.white);
+                chip_my_playlist.setSelected(true);
+                tv_playing_from_playlist.setVisibility(View.VISIBLE);
+
+                ArrayList<SongModel> tempSongList = new ArrayList<>();
+                mWordViewModel.getAllWords().observe(SaregamaActivity.this, new Observer<List<Word>>() {
+                    @Override
+                    public void onChanged(List<Word> words) {
+                        if (!tempSongList.isEmpty()) {
+                            tempSongList.clear();
+                        }
+                        ArrayList<String> songNameInPlaylist = new ArrayList<>();
+                        for (int i = 0; i < words.size(); i++) {
+                            songNameInPlaylist.add(words.get(i).getWord());
+                        }
+                        for (SongModel songModel : mainSongList) {
+                            if (songNameInPlaylist.contains(songModel.getSongName())) {
+                                tempSongList.add(songModel);
+                            }
+                        }
+
+                    }
+                });
+                songList.clear();
+                songList.addAll(tempSongList);
+                Intent intent = new Intent("playlistSaregama");
+                intent.putExtra("playlistSaregama", songList);
+                LocalBroadcastManager.getInstance(SaregamaActivity.this).sendBroadcast(intent);
+                tv_total_songs.setText(getResources().getString(R.string.total_songs).concat(String.valueOf(songList.size())));
             }
         });
     }
@@ -544,6 +604,19 @@ public class SaregamaActivity extends AppCompatActivity {
 
     }
 
+    private void setVisibilityOfPlaylistChip() {
+        mWordViewModel.getAllWords().observe(SaregamaActivity.this, new Observer<List<Word>>() {
+            @Override
+            public void onChanged(List<Word> words) {
+                if (words.isEmpty()) {
+                    chip_my_playlist.setVisibility(View.GONE);
+                } else {
+                    chip_my_playlist.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+    }
+
     private void generateChip(String title) {
         Chip chip = new Chip(chipGroup.getContext());
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -598,9 +671,9 @@ public class SaregamaActivity extends AppCompatActivity {
 
     private void showEquilizerDialog() {
         //if (fragment != null) {
-            fragment.show(getSupportFragmentManager(), "eq");
+        fragment.show(getSupportFragmentManager(), "eq");
         //} else {
-           // Toast.makeText(this, "Start a song first", Toast.LENGTH_SHORT).show();
+        // Toast.makeText(this, "Start a song first", Toast.LENGTH_SHORT).show();
         //}
     }
 

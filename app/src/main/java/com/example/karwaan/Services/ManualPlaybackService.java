@@ -172,6 +172,7 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcast3, new IntentFilter("chip"));
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcast4, new IntentFilter("holderItemOnClick"));
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcast5, new IntentFilter("seekChanged"));
+        LocalBroadcastManager.getInstance(this).registerReceiver(broadcast6, new IntentFilter("playlist"));
 
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
@@ -583,6 +584,19 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
             if (intent.getAction().equals("holderItemOnClick")) {
                 int position = intent.getIntExtra("holderItemOnClick", 0);
                 holderItemOnClick(position);
+            }
+        }
+    };
+
+    private BroadcastReceiver broadcast6 = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals("playlist")) {
+                songs.clear();
+                ArrayList<SongModel> playlist = (ArrayList<SongModel>) intent.getSerializableExtra("playlist");
+                if (playlist != null) {
+                    songs.addAll(playlist);
+                }
             }
         }
     };

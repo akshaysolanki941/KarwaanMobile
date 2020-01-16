@@ -140,6 +140,7 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
         startService(new Intent(getBaseContext(), OnClearFromRecentService.class));
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcast, new IntentFilter("mainSongList"));
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcast1, new IntentFilter("chipSelect"));
+        LocalBroadcastManager.getInstance(this).registerReceiver(broadcast2, new IntentFilter("playlistSaregama"));
 
         registerReceiver(headphoneBroadcast, new IntentFilter(Intent.ACTION_HEADSET_PLUG));
 
@@ -498,6 +499,20 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
                         }
                     }
                     songList.addAll(artistSongsList);
+                }
+                startRandomSongs();
+            }
+        }
+    };
+
+    private BroadcastReceiver broadcast2 = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals("playlistSaregama")) {
+                songList.clear();
+                ArrayList<SongModel> playlist = (ArrayList<SongModel>) intent.getSerializableExtra("playlistSaregama");
+                if (playlist != null) {
+                    songList.addAll(playlist);
                 }
                 startRandomSongs();
             }

@@ -46,6 +46,7 @@ import android.widget.Toast;
 import com.airbnb.lottie.LottieAnimationView;
 import com.akexorcist.roundcornerprogressbar.RoundCornerProgressBar;
 import com.bumptech.glide.Glide;
+import com.example.karwaan.Adapters.RVPlaylistAdapter;
 import com.example.karwaan.Adapters.RVSongsAdapter;
 import com.example.karwaan.Equalizer.DialogEqualizerFragment;
 import com.example.karwaan.Equalizer.EqualizerModel;
@@ -53,6 +54,10 @@ import com.example.karwaan.Equalizer.EqualizerSettings;
 import com.example.karwaan.Equalizer.Settings;
 import com.example.karwaan.Models.SongModel;
 import com.example.karwaan.Notification.Constants;
+import com.example.karwaan.RVSwipeHelpers.RVPlaylistSwipeHelper;
+import com.example.karwaan.RVSwipeHelpers.RVSongSwipeHelper;
+import com.example.karwaan.RoomDB.Word;
+import com.example.karwaan.RoomDB.WordViewModel;
 import com.example.karwaan.Services.ManualPlaybackService;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
@@ -76,15 +81,18 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-public class ManualActivity extends AppCompatActivity {
+public class ManualActivity extends AppCompatActivity implements RVSongSwipeHelper.RecyclerItemTouchHelperListener, RVPlaylistSwipeHelper.RecyclerItemTouchHelperListener {
 
     private Toolbar toolbar;
-    private TextView toolbar_title, tv_sliding_view_song_name, tv_current_time, tv_total_time, tv_total_songs;
-    private RecyclerView rv_songs;
+    private TextView toolbar_title, tv_sliding_view_song_name, tv_current_time, tv_total_time, tv_total_songs, tv_add_by_right_swipe;
+    private RecyclerView rv_songs, rv_songs_playlist;
     private DatabaseReference songsRef;
     private ArrayList<SongModel> songs = new ArrayList<>();
     private ArrayList<SongModel> mainSongsList = new ArrayList<>();
@@ -96,6 +104,7 @@ public class ManualActivity extends AppCompatActivity {
     private ChipGroup chipGroup;
     private EditText et_search;
     private LottieAnimationView lottie_animation_view;
+    private Chip chip_my_playlist;
 
     private NotificationManager notificationManager;
     private MediaBrowserCompat mediaBrowser;
@@ -104,6 +113,9 @@ public class ManualActivity extends AppCompatActivity {
     private RoundCornerProgressBar seekbar;
     private SeekBar seekBarInvisible;
     private List<Integer> allColors;
+    private ItemTouchHelper itemTouchHelper, itemTouchHelper1;
+    private WordViewModel mWordViewModel;
+    private RVPlaylistAdapter playlistAdapter;
 
     private int audioSessionID = 0;
     public static final String PREF_KEY = "equalizer";
@@ -137,23 +149,40 @@ public class ManualActivity extends AppCompatActivity {
 
         bg = findViewById(R.id.bg);
         et_search = findViewById(R.id.et_search);
-        slidingUpPanelLayout = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
+        slidingUpPanelLayout = findViewById(R.id.sliding_layout);
         slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
-        btn_play_pause = (ImageButton) findViewById(R.id.btn_play_pause);
+        btn_play_pause = findViewById(R.id.btn_play_pause);
         btn_next_song = findViewById(R.id.btn_next_song);
         btn_prev_song = findViewById(R.id.btn_prev_song);
         btn_forward_10 = findViewById(R.id.btn_forward_10);
         btn_backward_10 = findViewById(R.id.btn_backward_10);
         tv_current_time = findViewById(R.id.tv_current_time);
         tv_total_time = findViewById(R.id.tv_total_time);
+        tv_add_by_right_swipe = findViewById(R.id.tv_add_by_right_swipe);
         tv_total_songs = findViewById(R.id.tv_total_songs);
         tv_total_songs.setVisibility(View.GONE);
         tv_sliding_view_song_name = findViewById(R.id.tv_sliding_view_song_name);
         tv_sliding_view_song_name.setText("Select a song to play");
         chipGroup = findViewById(R.id.chipGroup);
-        rv_songs = (RecyclerView) findViewById(R.id.rv_songs);
+        chip_my_playlist = findViewById(R.id.chip_my_playlist);
+        rv_songs = findViewById(R.id.rv_songs);
         rv_songs.setHasFixedSize(true);
         rv_songs.setLayoutManager(new LinearLayoutManager(this));
+
+        rv_songs_playlist = findViewById(R.id.rv_songs_playlist);
+        rv_songs_playlist.setHasFixedSize(true);
+        rv_songs_playlist.setLayoutManager(new LinearLayoutManager(this));
+        rv_songs_playlist.setVisibility(View.GONE);
+
+        ItemTouchHelper.SimpleCallback itemTouchHelperCallback = new RVSongSwipeHelper(0, ItemTouchHelper.RIGHT, this);
+        itemTouchHelper = new ItemTouchHelper(itemTouchHelperCallback);
+        itemTouchHelper.attachToRecyclerView(rv_songs);
+
+        ItemTouchHelper.SimpleCallback itemTouchHelperCallback1 = new RVPlaylistSwipeHelper(0, ItemTouchHelper.RIGHT, this);
+        itemTouchHelper1 = new ItemTouchHelper(itemTouchHelperCallback1);
+        itemTouchHelper1.attachToRecyclerView(rv_songs_playlist);
+
+        mWordViewModel = ViewModelProviders.of(ManualActivity.this).get(WordViewModel.class);
 
         // wave = findViewById(R.id.wave);
         seekbar = findViewById(R.id.seekBar);
@@ -199,6 +228,13 @@ public class ManualActivity extends AppCompatActivity {
             setReduceSizeAnimation(selectedChip);
             setRegainSizeAnimation(selectedChip);
             if (selectedChip != null) {
+
+                et_search.setEnabled(true);
+                chip_my_playlist.setChipStrokeWidth(0);
+                chip_my_playlist.setChipStrokeColorResource(R.color.black);
+                chip_my_playlist.setSelected(false);
+                tv_add_by_right_swipe.setVisibility(View.GONE);
+
                 String selectedArtist = selectedChip.getText().toString();
                 Intent intent = new Intent("chip");
                 intent.putExtra("chip", selectedArtist);
@@ -207,6 +243,9 @@ public class ManualActivity extends AppCompatActivity {
                     songs.clear();
                     songs.addAll(mainSongsList);
                     rv_songs.setAdapter(new RVSongsAdapter(songs, ManualActivity.this));
+                    rv_songs_playlist.setVisibility(View.GONE);
+                    rv_songs_playlist.setAdapter(null);
+                    rv_songs.setVisibility(View.VISIBLE);
                 } else {
                     songs.clear();
                     for (SongModel song : mainSongsList) {
@@ -218,9 +257,70 @@ public class ManualActivity extends AppCompatActivity {
                         }
                     }
                     rv_songs.setAdapter(new RVSongsAdapter(songs, ManualActivity.this));
+                    rv_songs_playlist.setVisibility(View.GONE);
+                    rv_songs_playlist.setAdapter(null);
+                    rv_songs.setVisibility(View.VISIBLE);
                 }
             }
             loading_dialog.dismiss();
+        });
+
+        chip_my_playlist.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                setReduceSizeAnimation(chip_my_playlist);
+                setRegainSizeAnimation(chip_my_playlist);
+
+                et_search.setEnabled(false);
+                chip_my_playlist.setChipStrokeWidth(1f);
+                chip_my_playlist.setChipStrokeColorResource(R.color.white);
+                chip_my_playlist.setSelected(true);
+
+                ArrayList<SongModel> tempSongList = new ArrayList<>();
+                mWordViewModel.getAllWords().observe(ManualActivity.this, new Observer<List<Word>>() {
+                    @Override
+                    public void onChanged(List<Word> words) {
+                        if (!tempSongList.isEmpty()) {
+                            tempSongList.clear();
+                        }
+                        ArrayList<String> songNameInPlaylist = new ArrayList<>();
+                        if (!words.isEmpty()) {
+                            for (int i = 0; i < words.size(); i++) {
+                                songNameInPlaylist.add(words.get(i).getWord());
+                            }
+                            for (SongModel songModel : mainSongsList) {
+                                if (songNameInPlaylist.contains(songModel.getSongName())) {
+                                    tempSongList.add(songModel);
+                                }
+                            }
+                            tv_add_by_right_swipe.setVisibility(View.GONE);
+                        } else {
+                            tv_add_by_right_swipe.setVisibility(View.VISIBLE);
+                            Toast.makeText(ManualActivity.this, "No songs in your playlist", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+                songs.clear();
+                songs.addAll(tempSongList);
+                Intent intent = new Intent("playlist");
+                intent.putExtra("playlist", songs);
+                LocalBroadcastManager.getInstance(ManualActivity.this).sendBroadcast(intent);
+                playlistAdapter = new RVPlaylistAdapter(songs, ManualActivity.this);
+                rv_songs_playlist.setAdapter(playlistAdapter);
+                rv_songs_playlist.setVisibility(View.VISIBLE);
+                rv_songs.setVisibility(View.GONE);
+                rv_songs.setAdapter(null);
+            }
+        });
+
+        et_search.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (!et_search.isEnabled()) {
+                    Toast.makeText(ManualActivity.this, "Search can't be done in the playlist", Toast.LENGTH_SHORT).show();
+                }
+            }
         });
 
         et_search.addTextChangedListener(new TextWatcher() {
@@ -472,6 +572,7 @@ public class ManualActivity extends AppCompatActivity {
                                     setMargins(rv_songs, 0, 0, 0, 150);
                                     getSharedPreferences("firstTimeCreated", MODE_PRIVATE).edit().putBoolean("firstTimeCreated", false).commit();
                                 }
+                                setMargins(rv_songs_playlist, 0, 0, 0, 150);
                             }
                             break;
 
@@ -591,6 +692,34 @@ public class ManualActivity extends AppCompatActivity {
             fragment.show(getSupportFragmentManager(), "eq");
         } else {
             Toast.makeText(this, "Start a song first", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction, int position) {
+        if (viewHolder instanceof RVSongsAdapter.ViewHolder) {
+            loading_dialog.show();
+            SongModel song = songs.get(position);
+            mWordViewModel.insert(new Word(song.getSongName()));
+            Toast.makeText(this, "Added " + song.getSongName(), Toast.LENGTH_SHORT).show();
+            loading_dialog.dismiss();
+
+            itemTouchHelper.attachToRecyclerView(null);
+            itemTouchHelper.attachToRecyclerView(rv_songs);
+        }
+
+        if (viewHolder instanceof RVPlaylistAdapter.ViewHolder) {
+            loading_dialog.show();
+
+            SongModel songModel = songs.get(position);
+            mWordViewModel.delete(new Word(songModel.getSongName()));
+            playlistAdapter.removeItem(position);
+            Toast.makeText(this, "Removed " + songModel.getSongName(), Toast.LENGTH_SHORT).show();
+
+            loading_dialog.dismiss();
+
+            itemTouchHelper1.attachToRecyclerView(null);
+            itemTouchHelper1.attachToRecyclerView(rv_songs_playlist);
         }
     }
 
@@ -748,6 +877,7 @@ public class ManualActivity extends AppCompatActivity {
             presetReverb.release();
         }
         rv_songs.setAdapter(null);
+        rv_songs_playlist.setAdapter(null);
         if (MediaControllerCompat.getMediaController(ManualActivity.this) != null) {
             MediaControllerCompat.getMediaController(ManualActivity.this).unregisterCallback(controllerCallback);
         }

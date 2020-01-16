@@ -21,4 +21,6 @@
     <color name="textColor">#FAFAFA</color>
 
     <color name="colorWindowBackground">#000</color>
+    <color name="white">#fff</color>
+    <color name="black">#000</color>
 </resources>

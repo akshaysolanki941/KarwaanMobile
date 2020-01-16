@@ -126,6 +126,19 @@
                         android:textAlignment="center"
                         android:textColor="#fff" />
 
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chip_my_playlist"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/tv_total_songs"
+                        android:layout_centerHorizontal="true"
+                        android:layout_margin="5dp"
+                        android:checkable="false"
+                        android:clickable="true"
+                        android:text="@string/my_playlist_chip"
+                        android:textColor="#fff"
+                        app:closeIconEnabled="false" />
+
                 </RelativeLayout>
 
             </com.google.android.material.appbar.CollapsingToolbarLayout>
@@ -159,6 +172,27 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_below="@+id/horizontalScroll" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_songs_playlist"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_below="@+id/horizontalScroll" />
+
+            <TextView
+                android:id="@+id/tv_add_by_right_swipe"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_margin="10dp"
+                android:background="@drawable/switch_bg"
+                android:fontFamily="@font/overpass_semi_bold"
+                android:padding="6dp"
+                android:text="@string/add_by_right_swiping_a_song"
+                android:textAlignment="center"
+                android:textColor="#fff"
+                android:textSize="16sp"
+                android:visibility="gone" />
         </RelativeLayout>
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
