@@ -16,8 +16,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -36,9 +38,11 @@ public class ModeActivity extends AppCompatActivity {
     private Toolbar toolbar;
     private TextView toolbar_title;
     private LottieAnimationView lottie_animation_view;
-    private RelativeLayout rl_saregama_mode, rl_manual_mode;
+    private RelativeLayout rl_saregama_mode, rl_manual_mode, rl_saregama_mode_offline, rl_manual_mode_offline;
     private ImageView bg;
     private Dialog loading_dialog;
+    private Switch switch_offline;
+    private Boolean isOfflineActivated;
 
 
     @Override
@@ -62,7 +66,12 @@ public class ModeActivity extends AppCompatActivity {
 
         rl_saregama_mode = findViewById(R.id.rl_saregama_mode);
         rl_manual_mode = findViewById(R.id.rl_manual_mode);
+        rl_saregama_mode_offline = findViewById(R.id.rl_saregama_mode_offline);
+        rl_manual_mode_offline = findViewById(R.id.rl_manual_mode_offline);
+        switch_offline = findViewById(R.id.switch_offline);
         bg = findViewById(R.id.bg);
+
+        Glide.with(this).load(R.drawable.bg).into(bg);
 
         setReduceSizeAnimation(toolbar_title);
         alphaAnimation(toolbar, 0, 1f);
@@ -83,7 +92,37 @@ public class ModeActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
-        Glide.with(this).load(R.drawable.bg).into(bg);
+        isOfflineActivated = getSharedPreferences("isOfflineActivated", MODE_PRIVATE).getBoolean("isOfflineActivated", false);
+        switch_offline.setChecked(isOfflineActivated);
+        if (isOfflineActivated) {
+            rl_saregama_mode_offline.setVisibility(View.VISIBLE);
+            rl_manual_mode_offline.setVisibility(View.VISIBLE);
+            rl_saregama_mode.setVisibility(View.GONE);
+            rl_manual_mode.setVisibility(View.GONE);
+        } else {
+            rl_saregama_mode_offline.setVisibility(View.GONE);
+            rl_manual_mode_offline.setVisibility(View.GONE);
+            rl_saregama_mode.setVisibility(View.VISIBLE);
+            rl_manual_mode.setVisibility(View.VISIBLE);
+        }
+
+        switch_offline.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                getSharedPreferences("isOfflineActivated", MODE_PRIVATE).edit().putBoolean("isOfflineActivated", b).commit();
+                if (b) {
+                    rl_saregama_mode_offline.setVisibility(View.VISIBLE);
+                    rl_manual_mode_offline.setVisibility(View.VISIBLE);
+                    rl_saregama_mode.setVisibility(View.GONE);
+                    rl_manual_mode.setVisibility(View.GONE);
+                } else {
+                    rl_saregama_mode_offline.setVisibility(View.GONE);
+                    rl_manual_mode_offline.setVisibility(View.GONE);
+                    rl_saregama_mode.setVisibility(View.VISIBLE);
+                    rl_manual_mode.setVisibility(View.VISIBLE);
+                }
+            }
+        });
 
         rl_saregama_mode.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -104,6 +143,20 @@ public class ModeActivity extends AppCompatActivity {
                 } else {
                     Toast.makeText(ModeActivity.this, "No internet connection", Toast.LENGTH_SHORT).show();
                 }
+            }
+        });
+
+        rl_saregama_mode_offline.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(ModeActivity.this, SaregamaOfflineActivity.class));
+            }
+        });
+
+        rl_manual_mode_offline.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(ModeActivity.this, ManualOfflineActivity.class));
             }
         });
     }

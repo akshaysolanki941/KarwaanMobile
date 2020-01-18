@@ -44,12 +44,12 @@ import android.widget.Toast;
 
 import com.airbnb.lottie.LottieAnimationView;
 import com.bumptech.glide.Glide;
+import com.example.karwaan.Constants.Constants;
 import com.example.karwaan.Equalizer.DialogEqualizerFragment;
 import com.example.karwaan.Equalizer.EqualizerModel;
 import com.example.karwaan.Equalizer.EqualizerSettings;
 import com.example.karwaan.Equalizer.Settings;
 import com.example.karwaan.Models.SongModel;
-import com.example.karwaan.Notification.Constants;
 import com.example.karwaan.RoomDB.Word;
 import com.example.karwaan.RoomDB.WordViewModel;
 import com.example.karwaan.Services.SaregamaPlaybackService;
@@ -130,6 +130,8 @@ public class SaregamaActivity extends AppCompatActivity {
         btn_backward10 = (ImageButton) findViewById(R.id.btn_backward10);
         lottieAnimationView = (LottieAnimationView) findViewById(R.id.lottie_animation_view);
         bg = findViewById(R.id.bg);
+        Glide.with(this).load(R.drawable.bg).into(bg);
+
         tv_saregama_song_details = findViewById(R.id.tv_saregama_song_details);
         tv_playing_from_playlist = findViewById(R.id.tv_playing_from_playlist);
         tv_total_songs = findViewById(R.id.tv_total_songs);
@@ -185,8 +187,6 @@ public class SaregamaActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-
-        Glide.with(this).load(R.drawable.bg).into(bg);
 
         chipGroup.setOnCheckedChangeListener((chipGroup, i) -> {
             loading_dialog.show();

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rlParentLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".SaregamaActivity">
+
+    <ImageView
+        android:id="@+id/bg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitXY" />
+
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/lottie_animation_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        app:lottie_loop="true"
+        app:lottie_rawRes="@raw/sound_visualizer" />
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:alpha="0.5"
+        android:scaleType="fitXY"
+        android:src="@android:color/black" />
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolBar"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:background="@drawable/toolbar_bg"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+
+        <TextView
+            android:id="@+id/toolbar_title"
+            style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="cursive"
+            android:textColor="#fff"
+            android:textSize="25sp"
+            android:textStyle="bold" />
+
+    </androidx.appcompat.widget.Toolbar>
+
+    <TextView
+        android:id="@+id/tv_total_songs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/toolBar"
+        android:layout_margin="10dp"
+        android:fontFamily="@font/overpass_semi_bold_italic"
+        android:padding="6dp"
+        android:text="Total songs: 501"
+        android:textAlignment="center"
+        android:textColor="#fff" />
+
+    <ImageButton
+        android:id="@+id/btn_play_pause"
+        android:layout_width="90dp"
+        android:layout_height="90dp"
+        android:layout_centerInParent="true"
+        android:layout_margin="10dp"
+        android:background="@drawable/round_btn" />
+
+    <ImageButton
+        android:id="@+id/btn_next"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_centerInParent="true"
+        android:layout_toEndOf="@+id/btn_play_pause"
+        android:background="@drawable/round_btn"
+        android:src="@drawable/ic_fast_forward_black_24dp" />
+
+    <ImageButton
+        android:id="@+id/btn_previous"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_centerInParent="true"
+        android:layout_toStartOf="@+id/btn_play_pause"
+        android:background="@drawable/round_btn"
+        android:src="@drawable/ic_fast_rewind_black_24dp" />
+
+    <ImageButton
+        android:id="@+id/btn_forward10"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_centerInParent="true"
+        android:layout_margin="10dp"
+        android:layout_toEndOf="@+id/btn_next"
+        android:background="@drawable/round_btn"
+        android:src="@drawable/ic_forward_10_black_24dp" />
+
+    <ImageButton
+        android:id="@+id/btn_backward10"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_centerInParent="true"
+        android:layout_margin="10dp"
+        android:layout_toStartOf="@+id/btn_previous"
+        android:background="@drawable/round_btn"
+        android:src="@drawable/ic_replay_10_black_24dp" />
+
+    <TextView
+        android:id="@+id/tv_saregama_song_details"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="@drawable/slideup_panel_bg"
+        android:ellipsize="marquee"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:fontFamily="@font/overpass_light"
+        android:freezesText="true"
+        android:marqueeRepeatLimit="marquee_forever"
+        android:padding="30dp"
+        android:scrollHorizontally="true"
+        android:singleLine="true"
+        android:textAlignment="center"
+        android:textColor="#fff"
+        android:textSize="18sp" />
+
+</RelativeLayout>

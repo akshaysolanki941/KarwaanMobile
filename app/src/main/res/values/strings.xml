@@ -37,4 +37,10 @@
     <string name="add_this_song_nto_your_playlist">Add this song\nto your playlist?</string>
     <string name="playing_from_your_playlist">Playing from your playlist</string>
     <string name="search_by_title_artist_or_movie">Search by title or movie</string>
+    <string name="saregama_mode_offilne">SAREGAMA MODE\nOFFILNE</string>
+    <string name="manual_mode_offline">MANUAL MODE\nOFFLINE</string>
+    <string name="toolbar_manual_mode_offline">Manual Mode Offline</string>
+    <string name="delete_from_offline_songs">Delete from offline songs?</string>
+    <string name="saregama_mode_offline">Saregama Mode Offline</string>
+    <string name="no_offline_songs">No offline songs</string>
 </resources>

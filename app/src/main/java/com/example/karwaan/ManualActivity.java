@@ -48,12 +48,12 @@ import com.akexorcist.roundcornerprogressbar.RoundCornerProgressBar;
 import com.bumptech.glide.Glide;
 import com.example.karwaan.Adapters.RVPlaylistAdapter;
 import com.example.karwaan.Adapters.RVSongsAdapter;
+import com.example.karwaan.Constants.Constants;
 import com.example.karwaan.Equalizer.DialogEqualizerFragment;
 import com.example.karwaan.Equalizer.EqualizerModel;
 import com.example.karwaan.Equalizer.EqualizerSettings;
 import com.example.karwaan.Equalizer.Settings;
 import com.example.karwaan.Models.SongModel;
-import com.example.karwaan.Notification.Constants;
 import com.example.karwaan.RVSwipeHelpers.RVPlaylistSwipeHelper;
 import com.example.karwaan.RVSwipeHelpers.RVSongSwipeHelper;
 import com.example.karwaan.RoomDB.Word;
@@ -71,6 +71,7 @@ import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import org.xmlpull.v1.XmlPullParserException;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -148,6 +149,8 @@ public class ManualActivity extends AppCompatActivity implements RVSongSwipeHelp
         loading_dialog.setCancelable(false);
 
         bg = findViewById(R.id.bg);
+        Glide.with(this).load(R.drawable.bg).into(bg);
+
         et_search = findViewById(R.id.et_search);
         slidingUpPanelLayout = findViewById(R.id.sliding_layout);
         slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
@@ -219,8 +222,6 @@ public class ManualActivity extends AppCompatActivity implements RVSongSwipeHelp
     @Override
     protected void onStart() {
         super.onStart();
-
-        Glide.with(this).load(R.drawable.bg).into(bg);
 
         chipGroup.setOnCheckedChangeListener((chipGroup, i) -> {
             loading_dialog.show();
@@ -862,6 +863,32 @@ public class ManualActivity extends AppCompatActivity implements RVSongSwipeHelp
         return true;
     }
 
+    public static void trimCache(Context context) {
+        try {
+            File dir = context.getCacheDir();
+            if (dir != null && dir.isDirectory()) {
+                deleteDir(dir);
+            }
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
+    }
+
+    public static boolean deleteDir(File dir) {
+        if (dir != null && dir.isDirectory()) {
+            String[] children = dir.list();
+            for (String child : children) {
+                boolean success = deleteDir(new File(dir, child));
+                if (!success) {
+                    return false;
+                }
+            }
+        }
+
+        // The directory is now empty so delete it
+        return dir.delete();
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -882,6 +909,12 @@ public class ManualActivity extends AppCompatActivity implements RVSongSwipeHelp
         }
         rv_songs.setAdapter(null);
         rv_songs_playlist.setAdapter(null);
+        try {
+            trimCache(this);
+            // Toast.makeText(this,"onDestroy " ,Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         if (MediaControllerCompat.getMediaController(ManualActivity.this) != null) {
             MediaControllerCompat.getMediaController(ManualActivity.this).unregisterCallback(controllerCallback);
         }

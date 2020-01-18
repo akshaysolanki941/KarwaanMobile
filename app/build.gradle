@@ -1,5 +1,4 @@
 apply plugin: 'com.android.application'
-apply plugin: 'io.fabric'
 
 android {
     compileSdkVersion 29
@@ -37,8 +36,6 @@ dependencies {
 
     implementation 'com.google.android.material:material:1.2.0-alpha03'
 
-    implementation 'com.crashlytics.sdk.android:crashlytics:2.10.1'
-
     implementation 'com.google.firebase:firebase-database:19.2.0'
     implementation 'com.google.firebase:firebase-messaging:20.1.0'
     implementation 'com.google.firebase:firebase-auth:19.2.0'
@@ -67,12 +64,11 @@ dependencies {
     androidTestImplementation "androidx.room:room-testing:$rootProject.roomVersion"
 
 // Lifecycle components
-    //implementation "androidx.lifecycle:lifecycle-extensions:$rootProject.archLifecycleVersion"
-   // annotationProcessor "androidx.lifecycle:lifecycle-compiler:$rootProject.archLifecycleVersion"
-    // implementation "androidx.lifecycle:lifecycle-common-java8:$rootProject.archLifecycleVersion"
     implementation "android.arch.lifecycle:extensions:1.1.1"
     annotationProcessor 'androidx.lifecycle:lifecycle-compiler:2.1.0'
     implementation "android.arch.lifecycle:viewmodel:1.1.1"
+
+    implementation 'com.mindorks.android:prdownloader:0.4.0'
 }
 
 apply plugin: 'com.google.gms.google-services'

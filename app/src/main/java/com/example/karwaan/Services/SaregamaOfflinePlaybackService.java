@@ -7,18 +7,14 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.MediaMetadata;
-import android.media.MediaMetadataRetriever;
-import android.net.Uri;
-import android.os.AsyncTask;
+import android.media.MediaPlayer;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.speech.tts.TextToSpeech;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
@@ -27,33 +23,17 @@ import android.support.v4.media.session.PlaybackStateCompat;
 import android.text.SpannableStringBuilder;
 import android.widget.Toast;
 
-import com.example.karwaan.Equalizer.EqualizerSettings;
-import com.example.karwaan.Equalizer.Settings;
 import com.example.karwaan.Models.SongModel;
 import com.example.karwaan.R;
-import com.example.karwaan.SaregamaActivity;
-import com.google.android.exoplayer2.ExoPlaybackException;
-import com.google.android.exoplayer2.ExoPlayerFactory;
-import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.SimpleExoPlayer;
-import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
-import com.google.android.exoplayer2.extractor.ExtractorsFactory;
-import com.google.android.exoplayer2.source.ExtractorMediaSource;
-import com.google.android.exoplayer2.source.MediaSource;
-import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
-import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
-import com.google.android.exoplayer2.trackselection.TrackSelection;
-import com.google.android.exoplayer2.upstream.BandwidthMeter;
-import com.google.android.exoplayer2.upstream.DataSource;
-import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
-import com.google.android.exoplayer2.upstream.TransferListener;
-import com.google.android.exoplayer2.util.Util;
-import com.google.gson.Gson;
+import com.example.karwaan.SaregamaOfflineActivity;
+import com.example.karwaan.Utils.EncryptDecryptUtils;
+import com.example.karwaan.Utils.FileUtils;
+import com.example.karwaan.Utils.TinyDB;
 
+import java.io.FileDescriptor;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
@@ -72,20 +52,15 @@ import static com.example.karwaan.Constants.Constants.ACTION_NEXT;
 import static com.example.karwaan.Constants.Constants.ACTION_PLAY;
 import static com.example.karwaan.Constants.Constants.ACTION_PREVIOUS;
 import static com.example.karwaan.Constants.Constants.CHANNEL_ID;
-import static com.example.karwaan.SaregamaActivity.PREF_KEY;
 
-public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
+public class SaregamaOfflinePlaybackService extends MediaBrowserServiceCompat {
 
     private static final String MY_EMPTY_MEDIA_ROOT_ID = "empty_root_id";
 
     private MediaSessionCompat mediaSession;
     private PlaybackStateCompat.Builder stateBuilder;
 
-    private SimpleExoPlayer exoPlayer;
-    private BandwidthMeter bandwidthMeter;
-    private ExtractorsFactory extractorsFactory;
-    private TrackSelection.Factory trackSelectionfactory;
-    private DataSource.Factory dataSourceFactory;
+    private MediaPlayer mediaPlayer;
 
     private Notification notification;
     private Bitmap bitmap;
@@ -94,17 +69,18 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
     private NotificationCompat.Builder builder1;
     private NotificationManagerCompat notificationManagerCompat;
 
-    private ArrayList<SongModel> songList = new ArrayList<>();
-    private ArrayList<SongModel> mainSongList = new ArrayList<>();
+    private ArrayList<Object> songList = new ArrayList<>();
+    private ArrayList<Object> mainSongList = new ArrayList<>();
     private int index = 0;
     private TextToSpeech textToSpeech;
     private NotificationManager notificationManager;
     private float volume = 0;
-    private int volumeLevel = 0;
     private AudioManager audioManager;
-    private int audioSessionID = 0;
 
     private Boolean skip10SongsEnabled;
+    private FileDescriptor fileDescriptor;
+    private TinyDB tinyDB;
+
 
     @Nullable
     @Override
@@ -138,11 +114,22 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
 
         registerReceiver(broadcastReceiver, new IntentFilter("SONGS"));
         startService(new Intent(getBaseContext(), OnClearFromRecentService.class));
-        LocalBroadcastManager.getInstance(this).registerReceiver(broadcast, new IntentFilter("mainSongList"));
-        LocalBroadcastManager.getInstance(this).registerReceiver(broadcast1, new IntentFilter("chipSelect"));
-        LocalBroadcastManager.getInstance(this).registerReceiver(broadcast2, new IntentFilter("playlistSaregama"));
 
         registerReceiver(headphoneBroadcast, new IntentFilter(Intent.ACTION_HEADSET_PLUG));
+
+        tinyDB = new TinyDB(this);
+        mainSongList.clear();
+        mainSongList = tinyDB.getListObject("downloadedSongList", SongModel.class);
+        songList.clear();
+        songList.addAll(mainSongList);
+        Intent i = new Intent("loadingDismiss");
+        i.putExtra("loadingDismiss", "loadingDismiss");
+        LocalBroadcastManager.getInstance(this).sendBroadcast(i);
+        if (mainSongList.isEmpty()) {
+            Toast.makeText(this, "No offline songs", Toast.LENGTH_SHORT).show();
+        } else {
+            startRandomSongs();
+        }
 
         textToSpeech = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
             @Override
@@ -153,7 +140,6 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
             }
         });
 
-        initExoPlayer();
 
         audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
         AudioAttributes attrs = new AudioAttributes.Builder()
@@ -220,172 +206,196 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
         }
     };
 
-    private void initExoPlayer() {
-        bandwidthMeter = new DefaultBandwidthMeter();
-        extractorsFactory = new DefaultExtractorsFactory();
-        trackSelectionfactory = new AdaptiveTrackSelection.Factory(bandwidthMeter);
-        dataSourceFactory = new DefaultDataSourceFactory(this, Util.getUserAgent(this, getPackageName()), (TransferListener) bandwidthMeter);
-        exoPlayer = ExoPlayerFactory.newSimpleInstance(this, new DefaultTrackSelector(trackSelectionfactory));
-        exoPlayer.addListener(new Player.EventListener() {
+    private void setUpMediaPlayer(FileDescriptor fileDescriptor) {
+        mediaPlayer = new MediaPlayer();
+        mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
-            public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-                switch (playbackState) {
-                    case Player.STATE_BUFFERING:
-                        stateBuilder.setState(PlaybackStateCompat.STATE_BUFFERING, 0, 0);
-                        mediaSession.setPlaybackState(stateBuilder.build());
-                        createNotification(getBaseContext(), mediaSession, songList.get(index), R.drawable.play_btn_black, false, true);
-                        break;
-
-                    case Player.STATE_ENDED:
-                        index++;
-                        if (index >= songList.size()) {
-                            index = 0;
-                            Collections.shuffle(songList);
-                            playSongInExoPlayer(songList.get(index));
-                        } else {
-                            playSongInExoPlayer(songList.get(index));
-                        }
-                        createNotification(getBaseContext(), mediaSession, songList.get(index), R.drawable.play_btn_black, true, false);
-                        break;
-
-                    case Player.STATE_READY:
-                        SpannableStringBuilder artists = new SpannableStringBuilder();
-                        ArrayList<String> artistList = songList.get(index).getArtists();
-                        for (int i = 0; i < artistList.size(); i++) {
-                            String a = artistList.get(i);
-                            if (i == artistList.size() - 1) {
-                                artists.append(a);
-                            } else {
-                                artists.append(a).append(" | ");
-                            }
-                        }
-                        mediaSession.setPlaybackState(stateBuilder.build());
-                        MediaMetadataCompat.Builder mediaMetadata = new MediaMetadataCompat.Builder()
-                                .putString(MediaMetadata.METADATA_KEY_TITLE, songList.get(index).getSongName())
-                                .putString(MediaMetadata.METADATA_KEY_ARTIST, String.valueOf(artists))
-                                .putString(MediaMetadata.METADATA_KEY_ALBUM, songList.get(index).getMovie());
-                        mediaSession.setMetadata(mediaMetadata.build());
-                        break;
-                }
-                if (playWhenReady && playbackState == Player.STATE_READY) {
-                    // media actually playing
-                    stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, 0, 0);
-                    mediaSession.setPlaybackState(stateBuilder.build());
-                    createNotification(getBaseContext(), mediaSession, songList.get(index), R.drawable.pause_btn_black, false, false);
-
-
-                    audioSessionID = exoPlayer.getAudioSessionId();
-                    if (audioSessionID > 0) {
-                        Intent i = new Intent("audioSessionID");
-                        i.putExtra("audioSessionID", audioSessionID);
-                        LocalBroadcastManager.getInstance(getBaseContext()).sendBroadcast(i);
+            public void onPrepared(MediaPlayer mp) {
+                mediaPlayer.start();
+                SongModel song = (SongModel) songList.get(index);
+                SpannableStringBuilder artists = new SpannableStringBuilder();
+                ArrayList<String> artistList = song.getArtists();
+                for (int i = 0; i < artistList.size(); i++) {
+                    String a = artistList.get(i);
+                    if (i == artistList.size() - 1) {
+                        artists.append(a);
+                    } else {
+                        artists.append(a).append(" | ");
                     }
-
-                } else if (playWhenReady) {
-                    // might be idle (plays after prepare()),
-                    // buffering (plays when data available)
-                    // or ended (plays when seek away from end)
-                } else {
-                    // player paused in any state
-                    stateBuilder.setState(PlaybackStateCompat.STATE_PAUSED, 0, 0);
-                    mediaSession.setPlaybackState(stateBuilder.build());
-                    createNotification(getBaseContext(), mediaSession, songList.get(index), R.drawable.play_btn_black, false, false);
                 }
-            }
-
-            @Override
-            public void onPlayerError(ExoPlaybackException error) {
-                Toast.makeText(getBaseContext(), "Error: " + error.getMessage(), Toast.LENGTH_LONG).show();
+                MediaMetadataCompat.Builder mediaMetadata = new MediaMetadataCompat.Builder()
+                        .putString(MediaMetadata.METADATA_KEY_TITLE, song.getSongName())
+                        .putString(MediaMetadata.METADATA_KEY_ARTIST, String.valueOf(artists))
+                        .putString(MediaMetadata.METADATA_KEY_ALBUM, song.getMovie())
+                        .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, mediaPlayer.getDuration());
+                mediaSession.setMetadata(mediaMetadata.build());
+                stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, 0, 0);
+                mediaSession.setPlaybackState(stateBuilder.build());
+                createNotification(getBaseContext(), mediaSession, song, fileDescriptor, R.drawable.pause_btn_black, false);
             }
         });
+
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                if (mediaPlayer != null) {
+                    if (mediaPlayer.isPlaying()) {
+                        mediaPlayer.stop();
+                        mediaPlayer.reset();
+                    } else {
+                        mediaPlayer.stop();
+                        mediaPlayer.reset();
+                    }
+                }
+                index++;
+                if (index >= songList.size()) {
+                    index = 0;
+                    Collections.shuffle(songList);
+                    playSongInExoPlayer();
+                } else {
+                    playSongInExoPlayer();
+                }
+                createNotification(getBaseContext(), mediaSession, (SongModel) songList.get(index), fileDescriptor, R.drawable.play_btn_black, true);
+            }
+        });
+
+        try {
+            mediaPlayer.setDataSource(fileDescriptor);
+            mediaPlayer.prepareAsync();
+        } catch (IOException e) {
+            Toast.makeText(getBaseContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
 
-    private void playSongInExoPlayer(SongModel song) {
-        MediaSource mediaSource = new ExtractorMediaSource(Uri.parse(song.getUrl()), dataSourceFactory, extractorsFactory, null, Throwable::printStackTrace);
-        exoPlayer.prepare(mediaSource);
-        exoPlayer.setPlayWhenReady(true);
+    private void playSongInExoPlayer() {
+        byte[] file = decrypt(index);
+        if (file != null) {
+            try {
+                fileDescriptor = FileUtils.getTempFileDescriptor(this, file);
+                setUpMediaPlayer(fileDescriptor);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        setUpMediaPlayer(fileDescriptor);
+    }
+
+    private byte[] decrypt(int position) {
+        try {
+            SongModel song = (SongModel) songList.get(position);
+            byte[] fileData = FileUtils.readFile(FileUtils.getFilePath(this, song.getSongName()));
+            byte[] decryptedBytes = EncryptDecryptUtils.decode(EncryptDecryptUtils.getInstance(this).getSecretKey(), fileData);
+            return decryptedBytes;
+        } catch (Exception e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+        return null;
     }
 
     private void startRandomSongs() {
         index = 0;
         Collections.shuffle(songList);
-        playSongInExoPlayer(songList.get(index));
-        createNotification(getBaseContext(), mediaSession, songList.get(index), R.drawable.pause_btn_black, true, false);
+        playSongInExoPlayer();
+
+        SongModel song = (SongModel) songList.get(index);
+        SpannableStringBuilder artists = new SpannableStringBuilder();
+        ArrayList<String> artistList = song.getArtists();
+        for (int i = 0; i < artistList.size(); i++) {
+            String a = artistList.get(i);
+            if (i == artistList.size() - 1) {
+                artists.append(a);
+            } else {
+                artists.append(a).append(" | ");
+            }
+        }
+        MediaMetadataCompat.Builder mediaMetadata = new MediaMetadataCompat.Builder()
+                .putString(MediaMetadata.METADATA_KEY_TITLE, song.getSongName())
+                .putString(MediaMetadata.METADATA_KEY_ARTIST, String.valueOf(artists))
+                .putString(MediaMetadata.METADATA_KEY_ALBUM, song.getMovie())
+                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, mediaPlayer.getDuration());
+        mediaSession.setMetadata(mediaMetadata.build());
+        stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, 0, 0);
+        mediaSession.setPlaybackState(stateBuilder.build());
+
+        createNotification(getBaseContext(), mediaSession, (SongModel) songList.get(index), fileDescriptor, R.drawable.pause_btn_black, true);
     }
 
     private void playPauseSong() {
-        if (!isExoPlaying()) {
-            /*AudioAttributes attrs = new AudioAttributes.Builder()
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .build();
-            AudioFocusRequest audioFocusRequest = null;
-            int result = 0;
-
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                audioFocusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-                        .setOnAudioFocusChangeListener(afChangeListener)
-                        .setAudioAttributes(attrs)
-                        .build();
-                result = audioManager.requestAudioFocus(audioFocusRequest);
-            }
-
-            if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-                exoPlayer.setVolume(0);
-                startPlayer();
-                startFadeIn();
-                if (audioManager != null) {
-                    volumeLevel = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-                }
-            }*/
-            exoPlayer.setVolume(0);
-            startPlayer();
-            startFadeIn();
+        if (!mediaPlayer.isPlaying()) {
+            startplayer();
         } else {
             pausePlayer();
         }
     }
 
     private void nextSong() {
+        if (mediaPlayer != null) {
+            if (mediaPlayer.isPlaying()) {
+                mediaPlayer.stop();
+                mediaPlayer.reset();
+            } else {
+                mediaPlayer.stop();
+                mediaPlayer.reset();
+            }
+        }
         index++;
         if (index >= songList.size()) {
             index = 0;
             Collections.shuffle(songList);
-            playSongInExoPlayer(songList.get(index));
+            playSongInExoPlayer();
         } else {
-            playSongInExoPlayer(songList.get(index));
+            playSongInExoPlayer();
         }
-        createNotification(getBaseContext(), mediaSession, songList.get(index), R.drawable.play_btn_black, true, false);
+        createNotification(getBaseContext(), mediaSession, (SongModel) songList.get(index), fileDescriptor, R.drawable.play_btn_black, true);
     }
 
     private void previousSong() {
+        if (mediaPlayer != null) {
+            if (mediaPlayer.isPlaying()) {
+                mediaPlayer.stop();
+                mediaPlayer.reset();
+            } else {
+                mediaPlayer.stop();
+                mediaPlayer.reset();
+            }
+        }
         index--;
         if (index <= -1) {
             index = 0;
             Collections.shuffle(songList);
-            playSongInExoPlayer(songList.get(index));
+            playSongInExoPlayer();
         } else {
-            playSongInExoPlayer(songList.get(index));
+            playSongInExoPlayer();
         }
-        createNotification(getBaseContext(), mediaSession, songList.get(index), R.drawable.play_btn_black, true, false);
+        createNotification(getBaseContext(), mediaSession, (SongModel) songList.get(index), fileDescriptor, R.drawable.play_btn_black, true);
     }
 
     private void skip10SongsForward() {
         if (skip10SongsEnabled) {
+            if (mediaPlayer != null) {
+                if (mediaPlayer.isPlaying()) {
+                    mediaPlayer.stop();
+                    mediaPlayer.reset();
+                } else {
+                    mediaPlayer.stop();
+                    mediaPlayer.reset();
+                }
+            }
             textToSpeech.speak("Ten songs skipped", TextToSpeech.QUEUE_FLUSH, null, null);
             Toast.makeText(getBaseContext(), "Skipping 10 songs in forward direction", Toast.LENGTH_SHORT).show();
             index += 10;
             if (index >= songList.size()) {
                 index = 0;
                 Collections.shuffle(songList);
-                playSongInExoPlayer(songList.get(index));
+                playSongInExoPlayer();
             } else {
-                playSongInExoPlayer(songList.get(index));
+                playSongInExoPlayer();
             }
-            createNotification(getBaseContext(), mediaSession, songList.get(index), R.drawable.play_btn_black, true, false);
+            createNotification(getBaseContext(), mediaSession, (SongModel) songList.get(index), fileDescriptor, R.drawable.play_btn_black, true);
         } else {
-            long position = exoPlayer.getCurrentPosition() + 10000;
-            if (position < exoPlayer.getDuration()) {
-                exoPlayer.seekTo(position);
+            long position = mediaPlayer.getCurrentPosition() + 10000;
+            if (position < mediaPlayer.getDuration()) {
+                mediaPlayer.seekTo((int) position);
                 Toast.makeText(this, "Forwarded 10 seconds", Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(this, "Song is about to end", Toast.LENGTH_SHORT).show();
@@ -398,21 +408,30 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
 
     private void skip10SongsBackward() {
         if (skip10SongsEnabled) {
+            if (mediaPlayer != null) {
+                if (mediaPlayer.isPlaying()) {
+                    mediaPlayer.stop();
+                    mediaPlayer.reset();
+                } else {
+                    mediaPlayer.stop();
+                    mediaPlayer.reset();
+                }
+            }
             textToSpeech.speak("Ten songs skipped", TextToSpeech.QUEUE_FLUSH, null, null);
             Toast.makeText(getBaseContext(), "Skipping 10 songs in backward direction", Toast.LENGTH_SHORT).show();
             index -= 10;
             if (index <= -1) {
                 index = 0;
                 Collections.shuffle(songList);
-                playSongInExoPlayer(songList.get(index));
+                playSongInExoPlayer();
             } else {
-                playSongInExoPlayer(songList.get(index));
+                playSongInExoPlayer();
             }
-            createNotification(getBaseContext(), mediaSession, songList.get(index), R.drawable.play_btn_black, true, false);
+            createNotification(getBaseContext(), mediaSession, (SongModel) songList.get(index), fileDescriptor, R.drawable.play_btn_black, true);
         } else {
-            long position = exoPlayer.getCurrentPosition() - 10000;
+            long position = mediaPlayer.getCurrentPosition() - 10000;
             if (position > 0) {
-                exoPlayer.seekTo(position);
+                mediaPlayer.seekTo((int) position);
                 Toast.makeText(this, "Rewinded 10 seconds", Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(this, "Song starting position", Toast.LENGTH_SHORT).show();
@@ -423,17 +442,22 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
         }
     }
 
+    private void startplayer() {
+        mediaPlayer.setVolume(0, 0);
+        mediaPlayer.start();
+        startFadeIn();
+        SongModel song = (SongModel) songList.get(index);
+        stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, 0, 0);
+        mediaSession.setPlaybackState(stateBuilder.build());
+        createNotification(getBaseContext(), mediaSession, song, fileDescriptor, R.drawable.pause_btn_black, false);
+    }
 
     private void pausePlayer() {
-        exoPlayer.setPlayWhenReady(false);
-    }
-
-    private void startPlayer() {
-        exoPlayer.setPlayWhenReady(true);
-    }
-
-    private boolean isExoPlaying() {
-        return exoPlayer.getPlayWhenReady();
+        mediaPlayer.pause();
+        SongModel song = (SongModel) songList.get(index);
+        stateBuilder.setState(PlaybackStateCompat.STATE_PAUSED, 0, 0);
+        mediaSession.setPlaybackState(stateBuilder.build());
+        createNotification(getBaseContext(), mediaSession, song, fileDescriptor, R.drawable.play_btn_black, false);
     }
 
     private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
@@ -465,57 +489,59 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
         }
     };
 
-    private BroadcastReceiver broadcast = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (action.equals("mainSongList")) {
-                mainSongList.clear();
-                mainSongList = (ArrayList<SongModel>) intent.getSerializableExtra("mainSongList");
-                songList.clear();
-                songList.addAll(mainSongList);
-                startRandomSongs();
-            }
-        }
-    };
-
-    private BroadcastReceiver broadcast1 = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (action.equals("chipSelect")) {
-                String selectedArtist = intent.getStringExtra("chipSelect");
-                ArrayList<SongModel> artistSongsList = new ArrayList<>();
-                if (selectedArtist.equals("All Artists")) {
-                    songList.clear();
-                    songList.addAll(mainSongList);
-                } else {
-                    songList.clear();
-                    for (SongModel song : mainSongList) {
-                        for (String artistName : song.getArtists()) {
-                            if (artistName.equals(selectedArtist)) {
-                                artistSongsList.add(song);
-                                break;
-                            }
-                        }
+    private AudioManager.OnAudioFocusChangeListener afChangeListener = new AudioManager.OnAudioFocusChangeListener() {
+        public void onAudioFocusChange(int focusChange) {
+            if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+                // Pause playback because your Audio Focus was
+                // temporarily stolen, but will be back soon.
+                // i.e. for a phone call
+                /*if (isExoPlaying()) {
+                    playPauseSong();
+                }*/
+                if (mediaPlayer != null) {
+                    if (mediaPlayer.isPlaying()) {
+                        playPauseSong();
                     }
-                    songList.addAll(artistSongsList);
                 }
-                startRandomSongs();
-            }
-        }
-    };
-
-    private BroadcastReceiver broadcast2 = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals("playlistSaregama")) {
-                songList.clear();
-                ArrayList<SongModel> playlist = (ArrayList<SongModel>) intent.getSerializableExtra("playlistSaregama");
-                if (playlist != null) {
-                    songList.addAll(playlist);
+            } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
+                // Stop playback, because you lost the Audio Focus.
+                // i.e. the user started some other playback app
+                // Remember to unregister your controls/buttons here.
+                // And release the kra — Audio Focus!
+                // You’re done.
+                /*if (isExoPlaying()) {
+                    playPauseSong();
+                }*/
+                if (mediaPlayer != null) {
+                    if (mediaPlayer.isPlaying()) {
+                        playPauseSong();
+                    }
                 }
-                startRandomSongs();
+            } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
+                // Lower the volume, because something else is also
+                // playing audio over you.
+                // i.e. for notifications or navigation directions
+                // Depending on your audio playback, you may prefer to
+                // pause playback here instead. You do you.
+                /*if (isExoPlaying()) {
+                    exoPlayer.setVolume(0.2f);
+                }*/
+                if (mediaPlayer != null) {
+                    if (mediaPlayer.isPlaying()) {
+                        mediaPlayer.setVolume(0.2f, 0.2f);
+                    }
+                }
+            } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
+                // Resume playback, because you hold the Audio Focus
+                // again!
+                // i.e. the phone call ended or the nav directions
+                // are finished
+                // If you implement ducking and lower the volume, be
+                // sure to return it to normal here, as well.
+                if (mediaPlayer != null) {
+                    mediaPlayer.setVolume(1f, 1f);
+                    startplayer();
+                }
             }
         }
     };
@@ -528,8 +554,10 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
                 switch (state) {
                     case 0:
                         //Headset is unplugged
-                        if (isExoPlaying()) {
-                            pausePlayer();
+                        if (mediaPlayer != null) {
+                            if (mediaPlayer.isPlaying()) {
+                                pausePlayer();
+                            }
                         }
                         break;
                     case 1:
@@ -538,62 +566,6 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
                     default:
                         //I have no idea what the headset state is
                 }
-            }
-        }
-    };
-
-    private void saveEqualizerSettings() {
-        if (Settings.equalizerModel != null) {
-            EqualizerSettings settings = new EqualizerSettings();
-            settings.bassStrength = Settings.equalizerModel.getBassStrength();
-            settings.presetPos = Settings.equalizerModel.getPresetPos();
-            settings.reverbPreset = Settings.equalizerModel.getReverbPreset();
-            settings.seekbarpos = Settings.equalizerModel.getSeekbarpos();
-            settings.isEqualizerEnabled = Settings.equalizerModel.isEqualizerEnabled();
-
-            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-
-            Gson gson = new Gson();
-            preferences.edit().putString(PREF_KEY, gson.toJson(settings)).apply();
-        }
-    }
-
-    private AudioManager.OnAudioFocusChangeListener afChangeListener = new AudioManager.OnAudioFocusChangeListener() {
-        public void onAudioFocusChange(int focusChange) {
-            if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
-                // Pause playback because your Audio Focus was
-                // temporarily stolen, but will be back soon.
-                // i.e. for a phone call
-                if (isExoPlaying()) {
-                    playPauseSong();
-                }
-            } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
-                // Stop playback, because you lost the Audio Focus.
-                // i.e. the user started some other playback app
-                // Remember to unregister your controls/buttons here.
-                // And release the kra — Audio Focus!
-                // You’re done.
-                if (isExoPlaying()) {
-                    playPauseSong();
-                }
-            } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
-                // Lower the volume, because something else is also
-                // playing audio over you.
-                // i.e. for notifications or navigation directions
-                // Depending on your audio playback, you may prefer to
-                // pause playback here instead. You do you.
-                if (isExoPlaying()) {
-                    exoPlayer.setVolume(0.2f);
-                }
-            } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
-                // Resume playback, because you hold the Audio Focus
-                // again!
-                // i.e. the phone call ended or the nav directions
-                // are finished
-                // If you implement ducking and lower the volume, be
-                // sure to return it to normal here, as well.
-                exoPlayer.setVolume(1f);
-                playPauseSong();
             }
         }
     };
@@ -628,20 +600,16 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
     }
 
     private void fadeInStep(float deltaVolume) {
-        exoPlayer.setVolume(volume);
+        mediaPlayer.setVolume(volume, volume);
         volume += deltaVolume;
 
     }
 
-    private void createNotification(Context context, MediaSessionCompat mediaSessionCompat, SongModel song, int playbutton, Boolean isLoading, Boolean isBuffering) {
+    private void createNotification(Context context, MediaSessionCompat mediaSessionCompat, SongModel song, FileDescriptor fileDescriptor, int playbutton, Boolean isLoading) {
 
-        if (isLoading) {
-            new GetMetaData(context, song, playbutton).execute();
-            bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.placeholder);
-        }
+        bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.placeholder);
 
         notificationManagerCompat = NotificationManagerCompat.from(context);
-        // MediaSessionCompat mediaSessionCompat = new MediaSessionCompat(context, "tag");
 
         PendingIntent pendingIntentPrevious;
         Intent intentPrevious = new Intent(context, NotificationActionService.class).setAction(ACTION_PREVIOUS);
@@ -663,9 +631,9 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
         Intent intentBackward = new Intent(context, NotificationActionService.class).setAction(ACTION_BACKWARD);
         pendingIntentBackward = PendingIntent.getBroadcast(context, 4, intentBackward, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        PendingIntent pendingIntentSaregamaActivity;
-        Intent intentSaregamaActivity = new Intent(context, SaregamaActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        pendingIntentSaregamaActivity = PendingIntent.getActivity(context, 5, intentSaregamaActivity, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pendingIntentSaregamaOfflineActivity;
+        Intent intentSaregamaOfflineActivity = new Intent(context, SaregamaOfflineActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        pendingIntentSaregamaOfflineActivity = PendingIntent.getActivity(context, 6, intentSaregamaOfflineActivity, PendingIntent.FLAG_UPDATE_CURRENT);
 
         SpannableStringBuilder artists = new SpannableStringBuilder();
         ArrayList<String> artistList = song.getArtists();
@@ -682,11 +650,7 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
             title = "Loading....";
             artist = "";
         } else {
-            if (isBuffering) {
-                artist = "Buffering....";
-            } else {
-                artist = String.valueOf(artists);
-            }
+            artist = "(Offline) ".concat(String.valueOf(artists));
             title = song.getSongName();
         }
 
@@ -695,7 +659,7 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
                 .setContentTitle(title)
                 .setContentText(artist)
                 .setLargeIcon(bitmap)
-                .setContentIntent(pendingIntentSaregamaActivity)
+                .setContentIntent(pendingIntentSaregamaOfflineActivity)
                 .setOnlyAlertOnce(true)
                 .setShowWhen(false)
                 .addAction(R.drawable.ic_replay_10_black_24dp, "BACKWARD", pendingIntentBackward)
@@ -714,50 +678,13 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
         startForeground(999, notification);
     }
 
-    private class GetMetaData extends AsyncTask<Void, Void, Void> {
-
-        Context context;
-        SongModel song;
-        int playbutton;
-
-        GetMetaData(Context context, SongModel song, int playbutton) {
-            this.context = context;
-            this.song = song;
-            this.playbutton = playbutton;
-        }
-
-        @Override
-        protected Void doInBackground(Void... voids) {
-            MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-            mmr.setDataSource(song.getUrl(), new HashMap<String, String>());
-            byte[] data = mmr.getEmbeddedPicture();
-
-            if (data != null) {
-                bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-            } else {
-                bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.placeholder);
-            }
-            mmr.release();
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-
-            builder1.setLargeIcon(bitmap);
-            notification = builder1.build();
-            startForeground(999, notification);
-        }
-    }
-
     @Override
     public void onDestroy() {
         super.onDestroy();
-        saveEqualizerSettings();
-        pausePlayer();
-        if (exoPlayer != null) {
-            exoPlayer.release();
+        if (mediaPlayer != null) {
+            mediaPlayer.pause();
+            mediaPlayer.release();
+            mediaPlayer = null;
         }
         if (textToSpeech != null) {
             textToSpeech.stop();

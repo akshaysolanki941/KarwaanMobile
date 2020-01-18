@@ -32,6 +32,13 @@
 
     </androidx.appcompat.widget.Toolbar>
 
+    <Switch
+        android:id="@+id/switch_offline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:padding="10dp" />
+
     <RelativeLayout
         android:id="@+id/rl_saregama_mode"
         android:layout_width="250dp"
@@ -57,6 +64,30 @@
     </RelativeLayout>
 
     <RelativeLayout
+        android:id="@+id/rl_saregama_mode_offline"
+        android:layout_width="250dp"
+        android:layout_height="250dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="150dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginBottom="10dp"
+        android:background="@drawable/ripplebackground"
+        android:clickable="true"
+        android:focusable="true">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:fontFamily="@font/overpass_semi_bold"
+            android:text="@string/saregama_mode_offilne"
+            android:textAlignment="center"
+            android:textColor="#000"
+            android:textSize="20sp" />
+    </RelativeLayout>
+
+    <RelativeLayout
         android:id="@+id/rl_manual_mode"
         android:layout_width="250dp"
         android:layout_height="250dp"
@@ -76,6 +107,31 @@
             android:layout_centerInParent="true"
             android:fontFamily="@font/overpass_semi_bold"
             android:text="@string/manual_mode"
+            android:textAlignment="center"
+            android:textColor="#000"
+            android:textSize="20sp" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rl_manual_mode_offline"
+        android:layout_width="250dp"
+        android:layout_height="250dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginBottom="50dp"
+        android:background="@drawable/ripplebackground"
+        android:clickable="true"
+        android:focusable="true">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:fontFamily="@font/overpass_semi_bold"
+            android:text="@string/manual_mode_offline"
             android:textAlignment="center"
             android:textColor="#000"
             android:textSize="20sp" />
