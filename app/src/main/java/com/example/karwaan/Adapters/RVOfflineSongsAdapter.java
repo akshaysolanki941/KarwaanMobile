@@ -13,9 +13,10 @@ import android.view.animation.AlphaAnimation;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.karwaan.ManualOfflineActivity;
 import com.example.karwaan.Models.SongModel;
 import com.example.karwaan.R;
-import com.example.karwaan.Utils.FileUtils;
+import com.example.karwaan.Utils.FilesUtil;
 import com.example.karwaan.Utils.TinyDB;
 
 import java.util.ArrayList;
@@ -97,9 +98,7 @@ public class RVOfflineSongsAdapter extends RecyclerView.Adapter<RVOfflineSongsAd
                 tv_dialog_delete_offline_song.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        if (FileUtils.deleteDownloadedFile(context, song.getSongName())) {
-                            Toast.makeText(context, "Deleted", Toast.LENGTH_SHORT).show();
-                            removeItem(position);
+                        if (FilesUtil.deleteDownloadedFile(context, song.getSongName())) {
                             for (int i = 0; i < list.size(); i++) {
                                 SongModel songModel = (SongModel) list.get(i);
                                 if (songModel.getSongName().equals(song.getSongName())) {
@@ -107,7 +106,10 @@ public class RVOfflineSongsAdapter extends RecyclerView.Adapter<RVOfflineSongsAd
                                     break;
                                 }
                             }
+                            removeItem(position);
                             tinyDB.putListObject("downloadedSongList", list);
+                            ((ManualOfflineActivity) context).getTotalSize();
+                            Toast.makeText(context, "Deleted", Toast.LENGTH_SHORT).show();
                         } else {
                             Toast.makeText(context, "Some error occured", Toast.LENGTH_SHORT).show();
                         }

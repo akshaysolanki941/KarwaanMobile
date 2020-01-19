@@ -165,7 +165,7 @@ public class SaregamaActivity extends AppCompatActivity {
         setReduceSizeAnimation(btn_forward10);
         setReduceSizeAnimation(btn_backward10);
 
-        voiceModeEnabled = getSharedPreferences("voiceModeEnabled", MODE_PRIVATE).getBoolean("voiceModeEnabled", false);
+        voiceModeEnabled = getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).getBoolean("voiceModeEnabled", false);
         if (voiceModeEnabled) {
             btn_play_pause.setVisibility(View.GONE);
             btn_next.setVisibility(View.GONE);

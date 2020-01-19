@@ -21,9 +21,16 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
-        <activity android:name=".ManualOfflineActivity"></activity>
-        <activity android:name=".SaregamaOfflineActivity" />
-        <activity android:name=".AboutActivity" />
+        <activity
+            android:name=".ManualOfflineActivity"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustPan" />
+        <activity
+            android:name=".SaregamaOfflineActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".AboutActivity"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".SettingsActivity"
             android:screenOrientation="portrait" />
@@ -32,7 +39,6 @@
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

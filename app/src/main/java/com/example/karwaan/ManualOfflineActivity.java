@@ -42,11 +42,14 @@ import com.example.karwaan.Adapters.RVOfflineSongsAdapter;
 import com.example.karwaan.Constants.Constants;
 import com.example.karwaan.Models.SongModel;
 import com.example.karwaan.Services.ManualOfflinePlaybackService;
+import com.example.karwaan.Utils.FilesUtil;
 import com.example.karwaan.Utils.TinyDB;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
+import org.apache.commons.io.FileUtils;
 import org.xmlpull.v1.XmlPullParserException;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -62,7 +65,7 @@ import androidx.recyclerview.widget.RecyclerView;
 public class ManualOfflineActivity extends AppCompatActivity {
 
     private Toolbar toolbar;
-    private TextView toolbar_title, tv_sliding_view_song_name, tv_current_time, tv_total_time, tv_total_songs;
+    private TextView toolbar_title, tv_sliding_view_song_name, tv_current_time, tv_total_time, tv_total_songs, tv_total_size;
     private RecyclerView rv_songs;
     private ArrayList<Object> songs = new ArrayList<>();
     private ArrayList<Object> mainSongsList = new ArrayList<>();
@@ -118,6 +121,7 @@ public class ManualOfflineActivity extends AppCompatActivity {
         btn_backward_10 = findViewById(R.id.btn_backward_10);
         tv_current_time = findViewById(R.id.tv_current_time);
         tv_total_time = findViewById(R.id.tv_total_time);
+        tv_total_size = findViewById(R.id.tv_total_size);
         tv_total_songs = findViewById(R.id.tv_total_songs);
         tv_total_songs.setVisibility(View.GONE);
         tv_sliding_view_song_name = findViewById(R.id.tv_sliding_view_song_name);
@@ -150,6 +154,7 @@ public class ManualOfflineActivity extends AppCompatActivity {
         tinyDB = new TinyDB(this);
         getSongs();
         updateSeekbarColor();
+        getTotalSize();
     }
 
     @Override
@@ -358,6 +363,8 @@ public class ManualOfflineActivity extends AppCompatActivity {
         songs.clear();
         songs.addAll(mainSongsList);
         if (!songs.isEmpty()) {
+            tv_total_songs.setText(getResources().getString(R.string.total_songs).concat(String.valueOf(mainSongsList.size())));
+            tv_total_songs.setVisibility(View.VISIBLE);
             rv_songs.setAdapter(new RVOfflineSongsAdapter(songs, ManualOfflineActivity.this));
         } else {
             Toast.makeText(this, "No Offline Songs", Toast.LENGTH_SHORT).show();
@@ -379,6 +386,13 @@ public class ManualOfflineActivity extends AppCompatActivity {
         i.putExtra("search", query);
         LocalBroadcastManager.getInstance(ManualOfflineActivity.this).sendBroadcast(i);
         rv_songs.setAdapter(new RVOfflineSongsAdapter(songs, ManualOfflineActivity.this));
+    }
+
+    public void getTotalSize() {
+        File file = new File(FilesUtil.getDirPath(this));
+        long size = FileUtils.sizeOfDirectory(file);
+        String sizetoDisplay = FileUtils.byteCountToDisplaySize(size);
+        tv_total_size.setText("Total size: ".concat(sizetoDisplay));
     }
 
     private void updateSeekbarColor() {
@@ -520,7 +534,7 @@ public class ManualOfflineActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        getSharedPreferences("released", MODE_PRIVATE).edit().putBoolean("released", true).commit();
+        getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).edit().putBoolean("released", true).commit();
         if (notificationManager != null) {
             notificationManager.cancelAll();
         }
@@ -529,5 +543,7 @@ public class ManualOfflineActivity extends AppCompatActivity {
             MediaControllerCompat.getMediaController(ManualOfflineActivity.this).unregisterCallback(controllerCallback);
         }
         mediaBrowser.disconnect();
+        FileUtils.deleteQuietly(getCacheDir());
+        FileUtils.deleteQuietly(getExternalCacheDir());
     }
 }

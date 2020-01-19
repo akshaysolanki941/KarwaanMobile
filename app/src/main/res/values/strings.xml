@@ -43,4 +43,22 @@
     <string name="delete_from_offline_songs">Delete from offline songs?</string>
     <string name="saregama_mode_offline">Saregama Mode Offline</string>
     <string name="no_offline_songs">No offline songs</string>
+    <string name="please_update_your_app_to_the_latest_version">Please update your app to the latest version.</string>
+
+
+    <string name="about_whats_new">
+        <b><u>Karvaan Mobile v3.0</u></b>\n\n
+        1. Cleared out some hideous bugs.\n\n
+        2. Added offline mode. Now you can save your favourite song and enjoy without any internet connection.\n\n\n\n
+        <b><u>Karvaan Mobile v2.0</u></b>\n\n
+        1. Some bugs fixed.\n\n
+        2. App is completely changed but you won\'t see the changes as these changes are made in backend. You will feel these changes.\n\n
+        3. My Playlist option added. Add your favorite songs to the playlist and play it from any of the two modes.\n\n
+        4. Movie names of the songs added. Now you can search for songs of a particular movie.\n\n
+        5. Seekbar changed in Manual Mode.\n\n
+        6. Added a new option in Settings page to change behavior or action of a button.\n\n
+        7. Added Equalizer in both modes.\n\n
+        8. Added About section.
+    </string>
+    <string name="offline_mode">OFFLINE MODE</string>
 </resources>

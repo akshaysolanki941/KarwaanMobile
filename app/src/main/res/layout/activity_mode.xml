@@ -37,7 +37,24 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="10dp"
-        android:padding="10dp" />
+        android:padding="10dp"
+        android:thumbTint="#ffffff"
+        android:trackTint="#ffffff" />
+
+    <TextView
+        android:id="@+id/tv_offline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginBottom="10dp"
+        android:layout_toEndOf="@+id/switch_offline"
+        android:fontFamily="@font/overpass_light"
+        android:paddingTop="10dp"
+        android:paddingEnd="10dp"
+        android:paddingBottom="10dp"
+        android:text="@string/offline_mode"
+        android:textColor="#fff" />
 
     <RelativeLayout
         android:id="@+id/rl_saregama_mode"

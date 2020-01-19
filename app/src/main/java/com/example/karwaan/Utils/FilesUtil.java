@@ -17,7 +17,7 @@ import static com.example.karwaan.Constants.Constants.DIR_NAME;
 import static com.example.karwaan.Constants.Constants.FILE_EXT;
 import static com.example.karwaan.Constants.Constants.TEMP_FILE_NAME;
 
-public class FileUtils {
+public class FilesUtil {
 
     public static void saveFile(byte[] encodedBytes, String path) {
         try {
@@ -63,7 +63,7 @@ public class FileUtils {
     }
 
     public static FileDescriptor getTempFileDescriptor(Context context, byte[] decrypted) throws IOException {
-        File tempFile = FileUtils.createTempFile(context, decrypted);
+        File tempFile = FilesUtil.createTempFile(context, decrypted);
         FileInputStream fis = new FileInputStream(tempFile);
         return fis.getFD();
     }

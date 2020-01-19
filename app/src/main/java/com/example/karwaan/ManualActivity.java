@@ -71,7 +71,6 @@ import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import org.xmlpull.v1.XmlPullParserException;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -131,7 +130,7 @@ public class ManualActivity extends AppCompatActivity implements RVSongSwipeHelp
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_manual);
 
-        getSharedPreferences("released", MODE_PRIVATE).edit().putBoolean("released", false).commit();
+        getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).edit().putBoolean("released", false).commit();
 
         toolbar = (Toolbar) findViewById(R.id.toolBar);
         toolbar_title = (TextView) findViewById(R.id.toolbar_title);
@@ -212,7 +211,7 @@ public class ManualActivity extends AppCompatActivity implements RVSongSwipeHelp
             e.printStackTrace();
         }
 
-        getSharedPreferences("firstTimeCreated", MODE_PRIVATE).edit().putBoolean("firstTimeCreated", true).commit();
+        getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).edit().putBoolean("firstTimeCreated", true).commit();
 
         updateSeekbarColor();
 
@@ -863,36 +862,10 @@ public class ManualActivity extends AppCompatActivity implements RVSongSwipeHelp
         return true;
     }
 
-    public static void trimCache(Context context) {
-        try {
-            File dir = context.getCacheDir();
-            if (dir != null && dir.isDirectory()) {
-                deleteDir(dir);
-            }
-        } catch (Exception e) {
-            // TODO: handle exception
-        }
-    }
-
-    public static boolean deleteDir(File dir) {
-        if (dir != null && dir.isDirectory()) {
-            String[] children = dir.list();
-            for (String child : children) {
-                boolean success = deleteDir(new File(dir, child));
-                if (!success) {
-                    return false;
-                }
-            }
-        }
-
-        // The directory is now empty so delete it
-        return dir.delete();
-    }
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        getSharedPreferences("released", MODE_PRIVATE).edit().putBoolean("released", true).commit();
+        getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).edit().putBoolean("released", true).commit();
         if (notificationManager != null) {
             notificationManager.cancelAll();
         }
@@ -909,12 +882,6 @@ public class ManualActivity extends AppCompatActivity implements RVSongSwipeHelp
         }
         rv_songs.setAdapter(null);
         rv_songs_playlist.setAdapter(null);
-        try {
-            trimCache(this);
-            // Toast.makeText(this,"onDestroy " ,Toast.LENGTH_LONG).show();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
         if (MediaControllerCompat.getMediaController(ManualActivity.this) != null) {
             MediaControllerCompat.getMediaController(ManualActivity.this).unregisterCallback(controllerCallback);
         }

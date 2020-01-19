@@ -66,8 +66,8 @@ public class SettingsActivity extends AppCompatActivity {
 
         switch_enable_voice_mode = findViewById(R.id.switch_enable_voice_mode);
         switch_change_10 = findViewById(R.id.switch_change_10);
-        Boolean voiceModeEnable = getSharedPreferences("voiceModeEnabled", MODE_PRIVATE).getBoolean("voiceModeEnabled", false);
-        Boolean skip10SongsEnabled = getSharedPreferences("skip10SongsEnabled", MODE_PRIVATE).getBoolean("skip10SongsEnabled", false);
+        Boolean voiceModeEnable = getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).getBoolean("voiceModeEnabled", false);
+        Boolean skip10SongsEnabled = getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).getBoolean("skip10SongsEnabled", false);
         if (voiceModeEnable) {
             switch_enable_voice_mode.setChecked(true);
             btn_help_voice.setVisibility(View.VISIBLE);
@@ -84,7 +84,7 @@ public class SettingsActivity extends AppCompatActivity {
             btn_help_10.setVisibility(View.GONE);
         }
 
-        checkForUpdates();
+        //checkForUpdates();
     }
 
     @Override
@@ -97,18 +97,18 @@ public class SettingsActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                 if (b) {
-                    Boolean firstTimeEnable = getSharedPreferences("firstTimeEnable", MODE_PRIVATE).getBoolean("firstTimeEnable", true);
+                    Boolean firstTimeEnable = getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).getBoolean("firstTimeEnable", true);
                     if (firstTimeEnable) {
                         checkVoiceCommandPermission();
-                        getSharedPreferences("firstTimeEnable", MODE_PRIVATE).edit().putBoolean("firstTimeEnable", false).commit();
+                        getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).edit().putBoolean("firstTimeEnable", false).apply();
                     } else {
                         btn_help_voice.setVisibility(View.VISIBLE);
-                        getSharedPreferences("voiceModeEnabled", MODE_PRIVATE).edit().putBoolean("voiceModeEnabled", true).commit();
+                        getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).edit().putBoolean("voiceModeEnabled", true).apply();
                         Toast.makeText(SettingsActivity.this, "Voice Mode Enabled", Toast.LENGTH_SHORT).show();
                     }
                 } else {
                     btn_help_voice.setVisibility(View.GONE);
-                    getSharedPreferences("voiceModeEnabled", MODE_PRIVATE).edit().putBoolean("voiceModeEnabled", false).commit();
+                    getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).edit().putBoolean("voiceModeEnabled", false).apply();
                     Toast.makeText(SettingsActivity.this, "Voice Mode Disabled", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -129,11 +129,11 @@ public class SettingsActivity extends AppCompatActivity {
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                 if (b) {
                     btn_help_10.setVisibility(View.VISIBLE);
-                    getSharedPreferences("skip10SongsEnabled", MODE_PRIVATE).edit().putBoolean("skip10SongsEnabled", true).commit();
+                    getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).edit().putBoolean("skip10SongsEnabled", true).apply();
                     Toast.makeText(SettingsActivity.this, "10 songs skipping enabled", Toast.LENGTH_SHORT).show();
                 } else {
                     btn_help_10.setVisibility(View.GONE);
-                    getSharedPreferences("skip10SongsEnabled", MODE_PRIVATE).edit().putBoolean("skip10SongsEnabled", false).commit();
+                    getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).edit().putBoolean("skip10SongsEnabled", false).apply();
                     Toast.makeText(SettingsActivity.this, "10 songs skipping disabled", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -191,14 +191,14 @@ public class SettingsActivity extends AppCompatActivity {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // permission was granted, yay!
                     btn_help_voice.setVisibility(View.VISIBLE);
-                    getSharedPreferences("voiceModeEnabled", MODE_PRIVATE).edit().putBoolean("voiceModeEnabled", true).commit();
+                    getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).edit().putBoolean("voiceModeEnabled", true).apply();
                     Toast.makeText(SettingsActivity.this, "Voice Mode Enabled", Toast.LENGTH_SHORT).show();
                 } else {
                     // permission denied, boo! Disable the functionality that depends on this permission.
                     Toast.makeText(this, "Permissions Denied to record audio", Toast.LENGTH_LONG).show();
                     switch_enable_voice_mode.setChecked(false);
                     btn_help_voice.setVisibility(View.GONE);
-                    getSharedPreferences("voiceModeEnabled", MODE_PRIVATE).edit().putBoolean("voiceModeEnabled", false).commit();
+                    getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).edit().putBoolean("voiceModeEnabled", false).apply();
                     Toast.makeText(SettingsActivity.this, "Voice Mode Disabled", Toast.LENGTH_SHORT).show();
                 }
                 return;

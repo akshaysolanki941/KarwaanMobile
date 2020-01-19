@@ -126,6 +126,18 @@
                         android:textAlignment="center"
                         android:textColor="#fff" />
 
+                    <TextView
+                        android:id="@+id/tv_total_size"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/tv_total_songs"
+                        android:layout_marginBottom="6dp"
+                        android:fontFamily="@font/overpass_semi_bold_italic"
+                        android:padding="3dp"
+                        android:text="Total size: 50 MB"
+                        android:textAlignment="center"
+                        android:textColor="#fff" />
+
                 </RelativeLayout>
 
             </com.google.android.material.appbar.CollapsingToolbarLayout>

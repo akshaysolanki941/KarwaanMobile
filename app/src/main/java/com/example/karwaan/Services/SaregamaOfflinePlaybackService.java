@@ -27,8 +27,10 @@ import com.example.karwaan.Models.SongModel;
 import com.example.karwaan.R;
 import com.example.karwaan.SaregamaOfflineActivity;
 import com.example.karwaan.Utils.EncryptDecryptUtils;
-import com.example.karwaan.Utils.FileUtils;
+import com.example.karwaan.Utils.FilesUtil;
 import com.example.karwaan.Utils.TinyDB;
+
+import org.apache.commons.io.FileUtils;
 
 import java.io.FileDescriptor;
 import java.io.IOException;
@@ -153,7 +155,7 @@ public class SaregamaOfflinePlaybackService extends MediaBrowserServiceCompat {
             audioManager.requestAudioFocus(audioFocusRequest);
         }
 
-        skip10SongsEnabled = getSharedPreferences("skip10SongsEnabled", MODE_PRIVATE).getBoolean("skip10SongsEnabled", false);
+        skip10SongsEnabled = getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).getBoolean("skip10SongsEnabled", false);
     }
 
     private MediaSessionCompat.Callback callback = new MediaSessionCompat.Callback() {
@@ -271,7 +273,7 @@ public class SaregamaOfflinePlaybackService extends MediaBrowserServiceCompat {
         byte[] file = decrypt(index);
         if (file != null) {
             try {
-                fileDescriptor = FileUtils.getTempFileDescriptor(this, file);
+                fileDescriptor = FilesUtil.getTempFileDescriptor(this, file);
                 setUpMediaPlayer(fileDescriptor);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -283,7 +285,7 @@ public class SaregamaOfflinePlaybackService extends MediaBrowserServiceCompat {
     private byte[] decrypt(int position) {
         try {
             SongModel song = (SongModel) songList.get(position);
-            byte[] fileData = FileUtils.readFile(FileUtils.getFilePath(this, song.getSongName()));
+            byte[] fileData = FilesUtil.readFile(FilesUtil.getFilePath(this, song.getSongName()));
             byte[] decryptedBytes = EncryptDecryptUtils.decode(EncryptDecryptUtils.getInstance(this).getSecretKey(), fileData);
             return decryptedBytes;
         } catch (Exception e) {
@@ -696,6 +698,8 @@ public class SaregamaOfflinePlaybackService extends MediaBrowserServiceCompat {
         if (notificationManager != null) {
             notificationManager.cancelAll();
         }
+        FileUtils.deleteQuietly(getCacheDir());
+        FileUtils.deleteQuietly(getExternalCacheDir());
         stopSelf();
     }
 }

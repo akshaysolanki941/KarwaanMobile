@@ -29,7 +29,7 @@ public class SplashActivity extends AppCompatActivity {
 
         Glide.with(this).load(R.drawable.bg).into(bg);
 
-        tv_app_name.setText("Karvaan \nMobile");
+        tv_app_name.setText("Karvaan\nMobile");
         tv_app_name.setLetterDuration(250);
         alphaAnimation(bg_alpha, 0, 1f, 3000);
 

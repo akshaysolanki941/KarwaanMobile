@@ -189,7 +189,7 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
             audioManager.requestAudioFocus(audioFocusRequest);
         }
 
-        skip10SongsEnabled = getSharedPreferences("skip10SongsEnabled", MODE_PRIVATE).getBoolean("skip10SongsEnabled", false);
+        skip10SongsEnabled = getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).getBoolean("skip10SongsEnabled", false);
 
         initExoPlayer();
     }

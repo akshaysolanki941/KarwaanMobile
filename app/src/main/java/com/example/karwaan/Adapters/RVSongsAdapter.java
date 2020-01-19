@@ -11,19 +11,21 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.downloader.Error;
 import com.downloader.OnDownloadListener;
+import com.downloader.OnProgressListener;
 import com.downloader.PRDownloader;
+import com.downloader.Progress;
 import com.example.karwaan.Models.SongModel;
 import com.example.karwaan.R;
 import com.example.karwaan.Utils.EncryptDecryptUtils;
-import com.example.karwaan.Utils.FileUtils;
+import com.example.karwaan.Utils.FilesUtil;
 import com.example.karwaan.Utils.TinyDB;
+import com.mikhaellopez.circularprogressbar.CircularProgressBar;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -33,6 +35,8 @@ import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import static android.content.Context.MODE_PRIVATE;
+
 public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHolder> {
 
     private ArrayList<SongModel> songs;
@@ -41,6 +45,7 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
     private TinyDB tinyDB;
     private ArrayList<Object> downloadedSongList = new ArrayList<>();
     private Drawable.ConstantState checkConstState, downloadConstState;
+    private Boolean isStoragePermissionGranted;
 
     public RVSongsAdapter() {
     }
@@ -62,6 +67,8 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
         checkConstState = context.getDrawable(R.drawable.ic_check_black_24dp).getConstantState();
         downloadConstState = context.getDrawable(R.drawable.ic_file_download_black_24dp).getConstantState();
 
+        isStoragePermissionGranted = context.getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).getBoolean("storagePermissionGranted", false);
+
         return new RVSongsAdapter.ViewHolder(view);
     }
 
@@ -73,7 +80,7 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
         SongModel song = songs.get(position);
         holder.tv_song_name.setText(song.getSongName());
 
-        File f = new File(FileUtils.getFilePath(context, song.getSongName()));
+        File f = new File(FilesUtil.getFilePath(context, song.getSongName()));
         if (f.exists()) {
             holder.img_download.setImageResource(R.drawable.ic_check_black_24dp);
         } else {
@@ -112,33 +119,45 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
             @Override
             public void onClick(View view) {
                 if (holder.img_download.getDrawable().getConstantState().equals(downloadConstState)) {
-                    holder.pb_download.setVisibility(View.VISIBLE);
-                    holder.img_download.setVisibility(View.GONE);
-                    PRDownloader.download(song.getUrl(), FileUtils.getDirPath(context),
-                            song.getSongName()).build().start(new OnDownloadListener() {
-                        @Override
-                        public void onDownloadComplete() {
-                            if (encrypt(song)) {
-                                Toast.makeText(context, "Downloaded", Toast.LENGTH_SHORT).show();
-                                holder.pb_download.setVisibility(View.GONE);
-                                holder.img_download.setImageResource(R.drawable.ic_check_black_24dp);
-                                holder.img_download.setVisibility(View.VISIBLE);
-                                downloadedSongList.add(song);
-                                tinyDB.putListObject("downloadedSongList", downloadedSongList);
+                    if (isStoragePermissionGranted) {
+                        holder.pb_download.setVisibility(View.VISIBLE);
+                        holder.img_download.setVisibility(View.GONE);
+                        PRDownloader.download(song.getUrl(), FilesUtil.getDirPath(context),
+                                song.getSongName()).build().setOnProgressListener(new OnProgressListener() {
+                            @Override
+                            public void onProgress(Progress progress) {
+                                holder.pb_download.setProgressMax(progress.totalBytes);
+                                holder.pb_download.setProgress(progress.currentBytes);
+                            }
+                        }).start(new OnDownloadListener() {
+                            @Override
+                            public void onDownloadComplete() {
+                                if (encrypt(song)) {
+                                    Toast.makeText(context, "Downloaded", Toast.LENGTH_SHORT).show();
+                                    holder.pb_download.setVisibility(View.GONE);
+                                    holder.img_download.setImageResource(R.drawable.ic_check_black_24dp);
+                                    holder.img_download.setVisibility(View.VISIBLE);
+                                    downloadedSongList.add(song);
+                                    tinyDB.putListObject("downloadedSongList", downloadedSongList);
 
-                            } else {
+                                } else {
+                                    holder.pb_download.setVisibility(View.GONE);
+                                    holder.img_download.setVisibility(View.VISIBLE);
+                                }
+                            }
+
+                            @Override
+                            public void onError(Error error) {
+                                Toast.makeText(context, error.toString(), Toast.LENGTH_SHORT).show();
                                 holder.pb_download.setVisibility(View.GONE);
                                 holder.img_download.setVisibility(View.VISIBLE);
                             }
-                        }
 
-                        @Override
-                        public void onError(Error error) {
-                            Toast.makeText(context, error.toString(), Toast.LENGTH_SHORT).show();
-                            holder.pb_download.setVisibility(View.GONE);
-                            holder.img_download.setVisibility(View.VISIBLE);
-                        }
-                    });
+
+                        });
+                    } else {
+                        Toast.makeText(context, "Please grant storage permission first", Toast.LENGTH_LONG).show();
+                    }
                 } else if (holder.img_download.getDrawable().getConstantState().equals(checkConstState)) {
                     Toast.makeText(context, "Already downloaded", Toast.LENGTH_SHORT).show();
                 }
@@ -163,7 +182,7 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
         TextView tv_song_name, tv_artist;
         public RelativeLayout foreground, background;
         ImageView img_download;
-        ProgressBar pb_download;
+        CircularProgressBar pb_download;
 
         private ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -180,9 +199,9 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
 
     private boolean encrypt(SongModel song) {
         try {
-            byte[] fileData = FileUtils.readFile(FileUtils.getFilePath(context, song.getSongName()));
+            byte[] fileData = FilesUtil.readFile(FilesUtil.getFilePath(context, song.getSongName()));
             byte[] encodedBytes = EncryptDecryptUtils.encode(EncryptDecryptUtils.getInstance(context).getSecretKey(), fileData);
-            FileUtils.saveFile(encodedBytes, FileUtils.getFilePath(context, song.getSongName()));
+            FilesUtil.saveFile(encodedBytes, FilesUtil.getFilePath(context, song.getSongName()));
             return true;
         } catch (Exception e) {
             Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();

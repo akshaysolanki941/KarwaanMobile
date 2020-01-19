@@ -167,7 +167,7 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
             audioManager.requestAudioFocus(audioFocusRequest);
         }
 
-        skip10SongsEnabled = getSharedPreferences("skip10SongsEnabled", MODE_PRIVATE).getBoolean("skip10SongsEnabled", false);
+        skip10SongsEnabled = getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).getBoolean("skip10SongsEnabled", false);
     }
 
     private MediaSessionCompat.Callback callback = new MediaSessionCompat.Callback() {

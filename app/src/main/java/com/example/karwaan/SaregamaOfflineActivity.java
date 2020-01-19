@@ -35,6 +35,8 @@ import com.example.karwaan.Models.SongModel;
 import com.example.karwaan.Services.SaregamaOfflinePlaybackService;
 import com.example.karwaan.Utils.TinyDB;
 
+import org.apache.commons.io.FileUtils;
+
 import java.util.ArrayList;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -329,5 +331,7 @@ public class SaregamaOfflineActivity extends AppCompatActivity {
             MediaControllerCompat.getMediaController(SaregamaOfflineActivity.this).unregisterCallback(controllerCallback);
         }
         mediaBrowser.disconnect();
+        FileUtils.deleteQuietly(getCacheDir());
+        FileUtils.deleteQuietly(getExternalCacheDir());
     }
 }
