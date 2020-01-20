@@ -103,20 +103,28 @@
         android:textColor="#fff"
         android:textSize="18sp" />
 
-    <TextView
-        android:id="@+id/tv_update"
+    <EditText
+        android:id="@+id/et_suggestion_bug"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/tv_open_source_licenses"
-        android:layout_marginStart="10dp"
-        android:layout_marginEnd="10dp"
-        android:background="@drawable/switch_bg"
-        android:fontFamily="@font/overpass_semi_bold"
-        android:padding="6dp"
-        android:text="@string/update_app"
-        android:textAlignment="center"
-        android:textColor="#fff"
-        android:textSize="15sp" />
+        android:layout_below="@+id/switch_change_10"
+        android:layout_margin="10dp"
+        android:background="@drawable/et_bg"
+        android:fontFamily="@font/overpass_light"
+        android:hint="@string/any_suggestion_for_a_new_feature_or_improvement_bug_report"
+        android:padding="10dp"
+        android:textColor="#000"
+        android:textColorHint="#8D8888" />
+
+    <Button
+        android:id="@+id/btn_sugggestion_bug_submit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/et_suggestion_bug"
+        android:layout_centerHorizontal="true"
+        android:padding="10dp"
+        android:text="SUBMIT"
+        android:textColor="#fff" />
 
     <TextView
         android:id="@+id/tv_open_source_licenses"

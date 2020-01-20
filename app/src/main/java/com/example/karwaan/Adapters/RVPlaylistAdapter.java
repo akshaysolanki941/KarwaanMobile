@@ -103,6 +103,7 @@ public class RVPlaylistAdapter extends RecyclerView.Adapter<RVPlaylistAdapter.Vi
     public void removeItem(int position) {
         songsPlaylist.remove(position);
         notifyItemRemoved(position);
+        notifyDataSetChanged();
     }
 
     private void setEnterAnimation(View viewToAnimate, int position) {

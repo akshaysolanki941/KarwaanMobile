@@ -55,7 +55,7 @@ public class RVOfflineSongsAdapter extends RecyclerView.Adapter<RVOfflineSongsAd
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RVOfflineSongsAdapter.ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull RVOfflineSongsAdapter.ViewHolder holder, final int position) {
 
         SongModel song = (SongModel) offlineSongList.get(position);
         holder.tv_song_name_offline.setText(song.getSongName());
@@ -99,15 +99,7 @@ public class RVOfflineSongsAdapter extends RecyclerView.Adapter<RVOfflineSongsAd
                     @Override
                     public void onClick(View view) {
                         if (FilesUtil.deleteDownloadedFile(context, song.getSongName())) {
-                            for (int i = 0; i < list.size(); i++) {
-                                SongModel songModel = (SongModel) list.get(i);
-                                if (songModel.getSongName().equals(song.getSongName())) {
-                                    list.remove(i);
-                                    break;
-                                }
-                            }
                             removeItem(position);
-                            tinyDB.putListObject("downloadedSongList", list);
                             ((ManualOfflineActivity) context).getTotalSize();
                             Toast.makeText(context, "Deleted", Toast.LENGTH_SHORT).show();
                         } else {
@@ -143,8 +135,12 @@ public class RVOfflineSongsAdapter extends RecyclerView.Adapter<RVOfflineSongsAd
     }
 
     public void removeItem(int position) {
+        list.remove(position);
+        tinyDB.putListObject("downloadedSongList", list);
         offlineSongList.remove(position);
         notifyItemRemoved(position);
+        notifyDataSetChanged();
+        ((ManualOfflineActivity) context).setTotalSongsCount();
     }
 
     private void setEnterAnimation(View viewToAnimate, int position) {

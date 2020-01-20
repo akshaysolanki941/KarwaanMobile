@@ -27,7 +27,6 @@
     <string name="saregama_toolbar">Saregama Mode</string>
 
 
-    <string name="update_app">UPDATE APP (ignore if already updated)</string>
     <string name="enable_10_songs_skipping">Enable 10 songs skipping</string>
 
     <string name="eq">Equalizer</string>
@@ -49,7 +48,9 @@
     <string name="about_whats_new">
         <b><u>Karvaan Mobile v3.0</u></b>\n\n
         1. Cleared out some hideous bugs.\n\n
-        2. Added offline mode. Now you can save your favourite song and enjoy without any internet connection.\n\n\n\n
+        2. Added offline mode. Now you can save your favourite song and enjoy without any internet connection.\n\n
+        3. Now you can suggest for any new feature or improvement or report a bug from Settings page.\n\n
+        4. Never miss any updates. If a new update is available, you will be get notified upon opening the app.\n\n\n\n
         <b><u>Karvaan Mobile v2.0</u></b>\n\n
         1. Some bugs fixed.\n\n
         2. App is completely changed but you won\'t see the changes as these changes are made in backend. You will feel these changes.\n\n
@@ -58,7 +59,10 @@
         5. Seekbar changed in Manual Mode.\n\n
         6. Added a new option in Settings page to change behavior or action of a button.\n\n
         7. Added Equalizer in both modes.\n\n
-        8. Added About section.
+        8. Added About section.\n\n
+        9. Made Android 6 compatible.
     </string>
     <string name="offline_mode">OFFLINE MODE</string>
+    <string name="any_suggestion_for_a_new_feature_or_improvement_bug_report">Any suggestion for a new feature or improvement/Bug report (It is completely anonymous)</string>
+    <string name="settings_toolbar">Settings</string>
 </resources>

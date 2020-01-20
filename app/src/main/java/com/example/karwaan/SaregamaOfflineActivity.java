@@ -99,8 +99,16 @@ public class SaregamaOfflineActivity extends AppCompatActivity {
         mainSongList = tinyDB.getListObject("downloadedSongList", SongModel.class);
         if (!mainSongList.isEmpty()) {
             tv_total_songs.setText(getResources().getString(R.string.total_songs).concat(String.valueOf(mainSongList.size())));
+            btn_play_pause.setImageResource(R.drawable.pause_button);
         } else {
             tv_total_songs.setText(getString(R.string.no_offline_songs));
+            lottieAnimationView.pauseAnimation();
+            alphaAnimation(lottieAnimationView, 1f, 0);
+            btn_play_pause.setVisibility(View.GONE);
+            btn_backward10.setVisibility(View.GONE);
+            btn_forward10.setVisibility(View.GONE);
+            btn_next.setVisibility(View.GONE);
+            btn_previous.setVisibility(View.GONE);
         }
 
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);

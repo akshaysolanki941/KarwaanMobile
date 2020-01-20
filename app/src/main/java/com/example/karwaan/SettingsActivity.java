@@ -2,10 +2,9 @@ package com.example.karwaan;
 
 import android.Manifest;
 import android.app.Dialog;
-import android.content.Intent;
-import android.content.pm.PackageManager;
+import android.content.Context;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -13,7 +12,9 @@ import android.text.style.ImageSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.webkit.WebView;
+import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Switch;
@@ -21,28 +22,27 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
+import com.nabinbhandari.android.permissions.PermissionHandler;
+import com.nabinbhandari.android.permissions.Permissions;
 
-import androidx.annotation.NonNull;
+import java.util.ArrayList;
+
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
 public class SettingsActivity extends AppCompatActivity {
 
     private Toolbar toolbar;
-    private TextView toolbar_title, tv_open_source_licenses, tv_update;
+    private TextView toolbar_title, tv_open_source_licenses;
     private Switch switch_enable_voice_mode, switch_change_10;
     private ImageView bg;
     private ImageButton btn_help_voice, btn_help_10;
     private Dialog dialog_voice_help;
-    private static final int RECORD_AUDIO_REQUEST_CODE = 5486;
+    private EditText et_suggestion_bug;
+    private Button btn_sugggestion_bug_submit;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,22 +52,24 @@ public class SettingsActivity extends AppCompatActivity {
         toolbar = (Toolbar) findViewById(R.id.toolBar);
         toolbar_title = (TextView) findViewById(R.id.toolbar_title);
         setSupportActionBar(toolbar);
-        toolbar_title.setText("Settings");
+        toolbar_title.setText(getString(R.string.settings_toolbar));
         getSupportActionBar().setDisplayShowTitleEnabled(false);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         bg = findViewById(R.id.bg);
+        Glide.with(this).load(R.drawable.bg).into(bg);
+
         tv_open_source_licenses = findViewById(R.id.tv_open_source_licenses);
-        tv_update = findViewById(R.id.tv_update);
-        tv_update.setVisibility(View.GONE);
         btn_help_voice = findViewById(R.id.btn_help_voice);
         btn_help_10 = findViewById(R.id.btn_help_10);
+        et_suggestion_bug = findViewById(R.id.et_suggestion_bug);
+        btn_sugggestion_bug_submit = findViewById(R.id.btn_sugggestion_bug_submit);
         dialog_voice_help = new Dialog(this);
 
         switch_enable_voice_mode = findViewById(R.id.switch_enable_voice_mode);
         switch_change_10 = findViewById(R.id.switch_change_10);
-        Boolean voiceModeEnable = getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).getBoolean("voiceModeEnabled", false);
-        Boolean skip10SongsEnabled = getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).getBoolean("skip10SongsEnabled", false);
+        boolean voiceModeEnable = getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).getBoolean("voiceModeEnabled", false);
+        boolean skip10SongsEnabled = getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).getBoolean("skip10SongsEnabled", false);
         if (voiceModeEnable) {
             switch_enable_voice_mode.setChecked(true);
             btn_help_voice.setVisibility(View.VISIBLE);
@@ -83,29 +85,17 @@ public class SettingsActivity extends AppCompatActivity {
             switch_change_10.setChecked(false);
             btn_help_10.setVisibility(View.GONE);
         }
-
-        //checkForUpdates();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
 
-        Glide.with(this).load(R.drawable.bg).into(bg);
-
         switch_enable_voice_mode.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                 if (b) {
-                    Boolean firstTimeEnable = getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).getBoolean("firstTimeEnable", true);
-                    if (firstTimeEnable) {
-                        checkVoiceCommandPermission();
-                        getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).edit().putBoolean("firstTimeEnable", false).apply();
-                    } else {
-                        btn_help_voice.setVisibility(View.VISIBLE);
-                        getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).edit().putBoolean("voiceModeEnabled", true).apply();
-                        Toast.makeText(SettingsActivity.this, "Voice Mode Enabled", Toast.LENGTH_SHORT).show();
-                    }
+                    checkVoiceCommandPermission();
                 } else {
                     btn_help_voice.setVisibility(View.GONE);
                     getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).edit().putBoolean("voiceModeEnabled", false).apply();
@@ -164,48 +154,60 @@ public class SettingsActivity extends AppCompatActivity {
                 displayLicensesAlertDialog();
             }
         });
+
+        btn_sugggestion_bug_submit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (isNetworkConnected()) {
+                    String text = et_suggestion_bug.getText().toString();
+                    if (!text.isEmpty()) {
+                        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Suggestions_Bugs");
+                        ref.push().child("response").setValue(text);
+                        et_suggestion_bug.setText("");
+                        et_suggestion_bug.clearFocus();
+                        Toast.makeText(SettingsActivity.this, "Submitted, THANK YOU", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(SettingsActivity.this, "Type Something....", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(SettingsActivity.this, "No Internet", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 
     private void checkVoiceCommandPermission() {
-        Toast.makeText(this, "Give the microphone permission", Toast.LENGTH_LONG).show();
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+        String[] permissions = {Manifest.permission.RECORD_AUDIO};
+        String rationale = "Please provide record audio permission to activate voice mode";
+        Permissions.Options options = new Permissions.Options()
+                .setRationaleDialogTitle("Record Audio Permission")
+                .setSettingsDialogTitle("Warning");
 
-            //When permission is not granted by user, show them message why this permission is needed.
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO)) {
-                Toast.makeText(this, "Please grant permissions to record audio", Toast.LENGTH_LONG).show();
-
-                //Give user option to still opt-in the permissions
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, RECORD_AUDIO_REQUEST_CODE);
-
-            } else {
-                // Show user dialog to grant permission to record audio
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, RECORD_AUDIO_REQUEST_CODE);
+        Permissions.check(this, permissions, rationale, options, new PermissionHandler() {
+            @Override
+            public void onGranted() {
+                // do your task.
+                btn_help_voice.setVisibility(View.VISIBLE);
+                getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).edit().putBoolean("voiceModeEnabled", true).apply();
+                Toast.makeText(SettingsActivity.this, "Voice Mode Enabled", Toast.LENGTH_SHORT).show();
             }
-        }
+
+            @Override
+            public void onDenied(Context context, ArrayList<String> deniedPermissions) {
+                // permission denied, block the feature.
+                switch_enable_voice_mode.setChecked(false);
+                btn_help_voice.setVisibility(View.GONE);
+                getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).edit().putBoolean("voiceModeEnabled", false).apply();
+                Toast.makeText(SettingsActivity.this, "Voice Mode Disabled", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case RECORD_AUDIO_REQUEST_CODE: {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // permission was granted, yay!
-                    btn_help_voice.setVisibility(View.VISIBLE);
-                    getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).edit().putBoolean("voiceModeEnabled", true).apply();
-                    Toast.makeText(SettingsActivity.this, "Voice Mode Enabled", Toast.LENGTH_SHORT).show();
-                } else {
-                    // permission denied, boo! Disable the functionality that depends on this permission.
-                    Toast.makeText(this, "Permissions Denied to record audio", Toast.LENGTH_LONG).show();
-                    switch_enable_voice_mode.setChecked(false);
-                    btn_help_voice.setVisibility(View.GONE);
-                    getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).edit().putBoolean("voiceModeEnabled", false).apply();
-                    Toast.makeText(SettingsActivity.this, "Voice Mode Disabled", Toast.LENGTH_SHORT).show();
-                }
-                return;
-            }
-        }
-    }
+    private boolean isNetworkConnected() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 
+        return cm.getActiveNetworkInfo() != null && cm.getActiveNetworkInfo().isConnected();
+    }
 
     private void displayLicensesAlertDialog() {
         WebView view = (WebView) LayoutInflater.from(this).inflate(R.layout.dialog_licenses, null);
@@ -217,7 +219,7 @@ public class SettingsActivity extends AppCompatActivity {
                 .show();
     }
 
-    private void checkForUpdates() {
+   /* private void checkForUpdates() {
         DatabaseReference updateRef = FirebaseDatabase.getInstance().getReference("Update");
         updateRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -247,7 +249,7 @@ public class SettingsActivity extends AppCompatActivity {
                 Toast.makeText(SettingsActivity.this, databaseError.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
-    }
+    }*/
 
 
     @Override

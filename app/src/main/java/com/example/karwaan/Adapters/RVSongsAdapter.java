@@ -133,12 +133,12 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
                             @Override
                             public void onDownloadComplete() {
                                 if (encrypt(song)) {
-                                    Toast.makeText(context, "Downloaded", Toast.LENGTH_SHORT).show();
                                     holder.pb_download.setVisibility(View.GONE);
                                     holder.img_download.setImageResource(R.drawable.ic_check_black_24dp);
                                     holder.img_download.setVisibility(View.VISIBLE);
                                     downloadedSongList.add(song);
                                     tinyDB.putListObject("downloadedSongList", downloadedSongList);
+                                    Toast.makeText(context, "Downloaded " + song.getSongName(), Toast.LENGTH_SHORT).show();
 
                                 } else {
                                     holder.pb_download.setVisibility(View.GONE);

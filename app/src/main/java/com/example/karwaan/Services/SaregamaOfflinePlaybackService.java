@@ -280,6 +280,8 @@ public class SaregamaOfflinePlaybackService extends MediaBrowserServiceCompat {
             }
         }
         setUpMediaPlayer(fileDescriptor);
+        stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, 0, 0);
+        mediaSession.setPlaybackState(stateBuilder.build());
     }
 
     private byte[] decrypt(int position) {
@@ -310,14 +312,6 @@ public class SaregamaOfflinePlaybackService extends MediaBrowserServiceCompat {
                 artists.append(a).append(" | ");
             }
         }
-        MediaMetadataCompat.Builder mediaMetadata = new MediaMetadataCompat.Builder()
-                .putString(MediaMetadata.METADATA_KEY_TITLE, song.getSongName())
-                .putString(MediaMetadata.METADATA_KEY_ARTIST, String.valueOf(artists))
-                .putString(MediaMetadata.METADATA_KEY_ALBUM, song.getMovie())
-                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, mediaPlayer.getDuration());
-        mediaSession.setMetadata(mediaMetadata.build());
-        stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, 0, 0);
-        mediaSession.setPlaybackState(stateBuilder.build());
 
         createNotification(getBaseContext(), mediaSession, (SongModel) songList.get(index), fileDescriptor, R.drawable.pause_btn_black, true);
     }

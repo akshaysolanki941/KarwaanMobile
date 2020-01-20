@@ -363,7 +363,7 @@ public class ManualOfflineActivity extends AppCompatActivity {
         songs.clear();
         songs.addAll(mainSongsList);
         if (!songs.isEmpty()) {
-            tv_total_songs.setText(getResources().getString(R.string.total_songs).concat(String.valueOf(mainSongsList.size())));
+            setTotalSongsCount();
             tv_total_songs.setVisibility(View.VISIBLE);
             rv_songs.setAdapter(new RVOfflineSongsAdapter(songs, ManualOfflineActivity.this));
         } else {
@@ -393,6 +393,11 @@ public class ManualOfflineActivity extends AppCompatActivity {
         long size = FileUtils.sizeOfDirectory(file);
         String sizetoDisplay = FileUtils.byteCountToDisplaySize(size);
         tv_total_size.setText("Total size: ".concat(sizetoDisplay));
+    }
+
+    public void setTotalSongsCount() {
+        ArrayList<Object> temp = tinyDB.getListObject("downloadedSongList", SongModel.class);
+        tv_total_songs.setText(getResources().getString(R.string.total_songs).concat(String.valueOf(temp.size())));
     }
 
     private void updateSeekbarColor() {
