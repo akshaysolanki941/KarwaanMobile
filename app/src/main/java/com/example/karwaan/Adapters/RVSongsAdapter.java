@@ -75,7 +75,7 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
     @Override
     public void onBindViewHolder(@NonNull RVSongsAdapter.ViewHolder holder, int position) {
 
-        holder.pb_download.setVisibility(View.GONE);
+        holder.pb_download.setVisibility(View.INVISIBLE);
 
         SongModel song = songs.get(position);
         holder.tv_song_name.setText(song.getSongName());
@@ -121,7 +121,7 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
                 if (holder.img_download.getDrawable().getConstantState().equals(downloadConstState)) {
                     if (isStoragePermissionGranted) {
                         holder.pb_download.setVisibility(View.VISIBLE);
-                        holder.img_download.setVisibility(View.GONE);
+                        holder.img_download.setVisibility(View.INVISIBLE);
                         PRDownloader.download(song.getUrl(), FilesUtil.getDirPath(context),
                                 song.getSongName()).build().setOnProgressListener(new OnProgressListener() {
                             @Override
@@ -133,7 +133,7 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
                             @Override
                             public void onDownloadComplete() {
                                 if (encrypt(song)) {
-                                    holder.pb_download.setVisibility(View.GONE);
+                                    holder.pb_download.setVisibility(View.INVISIBLE);
                                     holder.img_download.setImageResource(R.drawable.ic_check_black_24dp);
                                     holder.img_download.setVisibility(View.VISIBLE);
                                     downloadedSongList.add(song);
@@ -141,7 +141,7 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
                                     Toast.makeText(context, "Downloaded " + song.getSongName(), Toast.LENGTH_SHORT).show();
 
                                 } else {
-                                    holder.pb_download.setVisibility(View.GONE);
+                                    holder.pb_download.setVisibility(View.INVISIBLE);
                                     holder.img_download.setVisibility(View.VISIBLE);
                                 }
                             }
@@ -149,7 +149,7 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
                             @Override
                             public void onError(Error error) {
                                 Toast.makeText(context, error.toString(), Toast.LENGTH_SHORT).show();
-                                holder.pb_download.setVisibility(View.GONE);
+                                holder.pb_download.setVisibility(View.INVISIBLE);
                                 holder.img_download.setVisibility(View.VISIBLE);
                             }
 

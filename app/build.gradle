@@ -73,6 +73,9 @@ dependencies {
     implementation 'com.nabinbhandari.android:permissions:3.8'
     implementation 'com.mikhaellopez:circularprogressbar:3.0.3'
 
+   // implementation 'com.google.android.gms:play-services-ads:18.3.0'
+    implementation 'com.google.firebase:firebase-ads:18.3.0'
+
 }
 
 apply plugin: 'com.google.gms.google-services'

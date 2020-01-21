@@ -79,7 +79,8 @@ public class SaregamaOfflinePlaybackService extends MediaBrowserServiceCompat {
     private float volume = 0;
     private AudioManager audioManager;
 
-    private Boolean skip10SongsEnabled;
+    private boolean skip10SongsEnabled;
+    private boolean resumeOnFocusGain = true;
     private FileDescriptor fileDescriptor;
     private TinyDB tinyDB;
 
@@ -321,6 +322,7 @@ public class SaregamaOfflinePlaybackService extends MediaBrowserServiceCompat {
             startplayer();
         } else {
             pausePlayer();
+            resumeOnFocusGain = false;
         }
     }
 
@@ -496,7 +498,8 @@ public class SaregamaOfflinePlaybackService extends MediaBrowserServiceCompat {
                 }*/
                 if (mediaPlayer != null) {
                     if (mediaPlayer.isPlaying()) {
-                        playPauseSong();
+                        pausePlayer();
+                        resumeOnFocusGain = true;
                     }
                 }
             } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
@@ -510,7 +513,7 @@ public class SaregamaOfflinePlaybackService extends MediaBrowserServiceCompat {
                 }*/
                 if (mediaPlayer != null) {
                     if (mediaPlayer.isPlaying()) {
-                        playPauseSong();
+                        pausePlayer();
                     }
                 }
             } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
@@ -525,6 +528,7 @@ public class SaregamaOfflinePlaybackService extends MediaBrowserServiceCompat {
                 if (mediaPlayer != null) {
                     if (mediaPlayer.isPlaying()) {
                         mediaPlayer.setVolume(0.2f, 0.2f);
+                        resumeOnFocusGain = true;
                     }
                 }
             } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
@@ -534,7 +538,7 @@ public class SaregamaOfflinePlaybackService extends MediaBrowserServiceCompat {
                 // are finished
                 // If you implement ducking and lower the volume, be
                 // sure to return it to normal here, as well.
-                if (mediaPlayer != null) {
+                if (mediaPlayer != null && resumeOnFocusGain) {
                     mediaPlayer.setVolume(1f, 1f);
                     startplayer();
                 }

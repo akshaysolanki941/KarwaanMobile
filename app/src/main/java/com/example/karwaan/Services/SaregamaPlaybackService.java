@@ -104,7 +104,8 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
     private AudioManager audioManager;
     private int audioSessionID = 0;
 
-    private Boolean skip10SongsEnabled;
+    private boolean skip10SongsEnabled;
+    private boolean resumeOnFocusGain = true;
 
     @Nullable
     @Override
@@ -342,6 +343,7 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
             startFadeIn();
         } else {
             pausePlayer();
+            resumeOnFocusGain = false;
         }
     }
 
@@ -565,7 +567,8 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
                 // temporarily stolen, but will be back soon.
                 // i.e. for a phone call
                 if (isExoPlaying()) {
-                    playPauseSong();
+                    pausePlayer();
+                    resumeOnFocusGain = true;
                 }
             } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
                 // Stop playback, because you lost the Audio Focus.
@@ -574,7 +577,7 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
                 // And release the kra — Audio Focus!
                 // You’re done.
                 if (isExoPlaying()) {
-                    playPauseSong();
+                    pausePlayer();
                 }
             } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
                 // Lower the volume, because something else is also
@@ -584,6 +587,7 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
                 // pause playback here instead. You do you.
                 if (isExoPlaying()) {
                     exoPlayer.setVolume(0.2f);
+                    resumeOnFocusGain = true;
                 }
             } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
                 // Resume playback, because you hold the Audio Focus
@@ -592,8 +596,10 @@ public class SaregamaPlaybackService extends MediaBrowserServiceCompat {
                 // are finished
                 // If you implement ducking and lower the volume, be
                 // sure to return it to normal here, as well.
-                exoPlayer.setVolume(1f);
-                playPauseSong();
+                if (resumeOnFocusGain) {
+                    exoPlayer.setVolume(1f);
+                    startPlayer();
+                }
             }
         }
     };

@@ -102,12 +102,13 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
     private int index = 0;
     private TextToSpeech textToSpeech;
     private NotificationManager notificationManager;
-    private Boolean skip10SongsEnabled;
+    private boolean skip10SongsEnabled;
     private ArrayList<SongModel> mainSongsList = new ArrayList<>();
     private ArrayList<SongModel> songs = new ArrayList<>();
     private final Handler handler = new Handler();
     private AudioManager audioManager;
     private float volume;
+    private boolean resumeOnFocusGain;
 
     private int audioSessionID = 0;
 
@@ -302,6 +303,7 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
                         LocalBroadcastManager.getInstance(getBaseContext()).sendBroadcast(i);
                     }
 
+
                 } else if (playWhenReady) {
                     // might be idle (plays after prepare()),
                     // buffering (plays when data available)
@@ -357,6 +359,7 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
             startFadeIn();
         } else {
             pausePlayer();
+            resumeOnFocusGain = false;
         }
     }
 
@@ -636,7 +639,8 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
                 // temporarily stolen, but will be back soon.
                 // i.e. for a phone call
                 if (isExoPlaying()) {
-                    playPauseSong();
+                    pausePlayer();
+                    resumeOnFocusGain = true;
                 }
             } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
                 // Stop playback, because you lost the Audio Focus.
@@ -645,7 +649,7 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
                 // And release the kra — Audio Focus!
                 // You’re done.
                 if (isExoPlaying()) {
-                    playPauseSong();
+                    pausePlayer();
                 }
             } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
                 // Lower the volume, because something else is also
@@ -655,6 +659,7 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
                 // pause playback here instead. You do you.
                 if (isExoPlaying()) {
                     exoPlayer.setVolume(0.2f);
+                    resumeOnFocusGain = true;
                 }
             } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
                 // Resume playback, because you hold the Audio Focus
@@ -663,8 +668,10 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
                 // are finished
                 // If you implement ducking and lower the volume, be
                 // sure to return it to normal here, as well.
-                exoPlayer.setVolume(1f);
-                startPlayer();
+                if (resumeOnFocusGain) {
+                    exoPlayer.setVolume(1f);
+                    startPlayer();
+                }
             }
         }
     };

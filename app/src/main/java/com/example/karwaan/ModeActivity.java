@@ -30,6 +30,9 @@ import android.widget.Toast;
 
 import com.airbnb.lottie.LottieAnimationView;
 import com.bumptech.glide.Glide;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
@@ -59,7 +62,7 @@ public class ModeActivity extends AppCompatActivity {
     private Boolean isOfflineActivated;
     private String version = "0";
     private String link;
-
+    private AdView mAdView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,6 +82,13 @@ public class ModeActivity extends AppCompatActivity {
         lottie_animation_view.playAnimation();
         loading_dialog.setCanceledOnTouchOutside(false);
         loading_dialog.setCancelable(false);
+
+
+        MobileAds.initialize(this, "ca-app-pub-6698172333668123~9083978837");
+        mAdView = findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        mAdView.loadAd(adRequest);
+
 
         rl_saregama_mode = findViewById(R.id.rl_saregama_mode);
         rl_manual_mode = findViewById(R.id.rl_manual_mode);
@@ -104,6 +114,10 @@ public class ModeActivity extends AppCompatActivity {
 
         setUpFirebaseMessaging();
         requestStoragePermission();
+
+        if (getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).getBoolean("firstTimeAppOpened", true)) {
+            showDialogIntro();
+        }
     }
 
     @Override
@@ -133,7 +147,7 @@ public class ModeActivity extends AppCompatActivity {
         switch_offline.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).edit().putBoolean("isOfflineActivated", b).commit();
+                getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).edit().putBoolean("isOfflineActivated", b).apply();
                 if (b) {
                     rl_saregama_mode_offline.setVisibility(View.VISIBLE);
                     rl_manual_mode_offline.setVisibility(View.VISIBLE);
@@ -277,6 +291,15 @@ public class ModeActivity extends AppCompatActivity {
         dialog_update.setCanceledOnTouchOutside(false);
         dialog_update.setCancelable(false);
         dialog_update.show();
+    }
+
+    private void showDialogIntro() {
+        Dialog dialog_intro = new Dialog(this);
+        dialog_intro.setContentView(R.layout.dialog_intro);
+        dialog_intro.setCancelable(true);
+        dialog_intro.setCanceledOnTouchOutside(true);
+        dialog_intro.show();
+        getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).edit().putBoolean("firstTimeAppOpened", false).apply();
     }
 
     private void requestStoragePermission() {

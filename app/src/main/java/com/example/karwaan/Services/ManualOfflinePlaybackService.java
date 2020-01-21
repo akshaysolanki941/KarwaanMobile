@@ -73,12 +73,13 @@ public class ManualOfflinePlaybackService extends MediaBrowserServiceCompat {
     private int index = 0;
     private TextToSpeech textToSpeech;
     private NotificationManager notificationManager;
-    private Boolean skip10SongsEnabled;
+    private boolean skip10SongsEnabled;
     private ArrayList<Object> mainSongsList = new ArrayList<>();
     private ArrayList<Object> songs = new ArrayList<>();
     private final Handler handler = new Handler();
     private AudioManager audioManager;
     private float volume;
+    private boolean resumeOnFocusGain = true;
 
     private TinyDB tinyDB;
     private FileDescriptor fileDescriptor;
@@ -140,6 +141,7 @@ public class ManualOfflinePlaybackService extends MediaBrowserServiceCompat {
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcast2, new IntentFilter("searchList"));
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcast4, new IntentFilter("holderItemOnClick"));
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcast5, new IntentFilter("seekChanged"));
+        LocalBroadcastManager.getInstance(this).registerReceiver(broadcast6, new IntentFilter("itemDeletedUpdateList"));
 
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
@@ -275,8 +277,10 @@ public class ManualOfflinePlaybackService extends MediaBrowserServiceCompat {
     private void playPauseSong() {
         if (!mediaPlayer.isPlaying()) {
             startplayer();
+            resumeOnFocusGain = true;
         } else {
             pausePlayer();
+            resumeOnFocusGain = false;
         }
     }
 
@@ -591,6 +595,18 @@ public class ManualOfflinePlaybackService extends MediaBrowserServiceCompat {
         }
     };
 
+    private BroadcastReceiver broadcast6 = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals("itemDeletedUpdateList")) {
+                mainSongsList.clear();
+                mainSongsList = tinyDB.getListObject("downloadedSongList", SongModel.class);
+                songs.clear();
+                songs.addAll(mainSongsList);
+            }
+        }
+    };
+
     private AudioManager.OnAudioFocusChangeListener afChangeListener = new AudioManager.OnAudioFocusChangeListener() {
         public void onAudioFocusChange(int focusChange) {
             if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
@@ -602,7 +618,8 @@ public class ManualOfflinePlaybackService extends MediaBrowserServiceCompat {
                 }*/
                 if (mediaPlayer != null) {
                     if (mediaPlayer.isPlaying()) {
-                        playPauseSong();
+                        pausePlayer();
+                        resumeOnFocusGain = true;
                     }
                 }
             } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
@@ -616,7 +633,7 @@ public class ManualOfflinePlaybackService extends MediaBrowserServiceCompat {
                 }*/
                 if (mediaPlayer != null) {
                     if (mediaPlayer.isPlaying()) {
-                        playPauseSong();
+                        pausePlayer();
                     }
                 }
             } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
@@ -631,6 +648,7 @@ public class ManualOfflinePlaybackService extends MediaBrowserServiceCompat {
                 if (mediaPlayer != null) {
                     if (mediaPlayer.isPlaying()) {
                         mediaPlayer.setVolume(0.2f, 0.2f);
+                        resumeOnFocusGain = true;
                     }
                 }
             } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
@@ -640,7 +658,7 @@ public class ManualOfflinePlaybackService extends MediaBrowserServiceCompat {
                 // are finished
                 // If you implement ducking and lower the volume, be
                 // sure to return it to normal here, as well.
-                if (mediaPlayer != null) {
+                if (mediaPlayer != null && resumeOnFocusGain) {
                     mediaPlayer.setVolume(1f, 1f);
                     startplayer();
                 }

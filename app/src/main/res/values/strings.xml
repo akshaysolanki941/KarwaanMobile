@@ -49,7 +49,7 @@
         <b><u>Karvaan Mobile v3.0</u></b>\n\n
         1. Cleared out some hideous bugs.\n\n
         2. Added offline mode. Now you can save your favourite song and enjoy without any internet connection.\n\n
-        3. Now you can suggest for any new feature or improvement or report a bug from Settings page.\n\n
+        3. Now you can suggest for any new feature or improvement or give feedback or report a bug from Settings page.\n\n
         4. Never miss any updates. If a new update is available, you will be get notified upon opening the app.\n\n\n\n
         <b><u>Karvaan Mobile v2.0</u></b>\n\n
         1. Some bugs fixed.\n\n
@@ -63,6 +63,14 @@
         9. Made Android 6 compatible.
     </string>
     <string name="offline_mode">OFFLINE MODE</string>
-    <string name="any_suggestion_for_a_new_feature_or_improvement_bug_report">Any suggestion for a new feature or improvement/Bug report (It is completely anonymous)</string>
+    <string name="any_suggestion_for_a_new_feature_or_improvement_bug_report">Any suggestion for a new feature or improvement/Feedback/Bug report (It is completely anonymous)</string>
     <string name="settings_toolbar">Settings</string>
+    <string name="dialog_intro_text">
+        <b>Hi, thanks for using trying out Karvaan Mobile</b>\n\n
+        <i>Some instructions for you:</i>\n\n
+        To add a song in your playlist, swipe right it. To remove a song from your playlist, go to your playlist and swipe right.\n\n
+        Switch between online and offline mode by pressing the switch on top of the main screen which you are about to see.\n\n
+        To save a song for offline, press the download icon of that song. Go to Manual Offline Mode and long press to delete it.\n\n
+        That\'s it. Enjoy the music and don\'t forget to give a suggestion or feedback or report a bug by going to the Settings page.
+    </string>
 </resources>

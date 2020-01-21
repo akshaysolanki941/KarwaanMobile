@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:ads="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -108,12 +109,12 @@
         android:id="@+id/rl_manual_mode"
         android:layout_width="250dp"
         android:layout_height="250dp"
-        android:layout_alignParentBottom="true"
+        android:layout_above="@+id/adView"
         android:layout_centerHorizontal="true"
         android:layout_marginLeft="10dp"
         android:layout_marginTop="20dp"
         android:layout_marginRight="10dp"
-        android:layout_marginBottom="50dp"
+        android:layout_marginBottom="20dp"
         android:background="@drawable/ripplebackground"
         android:clickable="true"
         android:focusable="true">
@@ -133,12 +134,12 @@
         android:id="@+id/rl_manual_mode_offline"
         android:layout_width="250dp"
         android:layout_height="250dp"
-        android:layout_alignParentBottom="true"
+        android:layout_above="@+id/adView"
         android:layout_centerHorizontal="true"
         android:layout_marginLeft="10dp"
         android:layout_marginTop="20dp"
         android:layout_marginRight="10dp"
-        android:layout_marginBottom="50dp"
+        android:layout_marginBottom="20dp"
         android:background="@drawable/ripplebackground"
         android:clickable="true"
         android:focusable="true">
@@ -153,5 +154,15 @@
             android:textColor="#000"
             android:textSize="20sp" />
     </RelativeLayout>
+
+    <com.google.android.gms.ads.AdView
+        android:id="@+id/adView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginTop="10dp"
+        ads:adSize="BANNER"
+        ads:adUnitId="ca-app-pub-3940256099942544/6300978111" />
+    <!--ads:adUnitId="ca-app-pub-6698172333668123/4157588234"-->
 
 </RelativeLayout>

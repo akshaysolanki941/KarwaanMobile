@@ -140,6 +140,8 @@ public class RVOfflineSongsAdapter extends RecyclerView.Adapter<RVOfflineSongsAd
         offlineSongList.remove(position);
         notifyItemRemoved(position);
         notifyDataSetChanged();
+        Intent i = new Intent("itemDeletedUpdateList");
+        LocalBroadcastManager.getInstance(context).sendBroadcast(i);
         ((ManualOfflineActivity) context).setTotalSongsCount();
     }
 
