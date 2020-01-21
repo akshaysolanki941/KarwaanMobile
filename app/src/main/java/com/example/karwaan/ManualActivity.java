@@ -88,6 +88,8 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import static com.example.karwaan.Constants.Constants.LIST_AD_DELTA;
+
 public class ManualActivity extends AppCompatActivity implements RVSongSwipeHelper.RecyclerItemTouchHelperListener, RVPlaylistSwipeHelper.RecyclerItemTouchHelperListener {
 
     private Toolbar toolbar;
@@ -132,8 +134,8 @@ public class ManualActivity extends AppCompatActivity implements RVSongSwipeHelp
 
         getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).edit().putBoolean("released", false).commit();
 
-        toolbar = (Toolbar) findViewById(R.id.toolBar);
-        toolbar_title = (TextView) findViewById(R.id.toolbar_title);
+        toolbar = findViewById(R.id.toolBar);
+        toolbar_title = findViewById(R.id.toolbar_title);
         setSupportActionBar(toolbar);
         toolbar_title.setText(getString(R.string.manual_toolbar));
         getSupportActionBar().setDisplayShowTitleEnabled(false);
@@ -572,10 +574,7 @@ public class ManualActivity extends AppCompatActivity implements RVSongSwipeHelp
                             }
                             if (slidingUpPanelLayout.getPanelState() != SlidingUpPanelLayout.PanelState.EXPANDED || slidingUpPanelLayout.getPanelState() == SlidingUpPanelLayout.PanelState.ANCHORED) {
                                 slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
-                                if (getSharedPreferences("firstTimeCreated", MODE_PRIVATE).getBoolean("firstTimeCreated", false)) {
-                                    setMargins(rv_songs, 0, 0, 0, 150);
-                                    getSharedPreferences("firstTimeCreated", MODE_PRIVATE).edit().putBoolean("firstTimeCreated", false).commit();
-                                }
+                                setMargins(rv_songs, 0, 0, 0, 150);
                                 setMargins(rv_songs_playlist, 0, 0, 0, 150);
                             }
                             break;
@@ -700,7 +699,10 @@ public class ManualActivity extends AppCompatActivity implements RVSongSwipeHelp
     }
 
     @Override
-    public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction, int position) {
+    public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction, int pos) {
+
+        int position = getRealPosition(pos);
+
         if (viewHolder instanceof RVSongsAdapter.ViewHolder) {
             loading_dialog.show();
             SongModel song = songs.get(position);
@@ -715,15 +717,26 @@ public class ManualActivity extends AppCompatActivity implements RVSongSwipeHelp
         if (viewHolder instanceof RVPlaylistAdapter.ViewHolder) {
             loading_dialog.show();
 
-            SongModel songModel = songs.get(position);
+            SongModel songModel = songs.get(pos);
             mWordViewModel.delete(new Word(songModel.getSongName()));
-            playlistAdapter.removeItem(position);
+            playlistAdapter.removeItem(pos);
+            Intent i = new Intent("playlistItemDeleted");
+            i.putExtra("positionRemoved", pos);
+            LocalBroadcastManager.getInstance(ManualActivity.this).sendBroadcast(i);
             Toast.makeText(this, "Removed " + songModel.getSongName(), Toast.LENGTH_SHORT).show();
 
             loading_dialog.dismiss();
 
             itemTouchHelper1.attachToRecyclerView(null);
             itemTouchHelper1.attachToRecyclerView(rv_songs_playlist);
+        }
+    }
+
+    private int getRealPosition(int position) {
+        if (LIST_AD_DELTA == 0) {
+            return position;
+        } else {
+            return position - position / LIST_AD_DELTA;
         }
     }
 

@@ -53,6 +53,8 @@ import com.example.karwaan.Models.SongModel;
 import com.example.karwaan.RoomDB.Word;
 import com.example.karwaan.RoomDB.WordViewModel;
 import com.example.karwaan.Services.SaregamaPlaybackService;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.database.DataSnapshot;
@@ -108,29 +110,34 @@ public class SaregamaActivity extends AppCompatActivity {
     private PresetReverb presetReverb;
 
     private WordViewModel mWordViewModel;
+    private AdView mAdView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_saregama);
 
-        toolbar = (Toolbar) findViewById(R.id.toolBar);
-        toolbar_title = (TextView) findViewById(R.id.toolbar_title);
+        toolbar = findViewById(R.id.toolBar);
+        toolbar_title = findViewById(R.id.toolbar_title);
         setSupportActionBar(toolbar);
         toolbar_title.setText(getString(R.string.saregama_toolbar));
         getSupportActionBar().setDisplayShowTitleEnabled(false);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         rlParentLayout = findViewById(R.id.rlParentLayout);
-        btn_play_pause = (ImageButton) findViewById(R.id.btn_play_pause);
+        btn_play_pause = findViewById(R.id.btn_play_pause);
         btn_play_pause.bringToFront();
-        btn_next = (ImageButton) findViewById(R.id.btn_next);
-        btn_previous = (ImageButton) findViewById(R.id.btn_previous);
-        btn_forward10 = (ImageButton) findViewById(R.id.btn_forward10);
-        btn_backward10 = (ImageButton) findViewById(R.id.btn_backward10);
-        lottieAnimationView = (LottieAnimationView) findViewById(R.id.lottie_animation_view);
+        btn_next = findViewById(R.id.btn_next);
+        btn_previous = findViewById(R.id.btn_previous);
+        btn_forward10 = findViewById(R.id.btn_forward10);
+        btn_backward10 = findViewById(R.id.btn_backward10);
+        lottieAnimationView = findViewById(R.id.lottie_animation_view);
         bg = findViewById(R.id.bg);
         Glide.with(this).load(R.drawable.bg).into(bg);
+
+        mAdView = findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        mAdView.loadAd(adRequest);
 
         tv_saregama_song_details = findViewById(R.id.tv_saregama_song_details);
         tv_playing_from_playlist = findViewById(R.id.tv_playing_from_playlist);

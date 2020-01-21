@@ -14,6 +14,7 @@ import android.widget.TextView;
 
 import com.example.karwaan.Models.SongModel;
 import com.example.karwaan.R;
+import com.google.android.gms.ads.AdView;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -39,12 +40,16 @@ public class RVPlaylistAdapter extends RecyclerView.Adapter<RVPlaylistAdapter.Vi
     @NonNull
     @Override
     public RVPlaylistAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
-        View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.rv_playlist_item, viewGroup, false);
+        View view;
+
+        view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.rv_playlist_item, viewGroup, false);
+
         return new RVPlaylistAdapter.ViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull RVPlaylistAdapter.ViewHolder holder, int position) {
+
 
         SongModel song = songsPlaylist.get(position);
         holder.tv_song_name_playlist.setText(song.getSongName());
@@ -77,6 +82,7 @@ public class RVPlaylistAdapter extends RecyclerView.Adapter<RVPlaylistAdapter.Vi
                 LocalBroadcastManager.getInstance(context).sendBroadcast(i);
             }
         });
+
     }
 
     @Override
@@ -88,6 +94,7 @@ public class RVPlaylistAdapter extends RecyclerView.Adapter<RVPlaylistAdapter.Vi
 
         TextView tv_song_name_playlist, tv_artist_playlist;
         public RelativeLayout foreground, background;
+        AdView adView;
 
         private ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -96,13 +103,13 @@ public class RVPlaylistAdapter extends RecyclerView.Adapter<RVPlaylistAdapter.Vi
             tv_artist_playlist = itemView.findViewById(R.id.tv_artist_playlist);
             background = (RelativeLayout) itemView.findViewById(R.id.background);
             foreground = (RelativeLayout) itemView.findViewById(R.id.foreground);
-
+            adView = itemView.findViewById(R.id.adView);
         }
     }
 
-    public void removeItem(int position) {
-        songsPlaylist.remove(position);
-        notifyItemRemoved(position);
+    public void removeItem(int pos) {
+        songsPlaylist.remove(pos);
+        notifyItemRemoved(pos);
         notifyDataSetChanged();
     }
 

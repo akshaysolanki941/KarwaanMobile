@@ -93,8 +93,8 @@ public class ManualOfflineActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_manual_offline);
 
-        toolbar = (Toolbar) findViewById(R.id.toolBar);
-        toolbar_title = (TextView) findViewById(R.id.toolbar_title);
+        toolbar = findViewById(R.id.toolBar);
+        toolbar_title = findViewById(R.id.toolbar_title);
         setSupportActionBar(toolbar);
         toolbar_title.setText(getString(R.string.toolbar_manual_mode_offline));
         getSupportActionBar().setDisplayShowTitleEnabled(false);

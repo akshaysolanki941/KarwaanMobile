@@ -69,8 +69,8 @@ public class ModeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mode);
 
-        toolbar = (Toolbar) findViewById(R.id.toolBar);
-        toolbar_title = (TextView) findViewById(R.id.toolbar_title);
+        toolbar = findViewById(R.id.toolBar);
+        toolbar_title = findViewById(R.id.toolbar_title);
         setSupportActionBar(toolbar);
         toolbar_title.setText(getString(R.string.app_name));
         getSupportActionBar().setDisplayShowTitleEnabled(false);

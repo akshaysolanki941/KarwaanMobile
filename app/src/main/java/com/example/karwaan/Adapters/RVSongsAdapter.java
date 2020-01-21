@@ -25,6 +25,8 @@ import com.example.karwaan.R;
 import com.example.karwaan.Utils.EncryptDecryptUtils;
 import com.example.karwaan.Utils.FilesUtil;
 import com.example.karwaan.Utils.TinyDB;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import com.mikhaellopez.circularprogressbar.CircularProgressBar;
 
 import java.io.File;
@@ -36,6 +38,9 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import static android.content.Context.MODE_PRIVATE;
+import static com.example.karwaan.Constants.Constants.AD;
+import static com.example.karwaan.Constants.Constants.CONTENT;
+import static com.example.karwaan.Constants.Constants.LIST_AD_DELTA;
 
 public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHolder> {
 
@@ -58,7 +63,7 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
     @NonNull
     @Override
     public RVSongsAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
-        View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.rv_songs_item, viewGroup, false);
+        View view;
 
         tinyDB = new TinyDB(context);
         downloadedSongList.clear();
@@ -69,112 +74,147 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
 
         isStoragePermissionGranted = context.getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).getBoolean("storagePermissionGranted", false);
 
+        if (viewType == CONTENT) {
+            view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.rv_songs_item, viewGroup, false);
+        } else {
+            view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.rv_ad_item, viewGroup, false);
+        }
+
         return new RVSongsAdapter.ViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RVSongsAdapter.ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull RVSongsAdapter.ViewHolder holder, int pos) {
 
-        holder.pb_download.setVisibility(View.INVISIBLE);
+        if (getItemViewType(pos) == CONTENT) {
 
-        SongModel song = songs.get(position);
-        holder.tv_song_name.setText(song.getSongName());
+            int position = getRealPosition(pos);
 
-        File f = new File(FilesUtil.getFilePath(context, song.getSongName()));
-        if (f.exists()) {
-            holder.img_download.setImageResource(R.drawable.ic_check_black_24dp);
-        } else {
-            holder.img_download.setImageResource(R.drawable.ic_file_download_black_24dp);
-        }
+            holder.pb_download.setVisibility(View.INVISIBLE);
 
-        SpannableStringBuilder artists = new SpannableStringBuilder();
-        ArrayList<String> artistList = song.getArtists();
-        for (int i = 0; i < artistList.size(); i++) {
-            String a = artistList.get(i);
-            if (i == artistList.size() - 1) {
-                artists.append(a);
+            SongModel song = songs.get(position);
+            holder.tv_song_name.setText(song.getSongName());
+
+            File f = new File(FilesUtil.getFilePath(context, song.getSongName()));
+            if (f.exists()) {
+                holder.img_download.setImageResource(R.drawable.ic_check_black_24dp);
             } else {
-                artists.append(a).append(", ");
+                holder.img_download.setImageResource(R.drawable.ic_file_download_black_24dp);
             }
-        }
-        holder.tv_artist.setText(song.getMovie().concat(" | ").concat(String.valueOf(artists)));
-        holder.tv_artist.setSelected(true);
 
-        setEnterAnimation(holder.itemView, position);
-
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                setReduceSizeAnimation(holder.itemView);
-                setRegainSizeAnimation(holder.itemView);
-
-                Intent i = new Intent("holderItemOnClick");
-                i.putExtra("holderItemOnClick", position);
-                LocalBroadcastManager.getInstance(context).sendBroadcast(i);
+            SpannableStringBuilder artists = new SpannableStringBuilder();
+            ArrayList<String> artistList = song.getArtists();
+            for (int i = 0; i < artistList.size(); i++) {
+                String a = artistList.get(i);
+                if (i == artistList.size() - 1) {
+                    artists.append(a);
+                } else {
+                    artists.append(a).append(", ");
+                }
             }
-        });
+            holder.tv_artist.setText(song.getMovie().concat(" | ").concat(String.valueOf(artists)));
+            holder.tv_artist.setSelected(true);
 
-        holder.img_download.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (holder.img_download.getDrawable().getConstantState().equals(downloadConstState)) {
-                    if (isStoragePermissionGranted) {
-                        holder.pb_download.setVisibility(View.VISIBLE);
-                        holder.img_download.setVisibility(View.INVISIBLE);
-                        PRDownloader.download(song.getUrl(), FilesUtil.getDirPath(context),
-                                song.getSongName()).build().setOnProgressListener(new OnProgressListener() {
-                            @Override
-                            public void onProgress(Progress progress) {
-                                holder.pb_download.setProgressMax(progress.totalBytes);
-                                holder.pb_download.setProgress(progress.currentBytes);
-                            }
-                        }).start(new OnDownloadListener() {
-                            @Override
-                            public void onDownloadComplete() {
-                                if (encrypt(song)) {
-                                    holder.pb_download.setVisibility(View.INVISIBLE);
-                                    holder.img_download.setImageResource(R.drawable.ic_check_black_24dp);
-                                    holder.img_download.setVisibility(View.VISIBLE);
-                                    downloadedSongList.add(song);
-                                    tinyDB.putListObject("downloadedSongList", downloadedSongList);
-                                    Toast.makeText(context, "Downloaded " + song.getSongName(), Toast.LENGTH_SHORT).show();
+            setEnterAnimation(holder.itemView, position);
 
-                                } else {
+            holder.itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                    setReduceSizeAnimation(holder.itemView);
+                    setRegainSizeAnimation(holder.itemView);
+
+                    Intent i = new Intent("holderItemOnClick");
+                    i.putExtra("holderItemOnClick", position);
+                    LocalBroadcastManager.getInstance(context).sendBroadcast(i);
+                }
+            });
+
+            holder.img_download.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (holder.img_download.getDrawable().getConstantState().equals(downloadConstState)) {
+                        if (isStoragePermissionGranted) {
+                            holder.pb_download.setVisibility(View.VISIBLE);
+                            holder.img_download.setVisibility(View.INVISIBLE);
+                            PRDownloader.download(song.getUrl(), FilesUtil.getDirPath(context),
+                                    song.getSongName()).build().setOnProgressListener(new OnProgressListener() {
+                                @Override
+                                public void onProgress(Progress progress) {
+                                    holder.pb_download.setProgressMax(progress.totalBytes);
+                                    holder.pb_download.setProgress(progress.currentBytes);
+                                }
+                            }).start(new OnDownloadListener() {
+                                @Override
+                                public void onDownloadComplete() {
+                                    if (encrypt(song)) {
+                                        holder.pb_download.setVisibility(View.INVISIBLE);
+                                        holder.img_download.setImageResource(R.drawable.ic_check_black_24dp);
+                                        holder.img_download.setVisibility(View.VISIBLE);
+                                        downloadedSongList.add(song);
+                                        tinyDB.putListObject("downloadedSongList", downloadedSongList);
+                                        Toast.makeText(context, "Downloaded " + song.getSongName(), Toast.LENGTH_SHORT).show();
+
+                                    } else {
+                                        holder.pb_download.setVisibility(View.INVISIBLE);
+                                        holder.img_download.setVisibility(View.VISIBLE);
+                                    }
+                                }
+
+                                @Override
+                                public void onError(Error error) {
+                                    Toast.makeText(context, error.toString(), Toast.LENGTH_SHORT).show();
                                     holder.pb_download.setVisibility(View.INVISIBLE);
                                     holder.img_download.setVisibility(View.VISIBLE);
                                 }
-                            }
-
-                            @Override
-                            public void onError(Error error) {
-                                Toast.makeText(context, error.toString(), Toast.LENGTH_SHORT).show();
-                                holder.pb_download.setVisibility(View.INVISIBLE);
-                                holder.img_download.setVisibility(View.VISIBLE);
-                            }
 
 
-                        });
-                    } else {
-                        Toast.makeText(context, "Please grant storage permission first", Toast.LENGTH_LONG).show();
+                            });
+                        } else {
+                            Toast.makeText(context, "Please grant storage permission first", Toast.LENGTH_LONG).show();
+                        }
+                    } else if (holder.img_download.getDrawable().getConstantState().equals(checkConstState)) {
+                        Toast.makeText(context, "Already downloaded", Toast.LENGTH_SHORT).show();
                     }
-                } else if (holder.img_download.getDrawable().getConstantState().equals(checkConstState)) {
-                    Toast.makeText(context, "Already downloaded", Toast.LENGTH_SHORT).show();
                 }
-            }
-        });
+            });
 
-        holder.pb_download.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Toast.makeText(context, "Downloading....", Toast.LENGTH_SHORT).show();
-            }
-        });
+            holder.pb_download.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Toast.makeText(context, "Downloading....", Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else {
+            AdRequest adRequest = new AdRequest.Builder().build();
+            holder.adView.loadAd(adRequest);
+        }
     }
 
     @Override
     public int getItemCount() {
-        return songs.size();
+        //return songs.size();
+        int additionalContent = 0;
+        if (songs.size() > 0 && LIST_AD_DELTA > 0 && songs.size() > LIST_AD_DELTA) {
+            additionalContent = songs.size() / LIST_AD_DELTA;
+        }
+        return songs.size() + additionalContent;
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        if (position > 0 && position % LIST_AD_DELTA == 0) {
+            return AD;
+        }
+        return CONTENT;
+    }
+
+    private int getRealPosition(int position) {
+        if (LIST_AD_DELTA == 0) {
+            return position;
+        } else {
+            return position - position / LIST_AD_DELTA;
+        }
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
@@ -183,6 +223,7 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
         public RelativeLayout foreground, background;
         ImageView img_download;
         CircularProgressBar pb_download;
+        AdView adView;
 
         private ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -193,6 +234,7 @@ public class RVSongsAdapter extends RecyclerView.Adapter<RVSongsAdapter.ViewHold
             foreground = (RelativeLayout) itemView.findViewById(R.id.foreground);
             img_download = itemView.findViewById(R.id.img_download);
             pb_download = itemView.findViewById(R.id.pb_download);
+            adView = itemView.findViewById(R.id.adView);
 
         }
     }

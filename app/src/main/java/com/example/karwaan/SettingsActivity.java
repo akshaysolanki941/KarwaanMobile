@@ -22,6 +22,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.nabinbhandari.android.permissions.PermissionHandler;
@@ -43,14 +45,15 @@ public class SettingsActivity extends AppCompatActivity {
     private Dialog dialog_voice_help;
     private EditText et_suggestion_bug;
     private Button btn_sugggestion_bug_submit;
+    private AdView mAdView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
-        toolbar = (Toolbar) findViewById(R.id.toolBar);
-        toolbar_title = (TextView) findViewById(R.id.toolbar_title);
+        toolbar = findViewById(R.id.toolBar);
+        toolbar_title = findViewById(R.id.toolbar_title);
         setSupportActionBar(toolbar);
         toolbar_title.setText(getString(R.string.settings_toolbar));
         getSupportActionBar().setDisplayShowTitleEnabled(false);
@@ -58,6 +61,10 @@ public class SettingsActivity extends AppCompatActivity {
 
         bg = findViewById(R.id.bg);
         Glide.with(this).load(R.drawable.bg).into(bg);
+
+        mAdView = findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        mAdView.loadAd(adRequest);
 
         tv_open_source_licenses = findViewById(R.id.tv_open_source_licenses);
         btn_help_voice = findViewById(R.id.btn_help_voice);

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:ads="http://schemas.android.com/apk/res-auto"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/rlParentLayout"
@@ -143,7 +144,7 @@
         android:id="@+id/tv_playing_from_playlist"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/tv_saregama_song_details"
+        android:layout_above="@+id/rl"
         android:layout_centerHorizontal="true"
         android:layout_margin="5dp"
         android:background="@drawable/switch_bg"
@@ -155,23 +156,39 @@
         android:textSize="14sp"
         android:visibility="gone" />
 
-    <TextView
-        android:id="@+id/tv_saregama_song_details"
+    <RelativeLayout
+        android:id="@+id/rl"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="@drawable/slideup_panel_bg"
-        android:ellipsize="marquee"
-        android:focusable="true"
-        android:focusableInTouchMode="true"
-        android:fontFamily="@font/overpass_light"
-        android:freezesText="true"
-        android:marqueeRepeatLimit="marquee_forever"
-        android:padding="30dp"
-        android:scrollHorizontally="true"
-        android:singleLine="true"
-        android:textAlignment="center"
-        android:textColor="#fff"
-        android:textSize="18sp" />
+        android:background="@drawable/slideup_panel_bg">
+
+        <TextView
+            android:id="@+id/tv_saregama_song_details"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="marquee"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:fontFamily="@font/overpass_light"
+            android:freezesText="true"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:padding="30dp"
+            android:scrollHorizontally="true"
+            android:singleLine="true"
+            android:textAlignment="center"
+            android:textColor="#fff"
+            android:textSize="18sp" />
+
+        <com.google.android.gms.ads.AdView
+            android:id="@+id/adView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/tv_saregama_song_details"
+            ads:adSize="BANNER"
+            ads:adUnitId="ca-app-pub-3940256099942544/6300978111" />
+        <!--ads:adUnitId="ca-app-pub-6698172333668123/6173732704"-->
+
+    </RelativeLayout>
 
 </RelativeLayout>

@@ -174,6 +174,7 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcast4, new IntentFilter("holderItemOnClick"));
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcast5, new IntentFilter("seekChanged"));
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcast6, new IntentFilter("playlist"));
+        LocalBroadcastManager.getInstance(this).registerReceiver(broadcast7, new IntentFilter("playlistItemDeleted"));
 
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
@@ -603,6 +604,16 @@ public class ManualPlaybackService extends MediaBrowserServiceCompat {
                 if (playlist != null) {
                     songs.addAll(playlist);
                 }
+            }
+        }
+    };
+
+    private BroadcastReceiver broadcast7 = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals("playlistItemDeleted")) {
+                int position = intent.getIntExtra("positionRemoved", 0);
+                songs.remove(position);
             }
         }
     };

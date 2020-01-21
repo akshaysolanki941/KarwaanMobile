@@ -51,7 +51,6 @@ public class SaregamaOfflineActivity extends AppCompatActivity {
     private LottieAnimationView lottieAnimationView, lottie_animation_view;
     private ImageView bg;
     private Dialog loading_dialog;
-    private Boolean voiceModeEnabled;
     private NotificationManager notificationManager;
 
     private MediaBrowserCompat mediaBrowser;
@@ -64,22 +63,22 @@ public class SaregamaOfflineActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_saregama_offline);
 
-        toolbar = (Toolbar) findViewById(R.id.toolBar);
-        toolbar_title = (TextView) findViewById(R.id.toolbar_title);
+        toolbar = findViewById(R.id.toolBar);
+        toolbar_title = findViewById(R.id.toolbar_title);
         setSupportActionBar(toolbar);
         toolbar_title.setText(getString(R.string.saregama_mode_offline));
         getSupportActionBar().setDisplayShowTitleEnabled(false);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        btn_play_pause = (ImageButton) findViewById(R.id.btn_play_pause);
+        btn_play_pause = findViewById(R.id.btn_play_pause);
         btn_play_pause.bringToFront();
         btn_play_pause.setImageResource(R.drawable.play_button);
 
-        btn_next = (ImageButton) findViewById(R.id.btn_next);
-        btn_previous = (ImageButton) findViewById(R.id.btn_previous);
-        btn_forward10 = (ImageButton) findViewById(R.id.btn_forward10);
-        btn_backward10 = (ImageButton) findViewById(R.id.btn_backward10);
-        lottieAnimationView = (LottieAnimationView) findViewById(R.id.lottie_animation_view);
+        btn_next = findViewById(R.id.btn_next);
+        btn_previous = findViewById(R.id.btn_previous);
+        btn_forward10 = findViewById(R.id.btn_forward10);
+        btn_backward10 = findViewById(R.id.btn_backward10);
+        lottieAnimationView = findViewById(R.id.lottie_animation_view);
         bg = findViewById(R.id.bg);
         Glide.with(this).load(R.drawable.bg).into(bg);
 

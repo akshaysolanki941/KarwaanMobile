@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:ads="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -15,7 +16,7 @@
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:alpha="0.5"
+        android:alpha="0.3"
         android:scaleType="fitXY"
         android:src="@android:color/black" />
 
@@ -130,7 +131,7 @@
         android:id="@+id/tv_open_source_licenses"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
+        android:layout_above="@+id/adView"
         android:layout_margin="10dp"
         android:background="@drawable/switch_bg"
         android:fontFamily="@font/overpass_semi_bold"
@@ -139,5 +140,14 @@
         android:textAlignment="center"
         android:textColor="#fff"
         android:textSize="15sp" />
+
+    <com.google.android.gms.ads.AdView
+        android:id="@+id/adView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        ads:adSize="BANNER"
+        ads:adUnitId="ca-app-pub-3940256099942544/6300978111" />
+    <!--ads:adUnitId="ca-app-pub-6698172333668123/9183518351"-->
 
 </RelativeLayout>

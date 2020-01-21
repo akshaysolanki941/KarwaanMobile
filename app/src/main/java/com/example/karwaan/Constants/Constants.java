@@ -22,4 +22,10 @@ public class Constants {
     public static final String KEY_SPEC_ALGORITHM = "AES";
     public static final String PROVIDER = "BC";
     public static final String SECRET_KEY = "SECRET_KEY";
+
+
+    //Ads in recycler view
+    public static final int LIST_AD_DELTA = 6;
+    public static final int CONTENT = 0;
+    public static final int AD = 1;
 }
