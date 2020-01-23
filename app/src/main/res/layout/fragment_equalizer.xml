@@ -260,13 +260,13 @@
             android:background="@android:color/transparent"
             android:orientation="horizontal">
 
-            <com.example.karwaan.Equalizer.AnalogController
+            <com.akshay.karwaan.Equalizer.AnalogController
                 android:id="@+id/controllerBass"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1" />
 
-            <com.example.karwaan.Equalizer.AnalogController
+            <com.akshay.karwaan.Equalizer.AnalogController
                 android:id="@+id/controller3D"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"

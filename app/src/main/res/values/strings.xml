@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Karvaan Mobile</string>
+    <string name="app_name">Karwaan Mobile</string>
 
     <string name="voice_help">
         Touch on the screen anywhere and as soon as the message <i>\'Give a command\'</i> appears, say any command you wish among <b>\'next\'</b>,
@@ -46,12 +46,12 @@
 
 
     <string name="about_whats_new">
-        <b><u>Karvaan Mobile v3.0</u></b>\n\n
+        <b><u>Karwaan Mobile v3.0</u></b>\n\n
         1. Cleared out some hideous bugs.\n\n
         2. Added offline mode. Now you can save your favourite song and enjoy without any internet connection.\n\n
         3. Now you can suggest for any new feature or improvement or give feedback or report a bug from Settings page.\n\n
         4. Never miss any updates. If a new update is available, you will be get notified upon opening the app.\n\n\n\n
-        <b><u>Karvaan Mobile v2.0</u></b>\n\n
+        <b><u>Karwaan Mobile v2.0</u></b>\n\n
         1. Some bugs fixed.\n\n
         2. App is completely changed but you won\'t see the changes as these changes are made in backend. You will feel these changes.\n\n
         3. My Playlist option added. Add your favorite songs to the playlist and play it from any of the two modes.\n\n

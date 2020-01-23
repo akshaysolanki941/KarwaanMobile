@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.example.karwaan">
+    package="com.akshay.karwaan">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -22,20 +22,20 @@
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
         <activity
-            android:name=".ManualOfflineActivity"
+            android:name="com.akshay.karwaan.ManualOfflineActivity"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustPan" />
         <activity
-            android:name=".SaregamaOfflineActivity"
+            android:name="com.akshay.karwaan.SaregamaOfflineActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".AboutActivity"
+            android:name="com.akshay.karwaan.AboutActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".SettingsActivity"
+            android:name="com.akshay.karwaan.SettingsActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".SplashActivity"
+            android:name="com.akshay.karwaan.SplashActivity"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -43,40 +43,40 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".SaregamaActivity"
+            android:name="com.akshay.karwaan.SaregamaActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".ModeActivity"
+            android:name="com.akshay.karwaan.ModeActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".ManualActivity"
+            android:name="com.akshay.karwaan.ManualActivity"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustPan" />
 
-        <receiver android:name=".Services.NotificationActionService" />
+        <receiver android:name="com.akshay.karwaan.Services.NotificationActionService" />
 
-        <service android:name=".Services.OnClearFromRecentService" />
-        <service android:name=".Services.SaregamaPlaybackService">
+        <service android:name="com.akshay.karwaan.Services.OnClearFromRecentService" />
+        <service android:name="com.akshay.karwaan.Services.SaregamaPlaybackService">
             <intent-filter>
                 <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>
         </service>
-        <service android:name=".Services.ManualPlaybackService">
+        <service android:name="com.akshay.karwaan.Services.ManualPlaybackService">
             <intent-filter>
                 <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>
         </service>
-        <service android:name=".Services.ManualOfflinePlaybackService">
+        <service android:name="com.akshay.karwaan.Services.ManualOfflinePlaybackService">
             <intent-filter>
                 <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>
         </service>
-        <service android:name=".Services.SaregamaOfflinePlaybackService">
+        <service android:name="com.akshay.karwaan.Services.SaregamaOfflinePlaybackService">
             <intent-filter>
                 <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>
         </service>
-        <service android:name=".FirebaseMessaging.MessagingService">
+        <service android:name="com.akshay.karwaan.FirebaseMessaging.MessagingService">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
