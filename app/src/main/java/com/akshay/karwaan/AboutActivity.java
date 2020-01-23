@@ -22,7 +22,7 @@ public class AboutActivity extends AppCompatActivity {
                 .isRTL(false)
                 .setImage(R.mipmap.ic_launcher)
                 .addItem(new Element().setTitle("KARWAAN MOBILE v3.0").setGravity(Gravity.CENTER_HORIZONTAL))
-                .setDescription("A simple app designed for those who love old bollywood classics. It has two simple modes one of which functions in the same manner as Saregama Carvaan speakers do. Its basically a Carvaan speaker but more portable and free, that too without annoying ads.")
+                .setDescription("A simple app designed for those who love old bollywood classics. It has two simple modes one of which functions in the same manner as Saregama Carvaan speakers do. Its basically a Carvaan speaker but more portable and free.")
                 .addGroup("What's new")
                 .addItem(new Element().setTitle(getString(R.string.about_whats_new)))
                 .addGroup("Connect with me")

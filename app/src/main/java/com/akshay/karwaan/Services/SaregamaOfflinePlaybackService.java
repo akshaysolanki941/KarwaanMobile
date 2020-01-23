@@ -254,9 +254,9 @@ public class SaregamaOfflinePlaybackService extends MediaBrowserServiceCompat {
                 if (index >= songList.size()) {
                     index = 0;
                     Collections.shuffle(songList);
-                    playSongInExoPlayer();
+                    playSongInMediaPlayer();
                 } else {
-                    playSongInExoPlayer();
+                    playSongInMediaPlayer();
                 }
                 createNotification(getBaseContext(), mediaSession, (SongModel) songList.get(index), fileDescriptor, R.drawable.play_btn_black, true);
             }
@@ -270,7 +270,9 @@ public class SaregamaOfflinePlaybackService extends MediaBrowserServiceCompat {
         }
     }
 
-    private void playSongInExoPlayer() {
+    private void playSongInMediaPlayer() {
+        SongModel song = (SongModel) songList.get(index);
+
         byte[] file = decrypt(index);
         if (file != null) {
             try {
@@ -281,8 +283,6 @@ public class SaregamaOfflinePlaybackService extends MediaBrowserServiceCompat {
             }
         }
         setUpMediaPlayer(fileDescriptor);
-        stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, 0, 0);
-        mediaSession.setPlaybackState(stateBuilder.build());
     }
 
     private byte[] decrypt(int position) {
@@ -300,7 +300,7 @@ public class SaregamaOfflinePlaybackService extends MediaBrowserServiceCompat {
     private void startRandomSongs() {
         index = 0;
         Collections.shuffle(songList);
-        playSongInExoPlayer();
+        playSongInMediaPlayer();
 
         SongModel song = (SongModel) songList.get(index);
         SpannableStringBuilder artists = new SpannableStringBuilder();
@@ -340,9 +340,9 @@ public class SaregamaOfflinePlaybackService extends MediaBrowserServiceCompat {
         if (index >= songList.size()) {
             index = 0;
             Collections.shuffle(songList);
-            playSongInExoPlayer();
+            playSongInMediaPlayer();
         } else {
-            playSongInExoPlayer();
+            playSongInMediaPlayer();
         }
         createNotification(getBaseContext(), mediaSession, (SongModel) songList.get(index), fileDescriptor, R.drawable.play_btn_black, true);
     }
@@ -361,9 +361,9 @@ public class SaregamaOfflinePlaybackService extends MediaBrowserServiceCompat {
         if (index <= -1) {
             index = 0;
             Collections.shuffle(songList);
-            playSongInExoPlayer();
+            playSongInMediaPlayer();
         } else {
-            playSongInExoPlayer();
+            playSongInMediaPlayer();
         }
         createNotification(getBaseContext(), mediaSession, (SongModel) songList.get(index), fileDescriptor, R.drawable.play_btn_black, true);
     }
@@ -385,9 +385,9 @@ public class SaregamaOfflinePlaybackService extends MediaBrowserServiceCompat {
             if (index >= songList.size()) {
                 index = 0;
                 Collections.shuffle(songList);
-                playSongInExoPlayer();
+                playSongInMediaPlayer();
             } else {
-                playSongInExoPlayer();
+                playSongInMediaPlayer();
             }
             createNotification(getBaseContext(), mediaSession, (SongModel) songList.get(index), fileDescriptor, R.drawable.play_btn_black, true);
         } else {
@@ -421,9 +421,9 @@ public class SaregamaOfflinePlaybackService extends MediaBrowserServiceCompat {
             if (index <= -1) {
                 index = 0;
                 Collections.shuffle(songList);
-                playSongInExoPlayer();
+                playSongInMediaPlayer();
             } else {
-                playSongInExoPlayer();
+                playSongInMediaPlayer();
             }
             createNotification(getBaseContext(), mediaSession, (SongModel) songList.get(index), fileDescriptor, R.drawable.play_btn_black, true);
         } else {

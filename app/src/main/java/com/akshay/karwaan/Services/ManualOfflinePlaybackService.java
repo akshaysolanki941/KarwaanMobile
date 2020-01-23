@@ -159,8 +159,6 @@ public class ManualOfflinePlaybackService extends MediaBrowserServiceCompat {
         }
 
         skip10SongsEnabled = getSharedPreferences("karvaanSharedPref", MODE_PRIVATE).getBoolean("skip10SongsEnabled", false);
-
-        initMediaPlayer();
     }
 
     private MediaSessionCompat.Callback callback = new MediaSessionCompat.Callback() {
@@ -212,10 +210,6 @@ public class ManualOfflinePlaybackService extends MediaBrowserServiceCompat {
             skip10SongsBackward();
         }
     };
-
-    private void initMediaPlayer() {
-
-    }
 
     private void setUpMediaPlayer(FileDescriptor fileDescriptor) {
         mediaPlayer = new MediaPlayer();
